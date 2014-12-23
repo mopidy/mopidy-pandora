@@ -39,8 +39,17 @@ Before starting Mopidy, you must add configuration for
 Mopidy-Pandora to your Mopidy configuration file::
 
     [pandora]
-    # TODO: Add example of extension config
+    enabled = true
+    max_tracks = 50
+    partner_encryption_key = 
+    partner_decryption_key = 
+    partner_username = iphone
+    partner_password = 
+    partner_device = IP01
+    username = 
+    password = 
 
+The **partner_** keys can be obtained from `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
 
 Project resources
 =================
