@@ -23,7 +23,6 @@ class Extension(ext.Extension):
 
     def get_config_schema(self):
         schema = super(Extension, self).get_config_schema()
-        schema['max_tracks'] = config.Integer(minimum=1)
         schema['partner_encryption_key'] = config.String()
         schema['partner_decryption_key'] = config.String()
         schema['partner_username'] = config.String()

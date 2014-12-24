@@ -25,64 +25,34 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
         self.api = pandora.APIClient.from_settings_dict(settings)
         self.api.login(username=config["username"], password=config["password"])
 
-        self.library = PandoraLibraryProvider(backend=self, max_tracks=int(config['max_tracks']))
+        self.library = PandoraLibraryProvider(backend=self)
         self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-        self.station = None
-        self.track_num = 0
+        self.station_token = None
 
-    def _next_track(self, station_token, track_num):
-        #XXX what if user browses out of station and then back? that should work
-        if self.station and station_token == self.station.token:
-            # Can't play a previously seen track in this station
-            if track_num <= self.track_num:
-                return None
-        else:
-            self.station = pandora.models.pandora.Station.from_json(
-                self.backend.api,
-                self.backend.api.get_station(station_token),
-            )
+    def _next_track(self, station_token):
+        if self.station_token != station_token:
+            self.station_token = station_token
             self.tracks = iter(())
-            self.track_num = 0
 
         while True:
             try:
                 return next(self.tracks)
             except StopIteration:
-                self.tracks = iter(self.station.get_playlist())
+                self.tracks = (pandora.models.pandora.PlaylistItem.from_json(self.backend.api, station)
+                               for station in self.backend.api.get_playlist(self.station_token)['items'])
 
     def change_track(self, track):
         track_uri = PandoraUri.parse(track.uri)
-        if track_uri.scheme != TrackUri.scheme:
-            return False
-        pandora_track = self._next_track(track_uri.station_token, track_uri.track_num)
+        pandora_track = self._next_track(track_uri.station_token)
         if not pandora_track:
             return False
-        mopidy_track = models.Track(
-            uri=pandora_track.audio_url,
-            name=pandora_track.song_name,
-            artists=[models.Artist(name=pandora_track.artist_name, uri=pandora_track.artist_detail_url)],
-            album=models.Album(name=pandora_track.album_name, uri=pandora_track.album_detail_url, images=[pandora_track.album_art_url]),
-        )
+        mopidy_track = models.Track(uri=pandora_track.audio_url)
         return super(PandoraPlaybackProvider, self).change_track(mopidy_track)
-
-
-def new_directory(name, uri):
-    return models.Ref.directory(
-        uri=uri.uri,
-        name=name,
-    )
-
-
-def new_track(name, uri):
-    return models.Ref.track(
-        uri=uri.uri,
-        name=name,
-    )
 
 
 class _PandoraUriMeta(type):
@@ -140,32 +110,33 @@ class TrackUri(PandoraUri):
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):
-    root_directory = new_directory('Pandora', PandoraUri('directory'))
+    root_directory = models.Ref.directory(name='Pandora', uri=PandoraUri('directory').uri)
 
-    def __init__(self, backend, max_tracks):
+    def __init__(self, backend):
         super(PandoraLibraryProvider, self).__init__(backend)
-        self.max_tracks = max_tracks
+        self.stations = {}
 
     def browse(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == 'stations':
+            def cache_station(station):
+                station_uri = StationUri(station.token).uri
+                self.stations[station_uri] = station
+                return models.Ref.track(name=station.name, uri=station_uri)
+            self.stations.clear()
             stations = self.backend.api.get_station_list()
-            return [new_track(station.name, StationUri(station.token))
-                    for station in stations]
+            return [cache_station(station) for station in stations]
 
         # Root directory
         return [
-            new_directory('Stations', PandoraUri('stations')),
+            models.Ref.directory(name='Stations', uri=PandoraUri('stations').uri),
         ]
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == StationUri.scheme:
-            # Return a list of placeholder tracks.
-            # We need mopidy support for dynamic playlists
-            # https://github.com/mopidy/mopidy/issues/620
-            return [models.Track(name='Pandora Track #{}'.format(i),
-                                 uri=TrackUri(pandora_uri.station_token, i).uri)
-                    for i in range(self.max_tracks)]
-        elif pandora_uri.scheme == TrackUri.scheme:
-            return [models.Track(name='Pandora Track #{}'.format(pandora_uri.track_num), uri=uri)]
+            station = self.stations[pandora_uri.uri]
+            return [models.Track(
+                name=station.name, uri=uri,
+                album=models.Album(name=station.name, uri=station.detail_url, images=[station.art_url]),
+            )]
