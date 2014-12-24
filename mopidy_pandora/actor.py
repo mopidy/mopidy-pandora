@@ -32,17 +32,20 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-        self.station_token = None
+        self.station = None
         self.track_num = 0
 
     def _next_track(self, station_token, track_num):
         #XXX what if user browses out of station and then back? that should work
-        if station_token <= self.station_token:
+        if self.station and station_token == self.station.token:
             # Can't play a previously seen track in this station
-            if track_num < self.track_num:
+            if track_num <= self.track_num:
                 return None
         else:
-            self.station_token = station_token
+            self.station = pandora.models.pandora.Station.from_json(
+                self.backend.api,
+                self.backend.api.get_station(station_token),
+            )
             self.tracks = iter(())
             self.track_num = 0
 
@@ -50,7 +53,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             try:
                 return next(self.tracks)
             except StopIteration:
-                self.tracks = iter(self.backend.api.get_playlist(station_token))
+                self.tracks = iter(self.station.get_playlist())
 
     def change_track(self, track):
         track_uri = PandoraUri.parse(track.uri)
@@ -60,9 +63,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if not pandora_track:
             return False
         mopidy_track = models.Track(
-            uri=pandora_track.stream_url,
+            uri=pandora_track.audio_url,
             name=pandora_track.song_name,
-            artist=models.Artist(name=pandora_track.artist_name, uri=pandora_track.artist_detail_url),
+            artists=[models.Artist(name=pandora_track.artist_name, uri=pandora_track.artist_detail_url)],
             album=models.Album(name=pandora_track.album_name, uri=pandora_track.album_detail_url, images=[pandora_track.album_art_url]),
         )
         return super(PandoraPlaybackProvider, self).change_track(mopidy_track)
@@ -147,15 +150,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == 'stations':
             stations = self.backend.api.get_station_list()
-            return [new_directory(station.name, StationUri(station.token))
+            return [new_track(station.name, StationUri(station.token))
                     for station in stations]
-        elif pandora_uri.scheme == StationUri.scheme:
-            # Return a list of placeholder tracks.
-            # We need mopidy support for dynamic playlists
-            # https://github.com/mopidy/mopidy/issues/620
-            return [new_track('Pandora Track #{}'.format(i),
-                              TrackUri(pandora_uri.station_token, i))
-                    for i in range(self.max_tracks)]
 
         # Root directory
         return [
@@ -169,7 +165,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             # We need mopidy support for dynamic playlists
             # https://github.com/mopidy/mopidy/issues/620
             return [models.Track(name='Pandora Track #{}'.format(i),
-                                 pandora_uri=TrackUri(pandora_uri.station_token, i))
+                                 uri=TrackUri(pandora_uri.station_token, i).uri)
                     for i in range(self.max_tracks)]
         elif pandora_uri.scheme == TrackUri.scheme:
             return [models.Track(name='Pandora Track #{}'.format(pandora_uri.track_num), uri=uri)]
