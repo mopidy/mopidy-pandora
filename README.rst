@@ -40,7 +40,6 @@ Mopidy-Pandora to your Mopidy configuration file::
 
     [pandora]
     enabled = true
-    max_tracks = 50
     partner_encryption_key = 
     partner_decryption_key = 
     partner_username = iphone
