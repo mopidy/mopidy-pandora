@@ -50,6 +50,14 @@ Mopidy-Pandora to your Mopidy configuration file::
 
 The **partner_** keys can be obtained from `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
 
+Usage
+=====
+
+Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ support to properly support Pandora.
+In the meantime, Mopidy-Pandora represents each Pandora station as a single track playlist.
+Play this track in repeat mode and each time it is played, the next dynamic track in that station will be played.
+
+
 Project resources
 =================
 
