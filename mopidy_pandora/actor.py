@@ -70,6 +70,9 @@ class PandoraUri(object):
         if scheme is not None:
             self.scheme = scheme
 
+    def quote(self, value):
+        return urllib.quote(value) if value is not None else ''
+
     @property
     def uri(self):
         return "pandora:{}".format(self.scheme)
@@ -87,26 +90,30 @@ class PandoraUri(object):
 class StationUri(PandoraUri):
     scheme = 'station'
 
-    def __init__(self, station_token):
+    def __init__(self, station_token, name, detail_url, art_url):
         super(StationUri, self).__init__()
         self.station_token = station_token
+        self.name = name
+        self.detail_url = detail_url
+        self.art_url = art_url
+
+    @classmethod
+    def from_station(cls, station):
+        return StationUri(station.token, station.name, station.detail_url, station.art_url)
 
     @property
     def uri(self):
-        return "{}:{}".format(super(StationUri, self).uri, self.station_token)
+        return "{}:{}:{}:{}:{}".format(
+            super(StationUri, self).uri,
+            self.quote(self.station_token),
+            self.quote(self.name),
+            self.quote(self.detail_url),
+            self.quote(self.art_url),
+        )
 
 
-class TrackUri(PandoraUri):
+class TrackUri(StationUri):
     scheme = 'track'
-
-    def __init__(self, station_token, track_num):
-        super(TrackUri, self).__init__()
-        self.station_token = station_token
-        self.track_num = int(track_num)
-
-    @property
-    def uri(self):
-        return "{}:{}:{}".format(super(TrackUri, self).uri, self.station_token, self.track_num)
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):
@@ -114,18 +121,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def __init__(self, backend):
         super(PandoraLibraryProvider, self).__init__(backend)
-        self.stations = {}
 
     def browse(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == 'stations':
-            def cache_station(station):
-                station_uri = StationUri(station.token).uri
-                self.stations[station_uri] = station
-                return models.Ref.track(name=station.name, uri=station_uri)
-            self.stations.clear()
             stations = self.backend.api.get_station_list()
-            return [cache_station(station) for station in stations]
+            return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
+                    for station in stations]
+        elif pandora_uri.scheme == StationUri.scheme:
+            name = "{} (Repeat Track)".format(pandora_uri.name)
+            return [models.Ref.track(name=name, uri=TrackUri(pandora_uri.station_token, name, pandora_uri.detail_url, pandora_uri.art_url).uri)]
 
         # Root directory
         return [
@@ -134,9 +139,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.parse(uri)
-        if pandora_uri.scheme == StationUri.scheme:
-            station = self.stations[pandora_uri.uri]
-            return [models.Track(
-                name=station.name, uri=uri,
-                album=models.Album(name=station.name, uri=station.detail_url, images=[station.art_url]),
-            )]
+        if pandora_uri.scheme == TrackUri.scheme:
+            return [models.Track(name=pandora_uri.name, uri=uri,
+                                 album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url, images=[pandora_uri.art_url]))]
