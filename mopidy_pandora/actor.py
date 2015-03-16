@@ -16,11 +16,13 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
         super(PandoraBackend, self).__init__()
         config = config['pandora']
         settings = {
+            "API_HOST": config.get("api_host", 'tuner.pandora.com/services/json/'),
             "DECRYPTION_KEY": config["partner_decryption_key"],
             "ENCRYPTION_KEY": config["partner_encryption_key"],
             "USERNAME": config["partner_username"],
             "PASSWORD": config["partner_password"],
             "DEVICE": config["partner_device"],
+            "DEFAULT_AUDIO_QUALITY": config.get("preferred_audio_quality", 'mediumQuality')
         }
         self.api = pandora.APIClient.from_settings_dict(settings)
         self.api.login(username=config["username"], password=config["password"])

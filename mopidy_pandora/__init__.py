@@ -23,6 +23,7 @@ class Extension(ext.Extension):
 
     def get_config_schema(self):
         schema = super(Extension, self).get_config_schema()
+        schema['api_host'] = config.String(optional=True)
         schema['partner_encryption_key'] = config.String()
         schema['partner_decryption_key'] = config.String()
         schema['partner_username'] = config.String()
@@ -30,6 +31,8 @@ class Extension(ext.Extension):
         schema['partner_device'] = config.String()
         schema['username'] = config.String()
         schema['password'] = config.Secret()
+        schema['preferred_audio_quality'] = config.String(optional=True, choices=['lowQuality', 'mediumQuality',
+                                                                                  'highQuality'])
         return schema
 
     def setup(self, registry):

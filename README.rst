@@ -40,15 +40,23 @@ Mopidy-Pandora to your Mopidy configuration file::
 
     [pandora]
     enabled = true
+    api_host = tuner.pandora.com/services/json/
     partner_encryption_key = 
     partner_decryption_key = 
     partner_username = iphone
     partner_password = 
     partner_device = IP01
+    preferred_audio_quality = mediumQuality
     username = 
     password = 
 
-The **partner_** keys can be obtained from `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+The **api_host** and **partner_** keys can be obtained from:
+
+ `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+
+**preferred_audio_quality** can be one of 'lowQuality', 'mediumQuality' (default), or 'highQuality'. If the preferred
+audio quality is not available for the partner device specified, then the next-highest bitrate stream that Pandora
+supports for the chosen device will be used.
 
 Usage
 =====
