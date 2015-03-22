@@ -27,7 +27,7 @@ setup(
         'setuptools',
         'Mopidy >= 0.18',
         'Pykka >= 1.1',
-        'pydora >= 0.2.2',
+        'pydora >= 0.2.3',
     ],
     test_suite='nose.collector',
     tests_require=[
