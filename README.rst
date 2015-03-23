@@ -77,6 +77,11 @@ Project resources
 Changelog
 =========
 
+v0.1.1 (UNRELEASED)
+----------------------------------------
+
+- Added ability to make preferred audio quality user-configurable.
+
 v0.1.0 (UNRELEASED)
 ----------------------------------------
 
