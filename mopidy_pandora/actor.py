@@ -22,12 +22,13 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
             "USERNAME": config["partner_username"],
             "PASSWORD": config["partner_password"],
             "DEVICE": config["partner_device"],
-            "DEFAULT_AUDIO_QUALITY": config.get("preferred_audio_quality", 'mediumQuality')
+            "DEFAULT_AUDIO_QUALITY": config.get("preferred_audio_quality", 'mediumQuality'),
+            "SORT_ORDER": config["sort_order"]
         }
         self.api = pandora.APIClient.from_settings_dict(settings)
         self.api.login(username=config["username"], password=config["password"])
 
-        self.library = PandoraLibraryProvider(backend=self)
+        self.library = PandoraLibraryProvider(backend=self, sort_order=config["sort_order"])
         self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
 
@@ -121,13 +122,16 @@ class TrackUri(StationUri):
 class PandoraLibraryProvider(backend.LibraryProvider):
     root_directory = models.Ref.directory(name='Pandora', uri=PandoraUri('directory').uri)
 
-    def __init__(self, backend):
+    def __init__(self, backend, sort_order):
+        self.sort_order = sort_order
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == 'stations':
             stations = self.backend.api.get_station_list()
+            if self.sort_order.upper() == "A-Z":
+                stations.sort(key=lambda x: x.name, reverse=False)
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                     for station in stations]
         elif pandora_uri.scheme == StationUri.scheme:

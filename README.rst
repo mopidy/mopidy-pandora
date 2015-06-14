@@ -48,7 +48,8 @@ Mopidy-Pandora to your Mopidy configuration file::
     partner_device = IP01
     preferred_audio_quality = mediumQuality
     username =
-    password = 
+    password =
+    sort_order = date
 
 The **api_host** and **partner_** keys can be obtained from:
 
@@ -57,6 +58,9 @@ The **api_host** and **partner_** keys can be obtained from:
 **preferred_audio_quality** can be one of 'lowQuality', 'mediumQuality' (default), or 'highQuality'. If the preferred
 audio quality is not available for the partner device specified, then the next-lowest bitrate stream that Pandora
 supports for the chosen device will be used.
+
+**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
+ alphabetical order.
 
 Usage
 =====
