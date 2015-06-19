@@ -123,14 +123,14 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     root_directory = models.Ref.directory(name='Pandora', uri=PandoraUri('directory').uri)
 
     def __init__(self, backend, sort_order):
-        self.sort_order = sort_order
+        self.sort_order = sort_order.upper()
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == 'stations':
             stations = self.backend.api.get_station_list()
-            if self.sort_order.upper() == "A-Z":
+            if self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                     for station in stations]
