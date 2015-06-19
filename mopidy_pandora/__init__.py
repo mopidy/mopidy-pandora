@@ -33,6 +33,7 @@ class Extension(ext.Extension):
         schema['password'] = config.Secret()
         schema['preferred_audio_quality'] = config.String(optional=True, choices=['lowQuality', 'mediumQuality',
                                                                                   'highQuality'])
+        schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
         return schema
 
     def setup(self, registry):
