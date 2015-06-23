@@ -81,6 +81,13 @@ Project resources
 Changelog
 =========
 
+v0.1.2 (UNRELEASED)
+----------------------------------------
+
+- Enhancement to handle 'Invalid Auth Token' exceptions when the Pandora session expires after long periods of
+  inactivity. Allows Mopidy-Pandora to run indefinitely on dedicated music servers like the Pi MusicBox.
+- Add configuration option to sort stations alphabetically, instead of by date.
+
 v0.1.1 (UNRELEASED)
 ----------------------------------------
 

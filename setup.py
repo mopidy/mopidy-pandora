@@ -28,6 +28,7 @@ setup(
         'Mopidy >= 0.18',
         'Pykka >= 1.1',
         'pydora >= 0.2.3',
+        'requests >= 2.5.0'
     ],
     test_suite='nose.collector',
     tests_require=[
