@@ -15,7 +15,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
         self.api = AlwaysOnAPIClient(config['pandora'])
-        self.library = PandoraLibraryProvider(backend=self, sort_order=config["sort_order"])
+        self.library = PandoraLibraryProvider(backend=self, sort_order=config['pandora']['sort_order'])
         self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
 
