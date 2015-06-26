@@ -1,7 +1,12 @@
 import functools
+import logging
+from urllib2 import URLError
+from mopidy.utils import encoding
 import requests
 import pandora
+from requests.exceptions import ConnectionError
 
+logger = logging.getLogger(__name__)
 
 def authenticated(f):
     @functools.wraps(f)
@@ -10,6 +15,7 @@ def authenticated(f):
             return f(self, *args, **kwargs)
         except pandora.PandoraException as e:
             if e.message == "Invalid Auth Token":
+                logger.warning('Pandora session expired, re-authenticating...')
                 # Re-authenticate and retry if we lost auth
                 self.authenticate()
                 return f(self, *args, **kwargs)
@@ -48,14 +54,30 @@ class AlwaysOnAPIClient(object):
     def playable(self, track):
         # Retrieve header information of the track's audio_url. Status code 200 implies that
         # the URL is valid and that the track is accessible
-        r = requests.head(track.audio_url)
-        return r.status_code == 200
+        try:
+            r = requests.head(track.audio_url)
+            return r.status_code == 200
+        except ConnectionError as e:
+            error_msg = encoding.locale_decode(e)
+            logger.error('Connection error checking if track is playable: %s', error_msg)
+            return False
 
     @authenticated
     def get_station_list(self):
-        return self.api.get_station_list()
+        try:
+            return self.api.get_station_list()
+        except URLError as e:
+            error_msg = encoding.locale_decode(e)
+            logger.error('URL error retrieving station list: %s', error_msg)
+            return iter(())
 
     @authenticated
     def get_playlist(self, station_token):
-        return (pandora.models.pandora.PlaylistItem.from_json(self.api, station)
-                for station in self.api.get_playlist(station_token)['items'])
+
+        try:
+            return (pandora.models.pandora.PlaylistItem.from_json(self.api, station)
+                    for station in self.api.get_playlist(station_token)['items'])
+        except URLError as e:
+            error_msg = encoding.locale_decode(e)
+            logger.error('URL error retrieving playlist: %s', error_msg)
+            return iter(())
