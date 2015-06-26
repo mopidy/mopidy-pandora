@@ -30,9 +30,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self.tracks = iter(())
 
         try:
-            track = next(self.tracks)
+            track = next(self.tracks) if any(self.tracks) else None
             # Check if the track is playable
-            if self.backend.api.playable(track):
+            if track and self.backend.api.playable(track):
                 return track
             else:
                 # Tracks have expired, retrieve fresh playlist from Pandora

@@ -69,7 +69,7 @@ class AlwaysOnAPIClient(object):
         except URLError as e:
             error_msg = encoding.locale_decode(e)
             logger.error('URL error retrieving station list: %s', error_msg)
-            return iter(())
+            return []
 
     @authenticated
     def get_playlist(self, station_token):
@@ -80,4 +80,4 @@ class AlwaysOnAPIClient(object):
         except URLError as e:
             error_msg = encoding.locale_decode(e)
             logger.error('URL error retrieving playlist: %s', error_msg)
-            return iter(())
+            return []
