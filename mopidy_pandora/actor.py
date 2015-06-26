@@ -30,17 +30,18 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self.tracks = iter(())
 
         try:
-            track = next(self.tracks)
+            track = next(self.tracks) if any(self.tracks) else None
             # Check if the track is playable
-            if self.backend.api.playable(track):
+            if track and self.backend.api.playable(track):
                 return track
             else:
                 # Tracks have expired, retrieve fresh playlist from Pandora
                 self.tracks = self.backend.api.get_playlist(station_token)
-                return next(self.tracks)
+                return next(self.tracks) if any(self.tracks) else None
         except StopIteration:
+            # Played through current playlist, retrieve fresh playlist from Pandora
             self.tracks = self.backend.api.get_playlist(station_token)
-            return next(self.tracks)
+            return next(self.tracks) if any(self.tracks) else None
 
     def change_track(self, track):
         track_uri = PandoraUri.parse(track.uri)
@@ -123,7 +124,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == 'stations':
             stations = self.backend.api.get_station_list()
-            if self.sort_order == "A-Z":
+            if any(stations) and self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                     for station in stations]
