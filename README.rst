@@ -81,6 +81,13 @@ Project resources
 Changelog
 =========
 
+v0.1.3 (UNRELEASED)
+----------------------------------------
+
+- Update to work with release of Mopidy version 1.0
+- Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
+- Fill artist name to improve how tracks are displayed in various Mopidy front ends
+
 v0.1.2 (UNRELEASED)
 ----------------------------------------
 
