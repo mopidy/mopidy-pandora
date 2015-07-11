@@ -59,8 +59,7 @@ The **api_host** and **partner_** keys can be obtained from:
 audio quality is not available for the partner device specified, then the next-lowest bitrate stream that Pandora
 supports for the chosen device will be used.
 
-**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
- alphabetical order.
+**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in alphabetical order.
 
 Usage
 =====
@@ -80,6 +79,15 @@ Project resources
 
 Changelog
 =========
+
+v0.1.3 (UNRELEASED)
+----------------------------------------
+
+- Update to work with release of Mopidy version 1.0
+- Update to work with pydora version >= 1.4.0: now keeps the Pandora session alive in tha API itself.
+- Implement station list caching to speed up browsing.
+- Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
+- Fill artist name to improve how tracks are displayed in various Mopidy front ends
 
 v0.1.2 (UNRELEASED)
 ----------------------------------------
