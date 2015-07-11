@@ -59,8 +59,7 @@ The **api_host** and **partner_** keys can be obtained from:
 audio quality is not available for the partner device specified, then the next-lowest bitrate stream that Pandora
 supports for the chosen device will be used.
 
-**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
- alphabetical order.
+**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in alphabetical order.
 
 Usage
 =====
