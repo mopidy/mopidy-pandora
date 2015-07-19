@@ -25,6 +25,3 @@ class MopidyPandoraAPIClient(pandora.APIClient):
 
     def get_station(self, station_token):
         return self.get_station_list()[station_token]
-
-    def get_playlist(self, station_token):
-        return super(MopidyPandoraAPIClient, self).get_playlist(station_token)
