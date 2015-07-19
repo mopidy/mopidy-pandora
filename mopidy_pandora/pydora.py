@@ -15,10 +15,10 @@ class MopidyPandoraAPIClient(pandora.APIClient):
 
         super(MopidyPandoraAPIClient, self).__init__(transport, partner_user, partner_password, device,
                                                      default_audio_quality)
-        self._station_list = None
+        self._station_list = []
 
     def get_station_list(self):
-        if self._station_list is None or not any(self._station_list) or self._station_list.has_changed():
+        if not any(self._station_list) or self._station_list.has_changed():
             self._station_list = super(MopidyPandoraAPIClient, self).get_station_list()
 
         return self._station_list
