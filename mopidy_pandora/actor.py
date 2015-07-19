@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import urllib
-from pandora import clientbuilder
+from pandora import BaseAPIClient, clientbuilder
 import pykka
 from mopidy import backend, models
 from mopidy_pandora.pydora import MopidyPandoraAPIClient
@@ -23,7 +23,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
             "PARTNER_USER": config["partner_username"],
             "PARTNER_PASSWORD": config["partner_password"],
             "DEVICE": config["partner_device"],
-            "DEFAULT_AUDIO_QUALITY": config.get("preferred_audio_quality", 'mediumQuality')
+            "DEFAULT_AUDIO_QUALITY": config.get("preferred_audio_quality", BaseAPIClient.MED_AUDIO_QUALITY)
         }
         builder = clientbuilder.APIClientBuilder(client_class=MopidyPandoraAPIClient)
         self.api = builder.build_from_settings_dict(settings)
