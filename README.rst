@@ -84,6 +84,8 @@ v0.1.3 (UNRELEASED)
 ----------------------------------------
 
 - Update to work with release of Mopidy version 1.0
+- Update to work with pydora version >= 1.4.0: now keeps the Pandora session alive in tha API itself.
+- Implement station list caching to speed up browsing.
 - Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
 - Fill artist name to improve how tracks are displayed in various Mopidy front ends
 

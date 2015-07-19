@@ -2,9 +2,10 @@ from __future__ import unicode_literals
 
 import logging
 import urllib
+from pandora import clientbuilder
 import pykka
 from mopidy import backend, models
-from mopidy_pandora.pydora import AlwaysOnAPIClient
+from mopidy_pandora.pydora import MopidyPandoraAPIClient
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +15,21 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
-        self.api = AlwaysOnAPIClient(config['pandora'])
-        self.library = PandoraLibraryProvider(backend=self, sort_order=config['pandora']['sort_order'])
+        config = config['pandora']
+        settings = {
+            "API_HOST": config.get("api_host", 'tuner.pandora.com/services/json/'),
+            "DECRYPTION_KEY": config["partner_decryption_key"],
+            "ENCRYPTION_KEY": config["partner_encryption_key"],
+            "PARTNER_USER": config["partner_username"],
+            "PARTNER_PASSWORD": config["partner_password"],
+            "DEVICE": config["partner_device"],
+            "DEFAULT_AUDIO_QUALITY": config.get("preferred_audio_quality", 'mediumQuality')
+        }
+        builder = clientbuilder.APIClientBuilder(client_class=MopidyPandoraAPIClient)
+        self.api = builder.build_from_settings_dict(settings)
+        self.api.login(config["username"], config["password"])
+
+        self.library = PandoraLibraryProvider(backend=self, sort_order=config['sort_order'])
         self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
 
@@ -32,15 +46,15 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         try:
             track = next(self.tracks)
             # Check if the track is playable
-            if self.backend.api.playable(track):
+            if track.get_is_playable():
                 return track
             else:
                 # Tracks have expired, retrieve fresh playlist from Pandora
-                self.tracks = self.backend.api.get_playlist(station_token)
+                self.tracks = iter(self.backend.api.get_playlist(station_token))
                 return next(self.tracks)
         except StopIteration:
             # Played through current playlist, retrieve fresh playlist from Pandora
-            self.tracks = self.backend.api.get_playlist(station_token)
+            self.tracks = iter(self.backend.api.get_playlist(station_token))
             return next(self.tracks)
 
 
