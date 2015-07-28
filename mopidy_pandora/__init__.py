@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 import logging
 import os
 
+from pandora import BaseAPIClient
 from mopidy import config, ext
 
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,9 @@ class Extension(ext.Extension):
         schema['partner_device'] = config.String()
         schema['username'] = config.String()
         schema['password'] = config.Secret()
-        schema['preferred_audio_quality'] = config.String(optional=True, choices=['lowQuality', 'mediumQuality',
-                                                                                  'highQuality'])
+        schema['preferred_audio_quality'] = config.String(optional=True, choices=[BaseAPIClient.LOW_AUDIO_QUALITY,
+                                                                                  BaseAPIClient.MED_AUDIO_QUALITY,
+                                                                                  BaseAPIClient.HIGH_AUDIO_QUALITY])
         schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
         return schema
 
