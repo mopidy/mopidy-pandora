@@ -62,7 +62,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             else:
                 consecutive_track_skips += 1
                 logger.warning('Track is not playable: %s', TrackUri.from_track(track).uri)
-                if consecutive_track_skips >= 3:
+                if consecutive_track_skips > 5:
                     self.station = None
                     raise Exception('Unplayable track limit exceeded')
 
