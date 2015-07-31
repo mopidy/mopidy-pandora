@@ -74,7 +74,7 @@ Project resources
 
 - `Source code <https://github.com/rectalogic/mopidy-pandora>`_
 - `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
-- `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/master.tar.gz#egg=Mopidy-Pandora-dev>`_
+- `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
 
 
 Changelog

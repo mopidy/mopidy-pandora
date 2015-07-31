@@ -3,9 +3,10 @@ from __future__ import unicode_literals
 import logging
 import urllib
 from pandora import BaseAPIClient, clientbuilder
+from pydora.utils import iterate_forever
 import pykka
 from mopidy import backend, models
-from mopidy_pandora.pydora import MopidyPandoraAPIClient
+from mopidy_pandora.client import MopidyPandoraAPIClient
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
             "DEVICE": config["partner_device"],
             "AUDIO_QUALITY": config.get("preferred_audio_quality", BaseAPIClient.MED_AUDIO_QUALITY)
         }
-        builder = clientbuilder.APIClientBuilder(client_class=MopidyPandoraAPIClient)
-        self.api = builder.build_from_settings_dict(settings)
+        self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
         self.api.login(config["username"], config["password"])
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=config['sort_order'])
@@ -36,39 +36,38 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-        self.station_token = None
+        self.station = None
+        self.station_iter = None
+        # TODO: add callback when gapless playback is supported in Mopidy > 1.1
+        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
+        # self.audio.set_about_to_finish_callback(self.callback).get()
 
-    def _next_track(self, station_token):
-        if self.station_token != station_token:
-            self.station_token = station_token
-            self.tracks = iter(())
+    def callback(self):
+        self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
-        try:
-            track = next(self.tracks)
-            # Check if the track is playable
+    def change_track(self, track):
+        station_token = PandoraUri.parse(track.uri).station_token
+
+        if not self.station or station_token != self.station.token:
+            self.station = self.backend.api.get_station(station_token)
+            self.station_iter = iterate_forever(self.station.get_playlist)
+
+        return super(PandoraPlaybackProvider, self).change_track(self.get_next_track())
+
+    def get_next_track(self):
+        consecutive_track_skips = 0
+        for track in self.station_iter:
             if track.get_is_playable():
-                return track
+                return models.Track(uri=TrackUri.from_track(track).uri)
             else:
-                # Tracks have expired, retrieve fresh playlist from Pandora
-                self.tracks = iter(self.backend.api.get_playlist(station_token))
-                return next(self.tracks)
-        except StopIteration:
-            # Played through current playlist, retrieve fresh playlist from Pandora
-            self.tracks = iter(self.backend.api.get_playlist(station_token))
-            return next(self.tracks)
-
+                consecutive_track_skips += 1
+                logger.warning('Track is not playable: %s', TrackUri.from_track(track).uri)
+                if consecutive_track_skips > 5:
+                    self.station = None
+                    raise Exception('Unplayable track limit exceeded')
 
     def translate_uri(self, uri):
         return PandoraUri.parse(uri).audio_url
-
-
-    def change_track(self, track):
-        track_uri = PandoraUri.parse(track.uri)
-        pandora_track = self._next_track(track_uri.station_token)
-        if not pandora_track:
-            return False
-        mopidy_track = models.Track(uri=TrackUri.from_track(pandora_track).uri)
-        return super(PandoraPlaybackProvider, self).change_track(mopidy_track)
 
 
 class _PandoraUriMeta(type):
@@ -163,13 +162,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             if self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
-                for station in stations]
+                    for station in stations]
         else:
-            return [models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name), uri=TrackUri(pandora_uri.station_token, pandora_uri.name, pandora_uri.detail_url, pandora_uri.art_url).uri)]
+            return [models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),
+                                     uri=TrackUri(pandora_uri.station_token, pandora_uri.name, pandora_uri.detail_url,
+                                                  pandora_uri.art_url).uri)]
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == TrackUri.scheme:
             return [models.Track(name="{} (Repeat Track)".format(pandora_uri.name), uri=uri,
                                  artists=[models.Artist(name="Pandora")],
-                                 album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url, images=[pandora_uri.art_url]))]
+                                 album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url,
+                                                    images=[pandora_uri.art_url]))]
