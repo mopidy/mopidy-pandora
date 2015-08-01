@@ -57,7 +57,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def get_next_track(self):
         consecutive_track_skips = 0
         for track in self.station_iter:
-            if track.get_is_playable():
+            if track.audio_url and track.get_is_playable():
                 return models.Track(uri=TrackUri.from_track(track).uri)
             else:
                 consecutive_track_skips += 1
