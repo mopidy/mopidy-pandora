@@ -122,7 +122,7 @@ class PandoraUri(object):
 
 
 class StationUri(PandoraUri):
-    scheme = '_station'
+    scheme = 'station'
 
     def __init__(self, station_token, name, detail_url, art_url):
         super(StationUri, self).__init__()
