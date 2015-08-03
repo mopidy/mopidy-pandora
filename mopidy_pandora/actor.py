@@ -6,6 +6,8 @@ from pandora import BaseAPIClient, clientbuilder
 from pydora.utils import iterate_forever
 import pykka
 from mopidy import backend, models
+from mopidy.utils import encoding
+import requests
 from mopidy_pandora.client import MopidyPandoraAPIClient
 
 logger = logging.getLogger(__name__)
@@ -36,8 +38,8 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-        self.station = None
-        self.station_iter = None
+        self._station = None
+        self._station_iter = None
         # TODO: add callback when gapless playback is supported in Mopidy > 1.1
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_about_to_finish_callback(self.callback).get()
@@ -48,23 +50,40 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def change_track(self, track):
         station_token = PandoraUri.parse(track.uri).station_token
 
-        if not self.station or station_token != self.station.token:
-            self.station = self.backend.api.get_station(station_token)
-            self.station_iter = iterate_forever(self.station.get_playlist)
+        if not self._station or station_token != self._station.token:
+            self._station = self.backend.api.get_station(station_token)
+            try:
+                self._station_iter = iterate_forever(self._station.get_playlist)
+            except requests.exceptions.RequestException as e:
+                logger.error('Error changing track: %s', encoding.locale_decode(e))
+                return False
 
-        return super(PandoraPlaybackProvider, self).change_track(self.get_next_track())
+        next_track = self.get_next_track()
+        if next_track:
+            return super(PandoraPlaybackProvider, self).change_track(next_track)
+        else:
+            return False
 
     def get_next_track(self):
         consecutive_track_skips = 0
-        for track in self.station_iter:
-            if track.get_is_playable():
+
+        for track in self._station_iter:
+            try:
+                is_playable = track.audio_url and track.get_is_playable()
+            except requests.exceptions.RequestException as e:
+                is_playable = False
+                logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
+
+            if is_playable:
                 return models.Track(uri=TrackUri.from_track(track).uri)
             else:
                 consecutive_track_skips += 1
-                logger.warning('Track is not playable: %s', TrackUri.from_track(track).uri)
+                logger.warning('Track with uri ''%s'' is not playable.', TrackUri.from_track(track).uri)
                 if consecutive_track_skips > 5:
-                    self.station = None
-                    raise Exception('Unplayable track limit exceeded')
+                    logger.error('Unplayable track skip limit exceeded!')
+                    return None
+
+        return None
 
     def translate_uri(self, uri):
         return PandoraUri.parse(uri).audio_url
@@ -159,7 +178,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if pandora_uri.scheme != StationUri.scheme:
             stations = self.backend.api.get_station_list()
-            if self.sort_order == "A-Z":
+            if any(stations) and self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                     for station in stations]

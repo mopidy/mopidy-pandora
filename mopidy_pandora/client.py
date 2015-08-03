@@ -1,4 +1,6 @@
 import logging
+import requests
+from mopidy.utils import encoding
 import pandora
 
 logger = logging.getLogger(__name__)
@@ -18,8 +20,12 @@ class MopidyPandoraAPIClient(pandora.APIClient):
         self._station_list = []
 
     def get_station_list(self):
+
         if not any(self._station_list) or self._station_list.has_changed():
-            self._station_list = super(MopidyPandoraAPIClient, self).get_station_list()
+            try:
+                self._station_list = super(MopidyPandoraAPIClient, self).get_station_list()
+            except requests.exceptions.RequestException as e:
+                logger.error('Error retrieving _station list: %s', encoding.locale_decode(e))
 
         return self._station_list
 
