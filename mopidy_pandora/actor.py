@@ -18,22 +18,26 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
-        config = config['pandora']
+        self._config = config['pandora']
         settings = {
-            "API_HOST": config.get("api_host", 'tuner.pandora.com/services/json/'),
-            "DECRYPTION_KEY": config["partner_decryption_key"],
-            "ENCRYPTION_KEY": config["partner_encryption_key"],
-            "PARTNER_USER": config["partner_username"],
-            "PARTNER_PASSWORD": config["partner_password"],
-            "DEVICE": config["partner_device"],
-            "AUDIO_QUALITY": config.get("preferred_audio_quality", BaseAPIClient.MED_AUDIO_QUALITY)
+            "API_HOST": self._config.get("api_host", 'tuner.pandora.com/services/json/'),
+            "DECRYPTION_KEY": self._config["partner_decryption_key"],
+            "ENCRYPTION_KEY": self._config["partner_encryption_key"],
+            "PARTNER_USER": self._config["partner_username"],
+            "PARTNER_PASSWORD": self._config["partner_password"],
+            "DEVICE": self._config["partner_device"],
+            "AUDIO_QUALITY": self._config.get("preferred_audio_quality", BaseAPIClient.MED_AUDIO_QUALITY)
         }
         self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
-        self.api.login(config["username"], config["password"])
 
-        self.library = PandoraLibraryProvider(backend=self, sort_order=config['sort_order'])
+        self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
         self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
+    def on_start(self):
+        try:
+            self.api.login(self._config["username"], self._config["password"])
+        except requests.exceptions.RequestException as e:
+            logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
@@ -48,6 +52,10 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
     def change_track(self, track):
+
+        if track.uri is None:
+            return False
+
         station_token = PandoraUri.parse(track.uri).station_token
 
         if not self._station or station_token != self._station.token:
@@ -55,13 +63,14 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             try:
                 self._station_iter = iterate_forever(self._station.get_playlist)
             except requests.exceptions.RequestException as e:
-                logger.error('Error changing track: %s', encoding.locale_decode(e))
+                logger.error('Playback of %s failed: %s', track.uri, encoding.locale_decode(e))
                 return False
 
         next_track = self.get_next_track()
         if next_track:
             return super(PandoraPlaybackProvider, self).change_track(next_track)
         else:
+            logger.error('Playback of %s failed', track.uri)
             return False
 
     def get_next_track(self):
@@ -194,3 +203,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                                  artists=[models.Artist(name="Pandora")],
                                  album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url,
                                                     images=[pandora_uri.art_url]))]
+
+        logger.error('Failed to lookup ''%s''', uri)
+        return []
