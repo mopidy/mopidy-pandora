@@ -114,7 +114,7 @@ class PandoraUri(object):
             self.scheme = scheme
 
     def quote(self, value):
-        return urllib.quote(value) if value is not None else ''
+        return urllib.quote(value.encode('utf8')) if value is not None else ''
 
     @property
     def uri(self):
@@ -122,7 +122,7 @@ class PandoraUri(object):
 
     @classmethod
     def parse(cls, uri):
-        parts = [urllib.unquote(p) for p in uri.split(':')]
+        parts = [urllib.unquote(p.decode('utf8')) for p in uri.split(':')]
         uri_cls = cls.SCHEMES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])
