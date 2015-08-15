@@ -5,7 +5,7 @@ import conftest
 
 import pytest
 
-from mopidy_pandora.actor import PandoraUri, StationUri, TrackUri
+from mopidy_pandora.uri import PandoraUri, StationUri, TrackUri
 
 
 def test_pandora_parse_mock_uri():

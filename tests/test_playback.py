@@ -10,8 +10,11 @@ from pandora.models.pandora import PlaylistItem, Station
 
 import pytest
 
-from mopidy_pandora.actor import PandoraPlaybackProvider, TrackUri
-from mopidy_pandora.client import MopidyPandoraAPIClient
+from mopidy_pandora import playback
+
+from mopidy_pandora.backend import MopidyPandoraAPIClient
+
+from mopidy_pandora.uri import TrackUri
 
 
 @pytest.fixture
@@ -22,7 +25,7 @@ def audio_mock():
 
 @pytest.fixture
 def provider(audio_mock, config):
-    return PandoraPlaybackProvider(
+    return playback.PandoraPlaybackProvider(
         audio=audio_mock, backend=conftest.get_backend(config))
 
 

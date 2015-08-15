@@ -40,5 +40,5 @@ class Extension(ext.Extension):
         return schema
 
     def setup(self, registry):
-        from .actor import PandoraBackend
+        from .backend import PandoraBackend
         registry.add('backend', PandoraBackend)

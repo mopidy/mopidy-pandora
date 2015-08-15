@@ -6,7 +6,7 @@ from mopidy import backend as backend_api
 
 from pandora import BaseAPIClient
 
-from mopidy_pandora import actor, client
+from mopidy_pandora import client, library, playback
 from tests.conftest import get_backend, login_exception_mock
 
 
@@ -21,10 +21,10 @@ def test_init_sets_up_the_providers(config):
 
     assert isinstance(backend.api, client.MopidyPandoraAPIClient)
 
-    assert isinstance(backend.library, actor.PandoraLibraryProvider)
+    assert isinstance(backend.library, library.PandoraLibraryProvider)
     assert isinstance(backend.library, backend_api.LibraryProvider)
 
-    assert isinstance(backend.playback, actor.PandoraPlaybackProvider)
+    assert isinstance(backend.playback, playback.PandoraPlaybackProvider)
     assert isinstance(backend.playback, backend_api.PlaybackProvider)
 
 
