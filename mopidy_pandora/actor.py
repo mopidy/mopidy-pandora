@@ -1,10 +1,13 @@
-from __future__ import unicode_literals
-
 import logging
 import urllib
+from pandora import BaseAPIClient, clientbuilder
+from pydora.utils import iterate_forever
 import pykka
 from mopidy import backend, models
-from mopidy_pandora.pydora import AlwaysOnAPIClient
+from mopidy.utils import encoding
+import requests
+from mopidy_pandora.client import MopidyPandoraAPIClient
+from mopidy_pandora.doubleclick import DoubleClickHandler
 
 logger = logging.getLogger(__name__)
 
@@ -14,42 +17,98 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
-        self.api = AlwaysOnAPIClient(config['pandora'])
-        self.library = PandoraLibraryProvider(backend=self, sort_order=config['pandora']['sort_order'])
-        self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
+        self._config = config['pandora']
+        settings = {
+            "API_HOST": self._config.get("api_host", 'tuner.pandora.com/services/json/'),
+            "DECRYPTION_KEY": self._config["partner_decryption_key"],
+            "ENCRYPTION_KEY": self._config["partner_encryption_key"],
+            "PARTNER_USER": self._config["partner_username"],
+            "PARTNER_PASSWORD": self._config["partner_password"],
+            "DEVICE": self._config["partner_device"],
+            "AUDIO_QUALITY": self._config.get("preferred_audio_quality", BaseAPIClient.MED_AUDIO_QUALITY)
+        }
+        self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
 
+        self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
+        self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
+        self.double_click_handler = DoubleClickHandler(self._config, self.api)
+
+    def on_start(self):
+        try:
+            self.api.login(self._config["username"], self._config["password"])
+        except requests.exceptions.RequestException as e:
+            logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-        self.station_token = None
+        self._station = None
+        self._station_iter = None
+        self.active_track = self.active_track_token = None
+        # TODO: add callback when gapless playback is supported in Mopidy > 1.1
+        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
+        # self.audio.set_about_to_finish_callback(self.callback).get()
 
-    def _next_track(self, station_token):
-        if self.station_token != station_token:
-            self.station_token = station_token
-            self.tracks = iter(())
-
-        try:
-            track = next(self.tracks)
-            # Check if the track is playable
-            if self.backend.api.playable(track):
-                return track
-            else:
-                # Tracks have expired, retrieve fresh playlist from Pandora
-                self.tracks = self.backend.api.get_playlist(station_token)
-                return next(self.tracks)
-        except StopIteration:
-            self.tracks = self.backend.api.get_playlist(station_token)
-            return next(self.tracks)
+    def callback(self):
+        self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
     def change_track(self, track):
-        track_uri = PandoraUri.parse(track.uri)
-        pandora_track = self._next_track(track_uri.station_token)
-        if not pandora_track:
-            return False
-        mopidy_track = models.Track(uri=pandora_track.audio_url)
-        return super(PandoraPlaybackProvider, self).change_track(mopidy_track)
 
+        if track.uri is None:
+            return False
+
+        self.backend.double_click_handler.on_change_track(self.active_track, self.active_track_token, track)
+
+        station_token = PandoraUri.parse(track.uri).station_token
+
+        if not self._station or station_token != self._station.token:
+            self._station = self.backend.api.get_station(station_token)
+            try:
+                self._station_iter = iterate_forever(self._station.get_playlist)
+            except requests.exceptions.RequestException as e:
+                logger.error('Playback of %s failed: %s', track.uri, encoding.locale_decode(e))
+                return False
+
+        self.active_track = track
+        next_track = self.get_next_track()
+        if next_track:
+            return super(PandoraPlaybackProvider, self).change_track(next_track)
+        else:
+            logger.error('Playback of %s failed', track.uri)
+            return False
+
+    def get_next_track(self):
+        consecutive_track_skips = 0
+
+        for track in self._station_iter:
+            try:
+                is_playable = track.audio_url and track.get_is_playable()
+            except requests.exceptions.RequestException as e:
+                is_playable = False
+                logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
+
+            if is_playable:
+                self.active_track_token = track.track_token
+                return models.Track(uri=TrackUri.from_track(track, PandoraUri.parse(self.active_track.uri).index).uri)
+            else:
+                consecutive_track_skips += 1
+                logger.warning('Track with uri ''%s'' is not playable.', TrackUri.from_track(track).uri)
+                if consecutive_track_skips > 5:
+                    logger.error('Unplayable track skip limit exceeded!')
+                    return None
+
+        return None
+
+    def translate_uri(self, uri):
+        return PandoraUri.parse(uri).audio_url
+
+    def pause(self):
+        self.backend.double_click_handler.set_click()
+        return super(PandoraPlaybackProvider, self).pause()
+
+    def resume(self):
+        self.backend.double_click_handler.on_resume_click(self.active_track_token, self.get_time_position())
+        return super(PandoraPlaybackProvider, self).resume()
 
 class _PandoraUriMeta(type):
     def __init__(cls, name, bases, clsdict):
@@ -67,15 +126,20 @@ class PandoraUri(object):
             self.scheme = scheme
 
     def quote(self, value):
-        return urllib.quote(value) if value is not None else ''
+        if value is None:
+            value = ''
+
+        if not isinstance(value, basestring):
+            value = str(value)
+        return urllib.quote(value.encode('utf8'))
 
     @property
     def uri(self):
-        return "pandora:{}".format(self.scheme)
+        return "pandora:{}".format(self.quote(self.scheme))
 
     @classmethod
     def parse(cls, uri):
-        parts = [urllib.unquote(p) for p in uri.split(':')]
+        parts = [urllib.unquote(p).decode('utf8') for p in uri.split(':')]
         uri_cls = cls.SCHEMES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])
@@ -111,6 +175,23 @@ class StationUri(PandoraUri):
 class TrackUri(StationUri):
     scheme = 'track'
 
+    def __init__(self, station_token, name, detail_url, art_url, audio_url='none_generated', index=0):
+        super(TrackUri, self).__init__(station_token, name, detail_url, art_url)
+        self.audio_url = audio_url
+        self.index = index
+
+    @classmethod
+    def from_track(cls, track, index=0):
+        return TrackUri(track.station_id, track.song_name, track.album_detail_url, track.album_art_url, track.audio_url, index)
+
+    @property
+    def uri(self):
+        return "{}:{}:{}".format(
+            super(TrackUri, self).uri,
+            self.quote(self.audio_url),
+            self.quote(self.index),
+        )
+
 
 class PandoraLibraryProvider(backend.LibraryProvider):
     root_directory = models.Ref.directory(name='Pandora', uri=PandoraUri('directory').uri)
@@ -120,24 +201,31 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
+
         pandora_uri = PandoraUri.parse(uri)
-        if pandora_uri.scheme == 'stations':
+
+        if pandora_uri.scheme != StationUri.scheme:
             stations = self.backend.api.get_station_list()
-            if self.sort_order == "A-Z":
+            if any(stations) and self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                     for station in stations]
-        elif pandora_uri.scheme == StationUri.scheme:
-            name = "{} (Repeat Track)".format(pandora_uri.name)
-            return [models.Ref.track(name=name, uri=TrackUri(pandora_uri.station_token, name, pandora_uri.detail_url, pandora_uri.art_url).uri)]
+        else:
+            tracks = []
+            for i in range(1,4):
+                tracks.append(models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),
+                                     uri=TrackUri(pandora_uri.station_token, pandora_uri.name, pandora_uri.detail_url,
+                                                  pandora_uri.art_url, index=str(i)).uri))
 
-        # Root directory
-        return [
-            models.Ref.directory(name='Stations', uri=PandoraUri('stations').uri),
-        ]
+            return tracks
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.parse(uri)
         if pandora_uri.scheme == TrackUri.scheme:
-            return [models.Track(name=pandora_uri.name, uri=uri,
-                                 album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url, images=[pandora_uri.art_url]))]
+            return [models.Track(name="{} (Repeat Track)".format(pandora_uri.name), uri=uri,
+                                 artists=[models.Artist(name="Pandora")],
+                                 album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url,
+                                                    images=[pandora_uri.art_url]))]
+
+        logger.error('Failed to lookup ''%s''', uri)
+        return []
