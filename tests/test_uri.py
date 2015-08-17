@@ -93,7 +93,8 @@ def test_track_uri_from_track(playlist_item_mock):
         track_uri.quote(conftest.MOCK_TRACK_NAME) + ":" + \
         track_uri.quote(conftest.MOCK_TRACK_DETAIL_URL) + ":" + \
         track_uri.quote(conftest.MOCK_TRACK_ART_URL) + ":" + \
-        track_uri.quote(conftest.MOCK_TRACK_AUDIO_HIGH)
+        track_uri.quote(conftest.MOCK_TRACK_AUDIO_HIGH) + ":" + \
+        track_uri.quote(0)
 
 
 def test_track_uri_parse(playlist_item_mock):

@@ -10,12 +10,12 @@ Mopidy-Pandora
     :target: https://pypi.python.org/pypi/Mopidy-Pandora/
     :alt: Number of PyPI downloads
 
-.. image:: https://img.shields.io/travis/rectalogic/mopidy-pandora/master.png?style=flat
+.. image:: https://img.shields.io/travis/rectalogic/mopidy-pandora/develop.svg?style=flat
     :target: https://travis-ci.org/rectalogic/mopidy-pandora
     :alt: Travis CI build status
 
-.. image:: https://img.shields.io/coveralls/rectalogic/mopidy-pandora/master.svg?style=flat
-   :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=master
+.. image:: https://img.shields.io/coveralls/rectalogic/mopidy-pandora/develop.svg?style=flat
+   :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=develop
    :alt: Test coverage
 
 Mopidy extension for Pandora
@@ -51,6 +51,13 @@ Mopidy-Pandora to your Mopidy configuration file::
     password =
     sort_order = date
 
+    ### EXPERIMENTAL RATINGS IMPLEMENTATION ###
+    ratings_support_enabled = false
+    double_click_interval = 2.00
+    on_pause_resume_click = thumbs_up
+    on_pause_next_click = thumbs_down
+    on_pause_previous_click = sleep
+
 The **api_host** and **partner_** keys can be obtained from:
 
  `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
@@ -59,14 +66,29 @@ The **api_host** and **partner_** keys can be obtained from:
 audio quality is not available for the partner device specified, then the next-lowest bitrate stream that Pandora
 supports for the chosen device will be used.
 
-**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in alphabetical order.
+**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
+alphabetical order.
+
+**EXPERIMENTAL RATINGS IMPLEMENTATION:** use these settings to work around the limitations of the current Mopidy core
+and front-end extensions:
+
+- double_click_interval - successive button clicks that occur within this interval (in seconds) will trigger the ratings functionality.
+- on_pause_resume_click - click pause and then play while a song is playing to apply the rating. Song continues afterwards.
+- on_pause_next_click - click pause and then next in quick succession. Applies rating and skips to next song. You will have to click play again for the next song to start :(
+- on_pause_previous_click - click pause and then previous in quick succession. Applies rating and skips to next song. You will have to click play again for the next song to start :(
 
 Usage
 =====
 
-Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ support to properly support Pandora.
-In the meantime, Mopidy-Pandora represents each Pandora station as a single track playlist.
-Play this track in repeat mode and each time it is played, the next dynamic track in that station will be played.
+Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
+`core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
+Mopidy-Pandora represents each Pandora station as a separate playlist. Play the playlist **in repeat mode** and each
+time a track is played, the next dynamic track for that Pandora station will be played.
+
+The playlist will consist of a single track unless the experimental ratings support is enabled. With ratings support
+enabled, the playlist will contain three tracks. These are just used to determine whether the user clicked on the
+'previous' or 'next' playback buttons, and all three tracks point to the same dynamic track for that Pandora station
+(i.e. it does not matter which one you select to play).
 
 
 Project resources
@@ -83,17 +105,18 @@ Changelog
 v0.1.5 (UNRELEASED)
 ----------------------------------------
 
-- Audio quality now defaults to 'high'
-- Improved caching to revert to Pandora server if station cannot be found in the local cache
-- Fix to retrieve stations by ID instead of token
-- Add unit tests to increase coverage
+- Add experimental support for rating songs by re-using buttons available in the current front-end Mopidy extensions.
+- Audio quality now defaults to the highest setting.
+- Improved caching to revert to Pandora server if station cannot be found in the local cache.
+- Fix to retrieve stations by ID instead of token.
+- Add unit tests to increase test coverage.
 
 v0.1.4 (UNRELEASED)
 ----------------------------------------
 
-- Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the Pandora user account
-- Better handling of backend exceptions to prevent Mopidy actor crashes
-- Add support for unicode characters in station and track names
+- Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the user's Pandora account.
+- Better handling of exceptions that occur in the backend to prevent Mopidy actor crashes.
+- Add support for unicode characters in station and track names.
 
 v0.1.3 (UNRELEASED)
 ----------------------------------------
@@ -102,7 +125,7 @@ v0.1.3 (UNRELEASED)
 - Update to work with pydora version >= 1.4.0: now keeps the Pandora session alive in tha API itself.
 - Implement station list caching to speed up browsing.
 - Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
-- Fill artist name to improve how tracks are displayed in various Mopidy front ends
+- Fill artist name to improve how tracks are displayed in various Mopidy front-end extensions.
 
 v0.1.2 (UNRELEASED)
 ----------------------------------------

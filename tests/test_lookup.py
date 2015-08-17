@@ -91,12 +91,19 @@ def test_browse_track_uri(config, playlist_item_mock, caplog):
 
     results = backend.library.browse(track_uri.uri)
 
+    assert len(results) == 3
+
+    backend.supports_ratings = False
+
+    results = backend.library.browse(track_uri.uri)
     assert len(results) == 1
+
     assert results[0].type == models.Ref.TRACK
     assert results[0].name == "{} (Repeat Track)".format(track_uri.name)
+    assert TrackUri.parse(results[0].uri).index == str(0)
 
     # Track should not have an audio URL at this stage
-    assert results[0].uri.endswith("none_generated")
+    assert TrackUri.parse(results[0].uri).audio_url == "none_generated"
 
     # Also clear reference track's audio URI so that we can compare more easily
     track_uri.audio_url = "none_generated"
