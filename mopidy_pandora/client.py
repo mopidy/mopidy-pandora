@@ -1,7 +1,10 @@
 import logging
-import requests
+
 from mopidy.utils import encoding
+
 import pandora
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +28,14 @@ class MopidyPandoraAPIClient(pandora.APIClient):
             try:
                 self._station_list = super(MopidyPandoraAPIClient, self).get_station_list()
             except requests.exceptions.RequestException as e:
-                logger.error('Error retrieving _station list: %s', encoding.locale_decode(e))
+                logger.error('Error retrieving station list: %s', encoding.locale_decode(e))
 
         return self._station_list
 
-    def get_station(self, station_token):
-        return self.get_station_list()[station_token]
+    def get_station(self, station_id):
+
+        try:
+            return self.get_station_list()[station_id]
+        except TypeError:
+            # Could not find station_id in cached list, try retrieving from Pandora server.
+            return super(MopidyPandoraAPIClient, self).get_station(station_id)

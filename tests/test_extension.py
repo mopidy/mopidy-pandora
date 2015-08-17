@@ -2,7 +2,11 @@ from __future__ import unicode_literals
 
 import unittest
 
-from mopidy_pandora import Extension, frontend as frontend_lib
+import mock
+
+from mopidy_pandora import Extension
+
+from mopidy_pandora import actor as backend_lib
 
 
 class ExtensionTest(unittest.TestCase):
@@ -14,14 +18,38 @@ class ExtensionTest(unittest.TestCase):
 
         self.assertIn('[pandora]', config)
         self.assertIn('enabled = true', config)
+        self.assertIn('api_host = tuner.pandora.com/services/json/', config)
+        self.assertIn('partner_encryption_key =', config)
+        self.assertIn('partner_decryption_key =', config)
+        self.assertIn('partner_username =', config)
+        self.assertIn('partner_password =', config)
+        self.assertIn('partner_device =', config)
+        self.assertIn('username =', config)
+        self.assertIn('password =', config)
+        self.assertIn('preferred_audio_quality = highQuality', config)
+        self.assertIn('sort_order = date', config)
 
     def test_get_config_schema(self):
         ext = Extension()
 
         schema = ext.get_config_schema()
 
-        # TODO Test the content of your config schema
-        #self.assertIn('username', schema)
-        #self.assertIn('password', schema)
+        self.assertIn('enabled', schema)
+        self.assertIn('api_host', schema)
+        self.assertIn('partner_encryption_key', schema)
+        self.assertIn('partner_decryption_key', schema)
+        self.assertIn('partner_username', schema)
+        self.assertIn('partner_password', schema)
+        self.assertIn('partner_device', schema)
+        self.assertIn('username', schema)
+        self.assertIn('password', schema)
+        self.assertIn('preferred_audio_quality', schema)
+        self.assertIn('sort_order', schema)
 
-    # TODO Write more tests
+    def test_setup(self):
+        registry = mock.Mock()
+
+        ext = Extension()
+        ext.setup(registry)
+
+        registry.add.assert_called_with('backend', backend_lib.PandoraBackend)

@@ -1,18 +1,25 @@
 import logging
+
 import urllib
-from pandora import BaseAPIClient, clientbuilder
-from pydora.utils import iterate_forever
-import pykka
+
 from mopidy import backend, models
 from mopidy.utils import encoding
+
+from pandora import BaseAPIClient, clientbuilder
+
+from pydora.utils import iterate_forever
+
+import pykka
+
 import requests
+
 from mopidy_pandora.client import MopidyPandoraAPIClient
+
 
 logger = logging.getLogger(__name__)
 
 
 class PandoraBackend(pykka.ThreadingActor, backend.Backend):
-    uri_schemes = ['pandora']
 
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
@@ -24,18 +31,21 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
             "PARTNER_USER": self._config["partner_username"],
             "PARTNER_PASSWORD": self._config["partner_password"],
             "DEVICE": self._config["partner_device"],
-            "AUDIO_QUALITY": self._config.get("preferred_audio_quality", BaseAPIClient.MED_AUDIO_QUALITY)
+            "AUDIO_QUALITY": self._config.get("preferred_audio_quality", BaseAPIClient.HIGH_AUDIO_QUALITY)
         }
         self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
         self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
+        self.uri_schemes = ['pandora']
+
     def on_start(self):
         try:
             self.api.login(self._config["username"], self._config["password"])
         except requests.exceptions.RequestException as e:
             logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
+
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
@@ -54,22 +64,20 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             return False
 
-        station_token = PandoraUri.parse(track.uri).station_token
+        station_id = PandoraUri.parse(track.uri).station_id
 
-        if not self._station or station_token != self._station.token:
-            self._station = self.backend.api.get_station(station_token)
-            try:
-                self._station_iter = iterate_forever(self._station.get_playlist)
-            except requests.exceptions.RequestException as e:
-                logger.error('Playback of %s failed: %s', track.uri, encoding.locale_decode(e))
-                return False
+        if not self._station or station_id != self._station.id:
+            self._station = self.backend.api.get_station(station_id)
+            self._station_iter = iterate_forever(self._station.get_playlist)
 
-        next_track = self.get_next_track()
-        if next_track:
-            return super(PandoraPlaybackProvider, self).change_track(next_track)
-        else:
-            logger.error('Playback of %s failed', track.uri)
-            return False
+        try:
+            next_track = self.get_next_track()
+            if next_track:
+                return super(PandoraPlaybackProvider, self).change_track(next_track)
+        except requests.exceptions.RequestException as e:
+            logger.error('Error changing track: %s', encoding.locale_decode(e))
+
+        return False
 
     def get_next_track(self):
         consecutive_track_skips = 0
@@ -86,7 +94,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             else:
                 consecutive_track_skips += 1
                 logger.warning('Track with uri ''%s'' is not playable.', TrackUri.from_track(track).uri)
-                if consecutive_track_skips > 5:
+                if consecutive_track_skips >= 4:
                     logger.error('Unplayable track skip limit exceeded!')
                     return None
 
@@ -112,6 +120,7 @@ class PandoraUri(object):
             self.scheme = scheme
 
     def quote(self, value):
+
         if value is None:
             value = ''
 
@@ -136,22 +145,24 @@ class PandoraUri(object):
 class StationUri(PandoraUri):
     scheme = 'station'
 
-    def __init__(self, station_token, name, detail_url, art_url):
+    def __init__(self, station_id, station_token, name, detail_url, art_url):
         super(StationUri, self).__init__()
-        self.station_token = station_token
+        self.station_id = station_id
+        self.token = station_token
         self.name = name
         self.detail_url = detail_url
         self.art_url = art_url
 
     @classmethod
     def from_station(cls, station):
-        return StationUri(station.token, station.name, station.detail_url, station.art_url)
+        return StationUri(station.id, station.token, station.name, station.detail_url, station.art_url)
 
     @property
     def uri(self):
-        return "{}:{}:{}:{}:{}".format(
+        return "{}:{}:{}:{}:{}:{}".format(
             super(StationUri, self).uri,
-            self.quote(self.station_token),
+            self.quote(self.station_id),
+            self.quote(self.token),
             self.quote(self.name),
             self.quote(self.detail_url),
             self.quote(self.art_url),
@@ -161,13 +172,14 @@ class StationUri(PandoraUri):
 class TrackUri(StationUri):
     scheme = 'track'
 
-    def __init__(self, station_token, name, detail_url, art_url, audio_url='none_generated'):
-        super(TrackUri, self).__init__(station_token, name, detail_url, art_url)
+    def __init__(self, station_id, track_token, name, detail_url, art_url, audio_url='none_generated'):
+        super(TrackUri, self).__init__(station_id, track_token, name, detail_url, art_url)
         self.audio_url = audio_url
 
     @classmethod
     def from_track(cls, track):
-        return TrackUri(track.station_id, track.song_name, track.album_detail_url, track.album_art_url, track.audio_url)
+        return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
+                        track.album_art_url, track.audio_url)
 
     @property
     def uri(self):
@@ -186,26 +198,32 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def browse(self, uri):
 
-        pandora_uri = PandoraUri.parse(uri)
-
-        if pandora_uri.scheme != StationUri.scheme:
+        if uri == self.root_directory.uri:
             stations = self.backend.api.get_station_list()
+
             if any(stations) and self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
+
             return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                     for station in stations]
         else:
+
+            pandora_uri = PandoraUri.parse(uri)
+
             return [models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),
-                                     uri=TrackUri(pandora_uri.station_token, pandora_uri.name, pandora_uri.detail_url,
-                                                  pandora_uri.art_url).uri)]
+                                     uri=TrackUri(pandora_uri.station_id, pandora_uri.token, pandora_uri.name,
+                                                  pandora_uri.detail_url, pandora_uri.art_url).uri)]
 
     def lookup(self, uri):
+
         pandora_uri = PandoraUri.parse(uri)
+
         if pandora_uri.scheme == TrackUri.scheme:
+
             return [models.Track(name="{} (Repeat Track)".format(pandora_uri.name), uri=uri,
                                  artists=[models.Artist(name="Pandora")],
                                  album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url,
                                                     images=[pandora_uri.art_url]))]
 
-        logger.error('Failed to lookup ''%s''', uri)
+        logger.error("Failed to lookup '%s'", uri)
         return []

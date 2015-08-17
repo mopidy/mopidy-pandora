@@ -30,11 +30,6 @@ setup(
         'pydora >= 1.4.0',
         'requests >= 2.5.0'
     ],
-    test_suite='nose.collector',
-    tests_require=[
-        'nose',
-        'mock >= 1.0',
-    ],
     entry_points={
         'mopidy.ext': [
             'pandora = mopidy_pandora:Extension',
