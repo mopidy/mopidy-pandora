@@ -7,7 +7,7 @@ from pandora import BaseAPIClient
 from mopidy import config, ext
 
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 logger = logging.getLogger(__name__)
 

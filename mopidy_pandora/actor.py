@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import logging
 import urllib
 from pandora import BaseAPIClient, clientbuilder
@@ -114,15 +112,20 @@ class PandoraUri(object):
             self.scheme = scheme
 
     def quote(self, value):
-        return urllib.quote(value) if value is not None else ''
+        if value is None:
+            value = ''
+
+        if not isinstance(value, basestring):
+            value = str(value)
+        return urllib.quote(value.encode('utf8'))
 
     @property
     def uri(self):
-        return "pandora:{}".format(self.scheme)
+        return "pandora:{}".format(self.quote(self.scheme))
 
     @classmethod
     def parse(cls, uri):
-        parts = [urllib.unquote(p) for p in uri.split(':')]
+        parts = [urllib.unquote(p).decode('utf8') for p in uri.split(':')]
         uri_cls = cls.SCHEMES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])

@@ -80,6 +80,13 @@ Project resources
 Changelog
 =========
 
+v0.1.4 (UNRELEASED)
+----------------------------------------
+
+- Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the Pandora user account
+- Better handling of backend exceptions to prevent Mopidy actor crashes
+- Add support for unicode characters in station and track names
+
 v0.1.3 (UNRELEASED)
 ----------------------------------------
 
