@@ -59,8 +59,7 @@ The **api_host** and **partner_** keys can be obtained from:
 audio quality is not available for the partner device specified, then the next-lowest bitrate stream that Pandora
 supports for the chosen device will be used.
 
-**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
- alphabetical order.
+**sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in alphabetical order.
 
 Usage
 =====
@@ -75,11 +74,27 @@ Project resources
 
 - `Source code <https://github.com/rectalogic/mopidy-pandora>`_
 - `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
-- `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/master.tar.gz#egg=Mopidy-Pandora-dev>`_
+- `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
 
 
 Changelog
 =========
+
+v0.1.4 (UNRELEASED)
+----------------------------------------
+
+- Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the Pandora user account
+- Better handling of backend exceptions to prevent Mopidy actor crashes
+- Add support for unicode characters in station and track names
+
+v0.1.3 (UNRELEASED)
+----------------------------------------
+
+- Update to work with release of Mopidy version 1.0
+- Update to work with pydora version >= 1.4.0: now keeps the Pandora session alive in tha API itself.
+- Implement station list caching to speed up browsing.
+- Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
+- Fill artist name to improve how tracks are displayed in various Mopidy front ends
 
 v0.1.2 (UNRELEASED)
 ----------------------------------------
