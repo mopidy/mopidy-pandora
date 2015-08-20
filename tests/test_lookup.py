@@ -9,7 +9,7 @@ from mopidy import models
 from pandora import APIClient
 from pandora.models.pandora import Station
 
-from mopidy_pandora.uri import StationUri, TrackUri
+from mopidy_pandora.actor import StationUri, TrackUri
 
 from tests.conftest import get_station_list_mock
 

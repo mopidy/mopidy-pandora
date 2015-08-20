@@ -10,7 +10,8 @@ from pandora.models.pandora import PlaylistItem, Station
 
 import pytest
 
-from mopidy_pandora import actor, client
+from mopidy_pandora.actor import PandoraPlaybackProvider, TrackUri
+from mopidy_pandora.client import MopidyPandoraAPIClient
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def audio_mock():
 
 @pytest.fixture
 def provider(audio_mock, config):
-    return actor.PandoraPlaybackProvider(
+    return PandoraPlaybackProvider(
         audio=audio_mock, backend=conftest.get_backend(config))
 
 
@@ -36,11 +37,11 @@ def test_change_track_aborts_if_no_track_uri(provider):
 
 
 def test_change_track(audio_mock, provider):
-    with mock.patch.object(client.MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
             with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=True):
 
-                track = models.Track(uri=actor.TrackUri.from_track(conftest.playlist_item_mock()).uri)
+                track = models.Track(uri=TrackUri.from_track(conftest.playlist_item_mock()).uri)
 
                 assert provider.change_track(track) is True
                 assert audio_mock.prepare_change.call_count == 0
@@ -51,7 +52,7 @@ def test_change_track(audio_mock, provider):
 
 
 def test_change_track_enforces_skip_limit(provider):
-    with mock.patch.object(client.MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
             with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=False):
 
@@ -62,7 +63,7 @@ def test_change_track_enforces_skip_limit(provider):
 
 
 def test_change_track_handles_request_exceptions(config, caplog):
-    with mock.patch.object(client.MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_request_exception_mock):
 
             track = models.Track(uri="pandora:track:test::::")
@@ -74,7 +75,7 @@ def test_change_track_handles_request_exceptions(config, caplog):
 
 
 def test_is_playable_handles_request_exceptions(provider, caplog):
-    with mock.patch.object(client.MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
             with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.get_is_playable_request_exception_mock):
 
