@@ -105,7 +105,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
 
 class _PandoraUriMeta(type):
-    def __init__(cls, name, bases, clsdict):
+    def __init__(cls, name, bases, clsdict):  # noqa
         super(_PandoraUriMeta, cls).__init__(name, bases, clsdict)
         if hasattr(cls, 'scheme'):
             cls.SCHEMES[cls.scheme] = cls
