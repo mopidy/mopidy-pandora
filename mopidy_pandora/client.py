@@ -1,6 +1,6 @@
 import logging
 
-from mopidy.utils import encoding
+from mopidy.internal import encoding
 
 import pandora
 

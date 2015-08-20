@@ -3,7 +3,7 @@ import logging
 import urllib
 
 from mopidy import backend, models
-from mopidy.utils import encoding
+from mopidy.internal import encoding
 
 from pandora import BaseAPIClient, clientbuilder
 
