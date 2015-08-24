@@ -6,7 +6,7 @@ import mock
 
 from mopidy_pandora import Extension
 
-from mopidy_pandora import actor as backend_lib
+from mopidy_pandora import backend as backend_lib
 
 
 class ExtensionTest(unittest.TestCase):
