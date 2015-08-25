@@ -41,6 +41,22 @@ def test_is_double_click(handler):
     assert handler.is_double_click() is False
 
 
+def test_no_duplicate_triggers(handler, playlist_item_mock):
+
+    assert handler.is_double_click()
+
+    thumbs_up_mock = mock.PropertyMock()
+    handler.thumbs_up = thumbs_up_mock
+
+    track_uri = TrackUri.from_track(playlist_item_mock).uri
+    handler.on_resume_click(track_uri, 100)
+
+    assert handler.is_double_click() is False
+    handler.on_resume_click(track_uri, 100)
+
+    handler.thumbs_up.assert_called_once_with(PandoraUri.parse(track_uri).token)
+
+
 def test_on_change_track_forward(config, handler, playlist_item_mock):
 
     track_0 = TrackUri.from_track(playlist_item_mock, 0).uri

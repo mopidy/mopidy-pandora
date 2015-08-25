@@ -52,6 +52,7 @@ class DoubleClickHandler(object):
         logger.warning("Calling '%s()' for track with token: %s", method, token)
         func = getattr(self, method)
         func(token)
+        self.click_time = 0
 
     def thumbs_up(self, track_token):
         self.client.add_feedback(track_token, True)
