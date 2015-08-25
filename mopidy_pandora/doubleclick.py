@@ -41,7 +41,6 @@ class DoubleClickHandler(object):
                 self.process_click(self.on_pause_previous_click, active_track_uri)
 
     def on_resume_click(self, track_uri, time_position):
-        # TODO: also ignore situation where we resume after being paused due to buffering
         if not self.is_double_click() or time_position == 0:
             return
 
