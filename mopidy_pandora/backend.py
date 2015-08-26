@@ -9,7 +9,7 @@ import requests
 
 from mopidy_pandora.client import MopidyPandoraAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
-from mopidy_pandora.playback import PandoraPlaybackProvider
+from mopidy_pandora.playback import PandoraPlaybackProvider, RatingsSupportPlaybackProvider
 from mopidy_pandora.uri import logger
 
 
@@ -30,7 +30,12 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
         self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
-        self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
+        self.supports_ratings = False
+        if self._config['ratings_support_enabled']:
+            self.supports_ratings = True
+            self.playback = RatingsSupportPlaybackProvider(audio=audio, backend=self)
+        else:
+            self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
         self.uri_schemes = ['pandora']
 

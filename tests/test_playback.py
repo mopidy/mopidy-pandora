@@ -14,6 +14,8 @@ from mopidy_pandora import playback
 
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 
+from mopidy_pandora.playback import PandoraPlaybackProvider
+
 from mopidy_pandora.uri import TrackUri
 
 
@@ -25,8 +27,12 @@ def audio_mock():
 
 @pytest.fixture
 def provider(audio_mock, config):
-    return playback.PandoraPlaybackProvider(
-        audio=audio_mock, backend=conftest.get_backend(config))
+    if config['pandora']['ratings_support_enabled']:
+        return playback.RatingsSupportPlaybackProvider(
+            audio=audio_mock, backend=conftest.get_backend(config))
+    else:
+        return playback.PandoraPlaybackProvider(
+            audio=audio_mock, backend=conftest.get_backend(config))
 
 
 def test_is_a_playback_provider(provider):
@@ -34,9 +40,81 @@ def test_is_a_playback_provider(provider):
 
 
 def test_change_track_aborts_if_no_track_uri(provider):
-    track = models.Track()
+    track = models.Track(uri=None)
 
     assert provider.change_track(track) is False
+
+
+def test_pause_starts_double_click_timer(provider):
+
+    assert provider.backend.supports_ratings
+    assert provider._double_click_handler.click_time == 0
+    provider.pause()
+    assert provider._double_click_handler.click_time > 0
+
+
+def test_resume_checks_for_double_click(provider):
+
+    assert provider.backend.supports_ratings
+    is_double_click_mock = mock.PropertyMock()
+    process_click_mock = mock.PropertyMock()
+    provider._double_click_handler.is_double_click = is_double_click_mock
+    provider._double_click_handler.process_click = process_click_mock
+    provider.resume()
+
+    provider._double_click_handler.is_double_click.assert_called_once_with()
+
+
+def test_resume_double_click_call(config, provider):
+
+    assert provider.backend.supports_ratings
+
+    process_click_mock = mock.PropertyMock()
+
+    provider._double_click_handler.process_click = process_click_mock
+    provider._double_click_handler.set_click()
+    provider.resume()
+
+    provider._double_click_handler.process_click.assert_called_once_with(config['pandora']['on_pause_resume_click'],
+                                                                         provider.active_track_uri)
+
+
+def test_change_track_checks_for_double_click(provider):
+    with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
+
+        assert provider.backend.supports_ratings
+        is_double_click_mock = mock.PropertyMock()
+        process_click_mock = mock.PropertyMock()
+        provider._double_click_handler.is_double_click = is_double_click_mock
+        provider._double_click_handler.process_click = process_click_mock
+        provider.change_track(models.Track(uri=TrackUri.from_track(conftest.playlist_item_mock()).uri))
+
+        provider._double_click_handler.is_double_click.assert_called_once_with()
+
+
+def test_change_track_double_click_call(config, provider, playlist_item_mock):
+    with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
+        assert provider.backend.supports_ratings
+
+        track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
+        track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
+        # track_2 = TrackUri.from_track(playlist_item_mock, 2).uri
+
+        process_click_mock = mock.PropertyMock()
+
+        provider._double_click_handler.process_click = process_click_mock
+        provider._double_click_handler.set_click()
+        provider.active_track_uri = track_0
+        provider.change_track(models.Track(uri=track_1))
+
+        provider._double_click_handler.process_click.assert_called_once_with(config['pandora']['on_pause_next_click'],
+                                                                             provider.active_track_uri)
+
+        provider.active_track_uri = track_1
+        provider.change_track(models.Track(uri=track_0))
+
+        provider._double_click_handler.process_click.assert_called_with(config['pandora']['on_pause_previous_click'],
+                                                                        provider.active_track_uri)
 
 
 def test_change_track(audio_mock, provider):
@@ -67,7 +145,7 @@ def test_change_track_enforces_skip_limit(provider):
 
 def test_change_track_handles_request_exceptions(config, caplog):
     with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
-        with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_request_exception_mock):
+        with mock.patch.object(Station, 'get_playlist', conftest.request_exception_mock):
 
             track = models.Track(uri="pandora:track:test::::")
 
@@ -80,7 +158,7 @@ def test_change_track_handles_request_exceptions(config, caplog):
 def test_is_playable_handles_request_exceptions(provider, caplog):
     with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
-            with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.get_is_playable_request_exception_mock):
+            with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.request_exception_mock):
 
                 track = models.Track(uri="pandora:track:test::::")
 

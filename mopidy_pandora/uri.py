@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class _PandoraUriMeta(type):
-    def __init__(cls, name, bases, clsdict):  # noqa
+    def __init__(cls, name, bases, clsdict):  # noqa N805
         super(_PandoraUriMeta, cls).__init__(name, bases, clsdict)
         if hasattr(cls, 'scheme'):
             cls.SCHEMES[cls.scheme] = cls
@@ -73,18 +73,20 @@ class StationUri(PandoraUri):
 class TrackUri(StationUri):
     scheme = 'track'
 
-    def __init__(self, station_id, track_token, name, detail_url, art_url, audio_url='none_generated'):
+    def __init__(self, station_id, track_token, name, detail_url, art_url, audio_url='none_generated', index=0):
         super(TrackUri, self).__init__(station_id, track_token, name, detail_url, art_url)
         self.audio_url = audio_url
+        self.index = index
 
     @classmethod
-    def from_track(cls, track):
+    def from_track(cls, track, index=0):
         return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
-                        track.album_art_url, track.audio_url)
+                        track.album_art_url, track.audio_url, index)
 
     @property
     def uri(self):
-        return "{}:{}".format(
+        return "{}:{}:{}".format(
             super(TrackUri, self).uri,
             self.quote(self.audio_url),
+            self.quote(self.index),
         )

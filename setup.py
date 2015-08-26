@@ -8,9 +8,9 @@ from setuptools.command.test import test
 
 
 def get_version(filename):
-    content = open(filename).read()
-    metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", content))
-    return metadata['version']
+    with open(filename) as fh:
+        metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", fh.read()))
+        return metadata['version']
 
 
 class Tox(test):
@@ -34,7 +34,6 @@ class Tox(test):
             args = shlex.split(self.tox_args)
         errno = tox.cmdline(args=args)
         sys.exit(errno)
-
 
 setup(
     name='Mopidy-Pandora',

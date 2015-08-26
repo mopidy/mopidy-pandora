@@ -5,6 +5,8 @@ from pydora.utils import iterate_forever
 
 import requests
 
+from mopidy_pandora.doubleclick import DoubleClickHandler
+
 from mopidy_pandora.uri import PandoraUri, TrackUri, logger
 
 
@@ -13,6 +15,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
         self._station = None
         self._station_iter = None
+        self.active_track_uri = None
         # TODO: add callback when gapless playback is supported in Mopidy > 1.1
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_about_to_finish_callback(self.callback).get()
@@ -32,7 +35,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self._station_iter = iterate_forever(self._station.get_playlist)
 
         try:
-            next_track = self.get_next_track()
+            next_track = self.get_next_track(TrackUri.parse(track.uri).index)
             if next_track:
                 return super(PandoraPlaybackProvider, self).change_track(next_track)
         except requests.exceptions.RequestException as e:
@@ -40,7 +43,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         return False
 
-    def get_next_track(self):
+    def get_next_track(self, index):
         consecutive_track_skips = 0
 
         for track in self._station_iter:
@@ -51,7 +54,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
 
             if is_playable:
-                return models.Track(uri=TrackUri.from_track(track).uri)
+                self.active_track_uri = TrackUri.from_track(track, index).uri
+                return models.Track(uri=self.active_track_uri)
             else:
                 consecutive_track_skips += 1
                 logger.warning('Track with uri ''%s'' is not playable.', TrackUri.from_track(track).uri)
@@ -63,3 +67,22 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def translate_uri(self, uri):
         return PandoraUri.parse(uri).audio_url
+
+
+class RatingsSupportPlaybackProvider(PandoraPlaybackProvider):
+    def __init__(self, audio, backend):
+        super(RatingsSupportPlaybackProvider, self).__init__(audio, backend)
+        self._double_click_handler = DoubleClickHandler(backend._config, backend.api)
+
+    def change_track(self, track):
+
+        self._double_click_handler.on_change_track(self.active_track_uri, track.uri)
+        return super(RatingsSupportPlaybackProvider, self).change_track(track)
+
+    def pause(self):
+        self._double_click_handler.set_click()
+        return super(RatingsSupportPlaybackProvider, self).pause()
+
+    def resume(self):
+        self._double_click_handler.on_resume_click(self.active_track_uri, self.get_time_position())
+        return super(RatingsSupportPlaybackProvider, self).resume()

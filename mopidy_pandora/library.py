@@ -24,9 +24,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             pandora_uri = PandoraUri.parse(uri)
 
-            return [models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),
-                                     uri=TrackUri(pandora_uri.station_id, pandora_uri.token, pandora_uri.name,
-                                                  pandora_uri.detail_url, pandora_uri.art_url).uri)]
+            tracks = []
+            number_of_tracks = 1
+            if self.backend.supports_ratings:
+                number_of_tracks = 3
+            for i in range(0, number_of_tracks):
+                tracks.append(models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),
+                                               uri=TrackUri(pandora_uri.station_id, pandora_uri.token, pandora_uri.name,
+                                                            pandora_uri.detail_url, pandora_uri.art_url,
+                                                            index=str(i)).uri))
+
+            return tracks
 
     def lookup(self, uri):
 
