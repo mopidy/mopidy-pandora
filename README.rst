@@ -51,8 +51,8 @@ Mopidy-Pandora to your Mopidy configuration file::
     password =
     sort_order = date
 
-    ### EXPERIMENTAL RATINGS IMPLEMENTATION ###
-    ratings_support_enabled = false
+    ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
+    event_support_enabled = false
     double_click_interval = 2.00
     on_pause_resume_click = thumbs_up
     on_pause_next_click = thumbs_down
@@ -69,13 +69,15 @@ supports for the chosen device will be used.
 **sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
 alphabetical order.
 
-**EXPERIMENTAL RATINGS IMPLEMENTATION:** use these settings to work around the limitations of the current Mopidy core
-and front-end extensions:
+**EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** use these settings to work around the limitations of the current Mopidy core
+and web extensions:
 
-- double_click_interval - successive button clicks that occur within this interval (in seconds) will trigger the ratings functionality.
-- on_pause_resume_click - click pause and then play while a song is playing to apply the rating. Song continues afterwards.
-- on_pause_next_click - click pause and then next in quick succession. Applies rating and skips to next song. You will have to click play again for the next song to start :(
-- on_pause_previous_click - click pause and then previous in quick succession. Applies rating and skips to next song. You will have to click play again for the next song to start :(
+- double_click_interval - successive button clicks that occur within this interval (in seconds) will trigger the event.
+- on_pause_resume_click - click pause and then play while a song is playing to trigger the event. Song continues afterwards.
+- on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song. You will have to click play again for the next song to start :(
+- on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song. You will have to click play again for the next song to start :(
+
+The supported events are: thumbs_up, thumbs_down, sleep, add_artist_bookmark, add_song_bookmark
 
 Usage
 =====

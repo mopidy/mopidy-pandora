@@ -26,7 +26,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             tracks = []
             number_of_tracks = 1
-            if self.backend.supports_ratings:
+            if self.backend.supports_events:
                 number_of_tracks = 3
             for i in range(0, number_of_tracks):
                 tracks.append(models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),

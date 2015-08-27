@@ -35,25 +35,25 @@ def test_init_sets_preferred_audio_quality(config):
     assert backend.api.default_audio_quality == BaseAPIClient.LOW_AUDIO_QUALITY
 
 
-def test_playback_provider_selection_ratings_disabled(config):
-    config['pandora']['ratings_support_enabled'] = 'false'
+def test_playback_provider_selection_events_disabled(config):
+    config['pandora']['event_support_enabled'] = 'false'
     backend = get_backend(config)
 
     assert isinstance(backend.playback, playback.PandoraPlaybackProvider)
 
 
-def test_playback_provider_selection_ratings_default(config):
-    config['pandora']['ratings_support_enabled'] = ''
+def test_playback_provider_selection_events_default(config):
+    config['pandora']['event_support_enabled'] = ''
     backend = get_backend(config)
 
     assert isinstance(backend.playback, playback.PandoraPlaybackProvider)
 
 
-def test_playback_provider_selection_ratings_enabled(config):
-    config['pandora']['ratings_support_enabled'] = 'true'
+def test_playback_provider_selection_events_enabled(config):
+    config['pandora']['event_support_enabled'] = 'true'
     backend = get_backend(config)
 
-    assert isinstance(backend.playback, playback.RatingsSupportPlaybackProvider)
+    assert isinstance(backend.playback, playback.EventSupportPlaybackProvider)
 
 
 def test_on_start_logs_in(config):

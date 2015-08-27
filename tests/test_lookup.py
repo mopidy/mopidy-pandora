@@ -93,7 +93,7 @@ def test_browse_track_uri(config, playlist_item_mock, caplog):
 
     assert len(results) == 3
 
-    backend.supports_ratings = False
+    backend.supports_events = False
 
     results = backend.library.browse(track_uri.uri)
     assert len(results) == 1

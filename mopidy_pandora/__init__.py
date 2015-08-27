@@ -37,7 +37,7 @@ class Extension(ext.Extension):
                                                                                   BaseAPIClient.MED_AUDIO_QUALITY,
                                                                                   BaseAPIClient.HIGH_AUDIO_QUALITY])
         schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
-        schema['ratings_support_enabled'] = config.Boolean()
+        schema['event_support_enabled'] = config.Boolean()
         schema['double_click_interval'] = config.String()
         schema['on_pause_resume_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
         schema['on_pause_next_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])

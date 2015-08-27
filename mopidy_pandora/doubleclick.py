@@ -48,7 +48,7 @@ class DoubleClickHandler(object):
 
     def process_click(self, method, track_uri):
         token = PandoraUri.parse(track_uri).token
-        logger.warning("Calling '%s()' for track with token: %s", method, token)
+        logger.info('Calling ''%s()'' for track with token: %s', method, token)
         func = getattr(self, method)
         func(token)
         self.click_time = 0
@@ -61,3 +61,9 @@ class DoubleClickHandler(object):
 
     def sleep(self, track_token):
         self.client.sleep_song(track_token)
+
+    def add_artist_bookmark(self, track_token):
+        self.client.add_artist_bookmark(track_token)
+
+    def add_song_bookmark(self, track_token):
+        self.client.add_song_bookmark(track_token)

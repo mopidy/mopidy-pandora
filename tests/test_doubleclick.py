@@ -152,3 +152,17 @@ def test_sleep(handler):
     handler.sleep(conftest.MOCK_TRACK_TOKEN)
 
     handler.client.sleep_song.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)
+
+
+def add_artist_bookmark(handler):
+
+    handler.add_artist_bookmark(conftest.MOCK_TRACK_TOKEN)
+
+    handler.client.add_artist_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)
+
+
+def add_song_bookmark(handler):
+
+    handler.add_song_bookmark(conftest.MOCK_TRACK_TOKEN)
+
+    handler.client.add_song_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)
