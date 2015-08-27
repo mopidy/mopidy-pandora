@@ -3,11 +3,12 @@ from __future__ import unicode_literals
 import logging
 import os
 
-from pandora import BaseAPIClient
 from mopidy import config, ext
 
+from pandora import BaseAPIClient
 
-__version__ = '0.1.4'
+
+__version__ = '0.1.5'
 
 logger = logging.getLogger(__name__)
 
@@ -39,5 +40,5 @@ class Extension(ext.Extension):
         return schema
 
     def setup(self, registry):
-        from .actor import PandoraBackend
+        from .backend import PandoraBackend
         registry.add('backend', PandoraBackend)

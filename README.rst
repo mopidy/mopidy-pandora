@@ -1,6 +1,6 @@
-****************************
+**************
 Mopidy-Pandora
-****************************
+**************
 
 .. image:: https://img.shields.io/pypi/v/Mopidy-Pandora.svg?style=flat
     :target: https://pypi.python.org/pypi/Mopidy-Pandora/
@@ -46,7 +46,7 @@ Mopidy-Pandora to your Mopidy configuration file::
     partner_username = iphone
     partner_password = 
     partner_device = IP01
-    preferred_audio_quality = mediumQuality
+    preferred_audio_quality = highQuality
     username =
     password =
     sort_order = date
@@ -55,7 +55,7 @@ The **api_host** and **partner_** keys can be obtained from:
 
  `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
 
-**preferred_audio_quality** can be one of 'lowQuality', 'mediumQuality' (default), or 'highQuality'. If the preferred
+**preferred_audio_quality** can be one of 'lowQuality', 'mediumQuality', or 'highQuality' (default). If the preferred
 audio quality is not available for the partner device specified, then the next-lowest bitrate stream that Pandora
 supports for the chosen device will be used.
 
@@ -79,6 +79,14 @@ Project resources
 
 Changelog
 =========
+
+v0.1.5 (UNRELEASED)
+----------------------------------------
+
+- Audio quality now defaults to 'high'
+- Improved caching to revert to Pandora server if station cannot be found in the local cache
+- Fix to retrieve stations by ID instead of token
+- Add unit tests to increase coverage
 
 v0.1.4 (UNRELEASED)
 ----------------------------------------

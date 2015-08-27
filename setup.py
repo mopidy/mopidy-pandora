@@ -1,14 +1,39 @@
 from __future__ import unicode_literals
 
 import re
+import sys
 
 from setuptools import find_packages, setup
+from setuptools.command.test import test
 
 
 def get_version(filename):
     content = open(filename).read()
     metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", content))
     return metadata['version']
+
+
+class Tox(test):
+    user_options = [(b'tox-args=', b'a', "Arguments to pass to tox")]
+
+    def initialize_options(self):
+        test.initialize_options(self)
+        self.tox_args = None
+
+    def finalize_options(self):
+        test.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        # import here, cause outside the eggs aren't loaded
+        import tox
+        import shlex
+        args = self.tox_args
+        if args:
+            args = shlex.split(self.tox_args)
+        errno = tox.cmdline(args=args)
+        sys.exit(errno)
 
 
 setup(
@@ -30,11 +55,8 @@ setup(
         'pydora >= 1.4.0',
         'requests >= 2.5.0'
     ],
-    test_suite='nose.collector',
-    tests_require=[
-        'nose',
-        'mock >= 1.0',
-    ],
+    tests_require=['tox'],
+    cmdclass={'test': Tox},
     entry_points={
         'mopidy.ext': [
             'pandora = mopidy_pandora:Extension',
