@@ -47,10 +47,10 @@ class DoubleClickHandler(object):
         self.process_click(self.on_pause_resume_click, track_uri)
 
     def process_click(self, method, track_uri):
-        token = PandoraUri.parse(track_uri).token
-        logger.info('Calling ''%s()'' for track with token: %s', method, token)
+        uri = PandoraUri.parse(track_uri)
+        logger.info("Triggering event '%s' for song: %s", method, uri.name)
         func = getattr(self, method)
-        func(token)
+        func(uri.token)
         self.click_time = 0
 
     def thumbs_up(self, track_token):

@@ -55,11 +55,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
             if is_playable:
                 self.active_track_uri = TrackUri.from_track(track, index).uri
-                logger.info('Up next: ''%s'' by %s', track.song_name, track.artist_name)
+                logger.info("Up next: '%s' by %s", track.song_name, track.artist_name)
                 return models.Track(uri=self.active_track_uri)
             else:
                 consecutive_track_skips += 1
-                logger.warning('Track with uri ''%s'' is not playable.', TrackUri.from_track(track).uri)
+                logger.warning("Track with uri '%s' is not playable.", TrackUri.from_track(track).uri)
                 if consecutive_track_skips >= 4:
                     logger.error('Unplayable track skip limit exceeded!')
                     return None
