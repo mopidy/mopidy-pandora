@@ -49,7 +49,7 @@ def config():
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
 
-            'ratings_support_enabled': True,
+            'event_support_enabled': True,
             'double_click_interval': '0.1',
             'on_pause_resume_click': 'thumbs_up',
             'on_pause_next_click': 'thumbs_down',

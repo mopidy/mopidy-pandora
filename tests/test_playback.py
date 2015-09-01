@@ -27,8 +27,8 @@ def audio_mock():
 
 @pytest.fixture
 def provider(audio_mock, config):
-    if config['pandora']['ratings_support_enabled']:
-        return playback.RatingsSupportPlaybackProvider(
+    if config['pandora']['event_support_enabled']:
+        return playback.EventSupportPlaybackProvider(
             audio=audio_mock, backend=conftest.get_backend(config))
     else:
         return playback.PandoraPlaybackProvider(
@@ -47,7 +47,7 @@ def test_change_track_aborts_if_no_track_uri(provider):
 
 def test_pause_starts_double_click_timer(provider):
 
-    assert provider.backend.supports_ratings
+    assert provider.backend.supports_events
     assert provider._double_click_handler.click_time == 0
     provider.pause()
     assert provider._double_click_handler.click_time > 0
@@ -55,7 +55,7 @@ def test_pause_starts_double_click_timer(provider):
 
 def test_resume_checks_for_double_click(provider):
 
-    assert provider.backend.supports_ratings
+    assert provider.backend.supports_events
     is_double_click_mock = mock.PropertyMock()
     process_click_mock = mock.PropertyMock()
     provider._double_click_handler.is_double_click = is_double_click_mock
@@ -67,7 +67,7 @@ def test_resume_checks_for_double_click(provider):
 
 def test_resume_double_click_call(config, provider):
 
-    assert provider.backend.supports_ratings
+    assert provider.backend.supports_events
 
     process_click_mock = mock.PropertyMock()
 
@@ -82,7 +82,7 @@ def test_resume_double_click_call(config, provider):
 def test_change_track_checks_for_double_click(provider):
     with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
 
-        assert provider.backend.supports_ratings
+        assert provider.backend.supports_events
         is_double_click_mock = mock.PropertyMock()
         process_click_mock = mock.PropertyMock()
         provider._double_click_handler.is_double_click = is_double_click_mock
@@ -94,7 +94,7 @@ def test_change_track_checks_for_double_click(provider):
 
 def test_change_track_double_click_call(config, provider, playlist_item_mock):
     with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
-        assert provider.backend.supports_ratings
+        assert provider.backend.supports_events
 
         track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
         track_1 = TrackUri.from_track(playlist_item_mock, 1).uri

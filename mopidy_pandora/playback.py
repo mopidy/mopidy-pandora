@@ -55,10 +55,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
             if is_playable:
                 self.active_track_uri = TrackUri.from_track(track, index).uri
+                logger.info("Up next: '%s' by %s", track.song_name, track.artist_name)
                 return models.Track(uri=self.active_track_uri)
             else:
                 consecutive_track_skips += 1
-                logger.warning('Track with uri ''%s'' is not playable.', TrackUri.from_track(track).uri)
+                logger.warning("Track with uri '%s' is not playable.", TrackUri.from_track(track).uri)
                 if consecutive_track_skips >= 4:
                     logger.error('Unplayable track skip limit exceeded!')
                     return None
@@ -69,20 +70,20 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         return PandoraUri.parse(uri).audio_url
 
 
-class RatingsSupportPlaybackProvider(PandoraPlaybackProvider):
+class EventSupportPlaybackProvider(PandoraPlaybackProvider):
     def __init__(self, audio, backend):
-        super(RatingsSupportPlaybackProvider, self).__init__(audio, backend)
+        super(EventSupportPlaybackProvider, self).__init__(audio, backend)
         self._double_click_handler = DoubleClickHandler(backend._config, backend.api)
 
     def change_track(self, track):
 
         self._double_click_handler.on_change_track(self.active_track_uri, track.uri)
-        return super(RatingsSupportPlaybackProvider, self).change_track(track)
+        return super(EventSupportPlaybackProvider, self).change_track(track)
 
     def pause(self):
         self._double_click_handler.set_click()
-        return super(RatingsSupportPlaybackProvider, self).pause()
+        return super(EventSupportPlaybackProvider, self).pause()
 
     def resume(self):
         self._double_click_handler.on_resume_click(self.active_track_uri, self.get_time_position())
-        return super(RatingsSupportPlaybackProvider, self).resume()
+        return super(EventSupportPlaybackProvider, self).resume()
