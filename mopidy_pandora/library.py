@@ -29,7 +29,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             if self.backend.supports_events:
                 number_of_tracks = 3
             for i in range(0, number_of_tracks):
-                tracks.append(models.Ref.track(name="{} (Repeat Track)".format(pandora_uri.name),
+                tracks.append(models.Ref.track(name=pandora_uri.name,
                                                uri=TrackUri(pandora_uri.station_id, pandora_uri.token, pandora_uri.name,
                                                             pandora_uri.detail_url, pandora_uri.art_url,
                                                             index=str(i)).uri))
@@ -42,7 +42,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if pandora_uri.scheme == TrackUri.scheme:
 
-            return [models.Track(name="{} (Repeat Track)".format(pandora_uri.name), uri=uri,
+            return [models.Track(name=pandora_uri.name, uri=uri,
                                  artists=[models.Artist(name="Pandora")],
                                  album=models.Album(name=pandora_uri.name, uri=pandora_uri.detail_url,
                                                     images=[pandora_uri.art_url]))]

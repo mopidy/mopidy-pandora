@@ -34,7 +34,7 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
 
     track = results[0]
 
-    assert track.name == "{} (Repeat Track)".format(track_uri.name)
+    assert track.name == track_uri.name
     assert track.uri == track_uri.uri
     assert next(iter(track.artists)).name == "Pandora"
     assert track.album.name == track_uri.name
@@ -99,7 +99,7 @@ def test_browse_track_uri(config, playlist_item_mock, caplog):
     assert len(results) == 1
 
     assert results[0].type == models.Ref.TRACK
-    assert results[0].name == "{} (Repeat Track)".format(track_uri.name)
+    assert results[0].name == track_uri.name
     assert TrackUri.parse(results[0].uri).index == str(0)
 
     # Track should not have an audio URL at this stage
