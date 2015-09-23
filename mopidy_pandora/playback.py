@@ -1,6 +1,8 @@
 from mopidy import backend, models
 from mopidy.internal import encoding
 
+from mpd import MPDClient
+
 from pydora.utils import iterate_forever
 
 import requests
@@ -19,9 +21,21 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # TODO: add callback when gapless playback is supported in Mopidy > 1.1
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_about_to_finish_callback(self.callback).get()
+        self._mpd_client = MPDClient()               # create client object
+        self._mpd_client.timeout = 5                 # network timeout in seconds (floats allowed), default: None
 
     def callback(self):
         self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
+
+    def play(self):
+
+        try:
+            return super(PandoraPlaybackProvider, self).play()
+        finally:
+            self._mpd_client.connect("localhost", 6600)  # connect to localhost:6600
+            self._mpd_client.repeat(1)
+            self._mpd_client.close()                     # send the close command
+            self._mpd_client.disconnect()                # disconnect from the server
 
     def change_track(self, track):
 

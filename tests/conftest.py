@@ -48,6 +48,7 @@ def config():
             'password': 'doe',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
+            'auto_set_repeat': True,
 
             'event_support_enabled': True,
             'double_click_interval': '0.1',
