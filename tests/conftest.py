@@ -60,7 +60,7 @@ def config():
 
 
 def get_backend(config, simulate_request_exceptions=False):
-    obj = backend.PandoraBackend(config=config, audio=None)
+    obj = backend.PandoraBackend(config=config, audio=Mock())
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock

@@ -18,20 +18,17 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         self._station = None
         self._station_iter = None
         self.active_track_uri = None
-        # TODO: add callback when gapless playback is supported in Mopidy > 1.1
-        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
-        # self.audio.set_about_to_finish_callback(self.callback).get()
+        self.audio.set_about_to_finish_callback(self.callback).get()
         self._mpd_client = MPDClient()               # create client object
         self._mpd_client.timeout = 5                 # network timeout in seconds (floats allowed), default: None
 
     def callback(self):
-        self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
+        # TODO: add gapless playback when it is supported in Mopidy > 1.1
+        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
+        #self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
-    def play(self):
-
-        try:
-            return super(PandoraPlaybackProvider, self).play()
-        finally:
+        if self.backend.auto_set_repeat:
+            # Make sure that tracks are being played in 'repeat mode'.
             self._mpd_client.connect("localhost", 6600)  # connect to localhost:6600
             self._mpd_client.repeat(1)
             self._mpd_client.close()                     # send the close command

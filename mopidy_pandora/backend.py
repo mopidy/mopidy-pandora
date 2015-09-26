@@ -31,6 +31,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
         self.supports_events = False
+        self.auto_set_repeat = self._config['auto_set_repeat']
         if self._config['event_support_enabled']:
             self.supports_events = True
             self.playback = EventSupportPlaybackProvider(audio=audio, backend=self)
