@@ -52,8 +52,7 @@ setup(
         'Mopidy >= 1.0.7',
         'Pykka >= 1.1',
         'pydora >= 1.4.0',
-        'requests >= 2.5.0',
-        'python-mpd2 >= 0.5.4'
+        'requests >= 2.5.0'
     ],
     tests_require=['tox'],
     cmdclass={'test': Tox},

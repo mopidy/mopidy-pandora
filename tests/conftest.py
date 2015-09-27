@@ -37,6 +37,10 @@ MOCK_DEFAULT_AUDIO_QUALITY = "highQuality"
 @pytest.fixture(scope="session")
 def config():
     return {
+        'http': {
+            'hostname': '127.0.0.1',
+            'port': '6680'
+        },
         'pandora': {
             'api_host': 'test_host',
             'partner_encryption_key': 'test_encryption_key',

@@ -7,6 +7,8 @@ import pykka
 
 import requests
 
+import rpc
+
 from mopidy_pandora.client import MopidyPandoraAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybackProvider
@@ -30,8 +32,11 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
         self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
-        self.supports_events = False
+
         self.auto_set_repeat = self._config['auto_set_repeat']
+        self.rpc_client = rpc.RPCClient(config['http']['hostname'], config['http']['port'])
+
+        self.supports_events = False
         if self._config['event_support_enabled']:
             self.supports_events = True
             self.playback = EventSupportPlaybackProvider(audio=audio, backend=self)
