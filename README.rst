@@ -50,6 +50,7 @@ Mopidy-Pandora to your Mopidy configuration file::
     username =
     password =
     sort_order = date
+    auto_set_repeat = true
 
     ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
     event_support_enabled = false
@@ -84,13 +85,15 @@ Usage
 
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
-Mopidy-Pandora represents each Pandora station as a separate playlist. Play the playlist **in repeat mode** and each
-time a track is played, the next dynamic track for that Pandora station will be played.
+Mopidy-Pandora represents each Pandora station as a separate playlist. The Playlist needs to be played **in repeat mode**,
+and Mopidy-Pandora will enable this automatically just before each track is changed unless you set the **auto_set_repeat**
+config parameter to 'false'.
 
-The playlist will consist of a single track unless the experimental ratings support is enabled. With ratings support
-enabled, the playlist will contain three tracks. These are just used to determine whether the user clicked on the
-'previous' or 'next' playback buttons, and all three tracks point to the same dynamic track for that Pandora station
-(i.e. it does not matter which one you select to play).
+Each time a track is played, the next dynamic track for that Pandora station will be played. The playlist will consist
+of a single track unless the experimental ratings support is enabled. With ratings support enabled, the playlist will
+contain three tracks. These are just used to determine whether the user clicked on the 'previous' or 'next' playback
+buttons, and all three tracks point to the same dynamic track for that Pandora station (i.e. it does not matter which
+one you select to play).
 
 
 Project resources
@@ -107,6 +110,7 @@ Changelog
 v0.1.5 (UNRELEASED)
 ----------------------------------------
 
+- Add option to automatically set tracks to play in repeat mode, using Mopidy's 'about-to-finish' callback.
 - Add experimental support for rating songs by re-using buttons available in the current front-end Mopidy extensions.
 - Audio quality now defaults to the highest setting.
 - Improved caching to revert to Pandora server if station cannot be found in the local cache.

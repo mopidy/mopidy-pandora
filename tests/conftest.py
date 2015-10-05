@@ -37,6 +37,10 @@ MOCK_DEFAULT_AUDIO_QUALITY = "highQuality"
 @pytest.fixture(scope="session")
 def config():
     return {
+        'http': {
+            'hostname': '127.0.0.1',
+            'port': '6680'
+        },
         'pandora': {
             'api_host': 'test_host',
             'partner_encryption_key': 'test_encryption_key',
@@ -48,6 +52,7 @@ def config():
             'password': 'doe',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
+            'auto_set_repeat': True,
 
             'event_support_enabled': True,
             'double_click_interval': '0.1',
@@ -59,7 +64,7 @@ def config():
 
 
 def get_backend(config, simulate_request_exceptions=False):
-    obj = backend.PandoraBackend(config=config, audio=None)
+    obj = backend.PandoraBackend(config=config, audio=Mock())
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock

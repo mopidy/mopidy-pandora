@@ -16,12 +16,17 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         self._station = None
         self._station_iter = None
         self.active_track_uri = None
-        # TODO: add callback when gapless playback is supported in Mopidy > 1.1
-        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
-        # self.audio.set_about_to_finish_callback(self.callback).get()
+
+        if self.backend.auto_set_repeat:
+            # Make sure that tracks are being played in 'repeat mode'.
+            self.audio.set_about_to_finish_callback(self.callback).get()
 
     def callback(self):
-        self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
+        # TODO: add gapless playback when it is supported in Mopidy > 1.1
+        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
+        # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
+
+        self.backend.rpc_client.set_repeat()
 
     def change_track(self, track):
 
