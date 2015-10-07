@@ -15,6 +15,7 @@ from mopidy_pandora import playback
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 
 from mopidy_pandora.playback import PandoraPlaybackProvider
+from mopidy_pandora.rpc import RPCClient
 
 from mopidy_pandora.uri import TrackUri
 
@@ -169,3 +170,23 @@ def test_is_playable_handles_request_exceptions(provider, caplog):
 def test_translate_uri_returns_audio_url(provider):
 
     assert provider.translate_uri("pandora:track:test:::::audio_url") == "audio_url"
+
+
+def test_auto_set_repeat_off_for_non_pandora_uri(provider):
+    with mock.patch.object(RPCClient, 'set_repeat', mock.Mock()):
+
+        provider.active_track_uri = "not_a_pandora_uri::::::"
+
+        provider.callback()
+
+        assert not provider.backend.rpc_client.set_repeat.called
+
+
+def test_auto_set_repeat_on_for_pandora_uri(provider):
+    with mock.patch.object(RPCClient, 'set_repeat', mock.Mock()):
+
+        provider.active_track_uri = "pandora::::::"
+
+        provider.callback()
+
+        provider.backend.rpc_client.set_repeat.assert_called_once_with()

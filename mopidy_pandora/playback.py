@@ -26,7 +26,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
-        self.backend.rpc_client.set_repeat()
+        if self.active_track_uri is not None and self.active_track_uri.startswith("pandora:"):
+            self.backend.rpc_client.set_repeat()
 
     def change_track(self, track):
 
