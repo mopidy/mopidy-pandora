@@ -174,19 +174,17 @@ def test_translate_uri_returns_audio_url(provider):
 
 def test_auto_set_repeat_off_for_non_pandora_uri(provider):
     with mock.patch.object(RPCClient, 'set_repeat', mock.Mock()):
+        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="not_a_pandora_uri::::::"):
 
-        provider.active_track_uri = "not_a_pandora_uri::::::"
+            provider.callback()
 
-        provider.callback()
-
-        assert not provider.backend.rpc_client.set_repeat.called
+            assert not provider.backend.rpc_client.set_repeat.called
 
 
 def test_auto_set_repeat_on_for_pandora_uri(provider):
     with mock.patch.object(RPCClient, 'set_repeat', mock.Mock()):
+        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="pandora::::::"):
 
-        provider.active_track_uri = "pandora::::::"
+            provider.callback()
 
-        provider.callback()
-
-        provider.backend.rpc_client.set_repeat.assert_called_once_with()
+            provider.backend.rpc_client.set_repeat.assert_called_once_with()
