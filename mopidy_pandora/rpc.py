@@ -12,7 +12,7 @@ class RPCClient(object):
     def _do_rpc(self, method, params=None):
 
         self.id += 1
-        data = { 'method': method, 'jsonrpc': '2.0', 'id': self.id }
+        data = {'method': method, 'jsonrpc': '2.0', 'id': self.id}
         if params is not None:
             data['params'] = params
 
@@ -26,4 +26,3 @@ class RPCClient(object):
 
         response = self._do_rpc('core.playback.get_current_tl_track')
         return response.json()['result']['track']['uri']
-
