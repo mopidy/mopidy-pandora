@@ -28,6 +28,11 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('password =', config)
         self.assertIn('preferred_audio_quality = highQuality', config)
         self.assertIn('sort_order = date', config)
+        self.assertIn('event_support_enabled = false', config)
+        self.assertIn('double_click_interval = 2.00', config)
+        self.assertIn('on_pause_resume_click = thumbs_up', config)
+        self.assertIn('on_pause_next_click = thumbs_down', config)
+        self.assertIn('on_pause_previous_click = sleep', config)
 
     def test_get_config_schema(self):
         ext = Extension()
@@ -45,6 +50,11 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('password', schema)
         self.assertIn('preferred_audio_quality', schema)
         self.assertIn('sort_order', schema)
+        self.assertIn('event_support_enabled', schema)
+        self.assertIn('double_click_interval', schema)
+        self.assertIn('on_pause_resume_click', schema)
+        self.assertIn('on_pause_next_click', schema)
+        self.assertIn('on_pause_previous_click', schema)
 
     def test_setup(self):
         registry = mock.Mock()
