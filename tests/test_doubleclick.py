@@ -11,6 +11,7 @@ import pytest
 
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 from mopidy_pandora.doubleclick import DoubleClickHandler
+from mopidy_pandora.playback import PandoraPlaybackProvider
 from mopidy_pandora.uri import PandoraUri, TrackUri
 
 
@@ -29,7 +30,8 @@ def handler(config):
     sleep_mock = mock.PropertyMock()
     handler.client.sleep_song = sleep_mock
 
-    handler.set_click()
+    handler.set_click_time()
+
     return handler
 
 
@@ -37,24 +39,10 @@ def test_is_double_click(handler):
 
     assert handler.is_double_click()
 
+    assert handler.is_double_click(0) is False
+
     time.sleep(float(handler.double_click_interval) + 0.1)
     assert handler.is_double_click() is False
-
-
-def test_no_duplicate_triggers(handler, playlist_item_mock):
-
-    assert handler.is_double_click()
-
-    thumbs_up_mock = mock.PropertyMock()
-    handler.thumbs_up = thumbs_up_mock
-
-    track_uri = TrackUri.from_track(playlist_item_mock).uri
-    handler.on_resume_click(track_uri, 100)
-
-    assert handler.is_double_click() is False
-    handler.on_resume_click(track_uri, 100)
-
-    handler.thumbs_up.assert_called_once_with(PandoraUri.parse(track_uri).token)
 
 
 def test_on_change_track_forward(config, handler, playlist_item_mock):
@@ -101,35 +89,56 @@ def test_on_resume_click_ignored_if_start_of_track(handler, playlist_item_mock):
 
 
 def test_on_resume_click(config, handler, playlist_item_mock):
+    with mock.patch.object(PandoraPlaybackProvider, 'get_time_position', return_value=100):
 
-    process_click_mock = mock.PropertyMock()
-    handler.process_click = process_click_mock
+        process_click_mock = mock.PropertyMock()
+        handler.process_click = process_click_mock
 
-    track_uri = TrackUri.from_track(playlist_item_mock).uri
-    handler.on_resume_click(track_uri, 100)
+        track_uri = TrackUri.from_track(playlist_item_mock).uri
+        handler.on_resume_click(track_uri, 100)
 
-    handler.process_click.assert_called_once_with(config['pandora']['on_pause_resume_click'], track_uri)
+        handler.process_click.assert_called_once_with(config['pandora']['on_pause_resume_click'], track_uri)
 
 
-def test_process_click(config, handler, playlist_item_mock):
+def test_process_click_resume(config, handler, playlist_item_mock):
 
     thumbs_up_mock = mock.PropertyMock()
-    thumbs_down_mock = mock.PropertyMock()
-    sleep_mock = mock.PropertyMock()
 
     handler.thumbs_up = thumbs_up_mock
-    handler.thumbs_down = thumbs_down_mock
-    handler.sleep = sleep_mock
 
     track_uri = TrackUri.from_track(playlist_item_mock).uri
 
     handler.process_click(config['pandora']['on_pause_resume_click'], track_uri)
-    handler.process_click(config['pandora']['on_pause_next_click'], track_uri)
-    handler.process_click(config['pandora']['on_pause_previous_click'], track_uri)
 
     token = PandoraUri.parse(track_uri).token
     handler.thumbs_up.assert_called_once_with(token)
+
+
+def test_process_click_next(config, handler, playlist_item_mock):
+
+    thumbs_down_mock = mock.PropertyMock()
+
+    handler.thumbs_down = thumbs_down_mock
+
+    track_uri = TrackUri.from_track(playlist_item_mock).uri
+
+    handler.process_click(config['pandora']['on_pause_next_click'], track_uri)
+
+    token = PandoraUri.parse(track_uri).token
     handler.thumbs_down.assert_called_once_with(token)
+
+
+def test_process_click_previous(config, handler, playlist_item_mock):
+
+    sleep_mock = mock.PropertyMock()
+
+    handler.sleep = sleep_mock
+
+    track_uri = TrackUri.from_track(playlist_item_mock).uri
+
+    handler.process_click(config['pandora']['on_pause_previous_click'], track_uri)
+
+    token = PandoraUri.parse(track_uri).token
     handler.sleep.assert_called_once_with(token)
 
 

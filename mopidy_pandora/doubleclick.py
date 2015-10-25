@@ -14,13 +14,26 @@ class DoubleClickHandler(object):
         self.on_pause_previous_click = config["on_pause_previous_click"]
         self.double_click_interval = config['double_click_interval']
         self.client = client
-        self.click_time = 0
+        self._click_time = 0
 
-    def set_click(self):
-        self.click_time = time.time()
+    def set_click_time(self, click_time=None):
+        if click_time is None:
+            self._click_time = time.time()
+        else:
+            self._click_time = click_time
 
-    def is_double_click(self):
-        return time.time() - self.click_time < float(self.double_click_interval)
+    def get_click_time(self):
+        return self._click_time
+
+    def is_double_click(self, time_position=None):
+
+        if self._click_time == 0:
+            return False
+
+        if time_position is None:
+            time_position = 1
+
+        return time.time() - self._click_time < float(self.double_click_interval) and time_position > 0
 
     def on_change_track(self, active_track_uri, new_track_uri):
         from mopidy_pandora.uri import PandoraUri
@@ -41,17 +54,17 @@ class DoubleClickHandler(object):
                 self.process_click(self.on_pause_previous_click, active_track_uri)
 
     def on_resume_click(self, track_uri, time_position):
-        if not self.is_double_click() or time_position == 0:
+        if not self.is_double_click(time_position):
             return
 
         self.process_click(self.on_pause_resume_click, track_uri)
 
     def process_click(self, method, track_uri):
+
         uri = PandoraUri.parse(track_uri)
         logger.info("Triggering event '%s' for song: %s", method, uri.name)
         func = getattr(self, method)
         func(uri.token)
-        self.click_time = 0
 
     def thumbs_up(self, track_token):
         self.client.add_feedback(track_token, True)

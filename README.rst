@@ -74,9 +74,9 @@ alphabetical order.
 and web extensions:
 
 - double_click_interval - successive button clicks that occur within this interval (in seconds) will trigger the event.
-- on_pause_resume_click - click pause and then play while a song is playing to trigger the event. Song continues afterwards.
-- on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song. You will have to click play again for the next song to start :(
-- on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song. You will have to click play again for the next song to start :(
+- on_pause_resume_click - click pause and then play while a song is playing to trigger the event
+- on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song.
+- on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song.
 
 The supported events are: thumbs_up, thumbs_down, sleep, add_artist_bookmark, add_song_bookmark
 
@@ -86,8 +86,7 @@ Usage
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
 Mopidy-Pandora represents each Pandora station as a separate playlist. The Playlist needs to be played **in repeat mode**,
-and Mopidy-Pandora will enable this automatically just before each track is changed unless you set the **auto_set_repeat**
-config parameter to 'false'.
+and Mopidy-Pandora will enable this automatically unless you set the **auto_set_repeat** config parameter to 'false'.
 
 Each time a track is played, the next dynamic track for that Pandora station will be played. The playlist will consist
 of a single track unless the experimental ratings support is enabled. With ratings support enabled, the playlist will
@@ -107,10 +106,15 @@ Project resources
 Changelog
 =========
 
+v0.1.6 (UNRELEASED)
+----------------------------------------
+
+- Fix to resume playback after a track has been rated.
+
 v0.1.5 (UNRELEASED)
 ----------------------------------------
 
-- Add option to automatically set tracks to play in repeat mode, using Mopidy's 'about-to-finish' callback.
+- Add option to automatically set tracks to play in repeat mode when Mopidy-Pandora starts.
 - Add experimental support for rating songs by re-using buttons available in the current front-end Mopidy extensions.
 - Audio quality now defaults to the highest setting.
 - Improved caching to revert to Pandora server if station cannot be found in the local cache.

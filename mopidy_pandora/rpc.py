@@ -26,3 +26,7 @@ class RPCClient(object):
 
         response = self._do_rpc('core.playback.get_current_tl_track')
         return response.json()['result']['track']['uri']
+
+    def resume_playback(self):
+
+        self._do_rpc('core.playback.resume')
