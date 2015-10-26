@@ -239,24 +239,25 @@ def test_translate_uri_returns_audio_url(provider):
 
 def test_auto_setup_off_for_non_pandora_uri(provider):
     with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
-                             set_consume=mock.DEFAULT) as values:
+                             set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
         with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="not_a_pandora_uri::::::"):
 
             event = threading.Event()
 
-            def set_event():
+            def set_event(*args, **kwargs):
                 event.set()
 
-            values['set_repeat'].side_effect = set_event
+            values['set_single'].side_effect = set_event
 
             provider.prepare_change()
 
-            if event.wait(timeout=1.0):
+            if event.wait(timeout=5.0):
                 assert False
             else:
                 assert not values['set_repeat'].called
                 assert not values['set_random'].called
                 assert not values['set_consume'].called
+                assert not values['set_single'].called
 
 
 def test_auto_setup_on_for_pandora_uri(provider):
@@ -267,14 +268,14 @@ def test_auto_setup_on_for_pandora_uri(provider):
 
             event = threading.Event()
 
-            def set_event():
+            def set_event(*args, **kwargs):
                 event.set()
 
-            values['set_repeat'].side_effect = set_event
+            values['set_single'].side_effect = set_event
 
             provider.prepare_change()
 
-            if event.wait(timeout=1.0):
+            if event.wait(timeout=5.0):
                 values['set_repeat'].assert_called_once_with()
                 values['set_random'].assert_called_once_with(False)
                 values['set_consume'].assert_called_once_with(False)
@@ -290,15 +291,15 @@ def test_auto_setup_only_called_once(provider):
 
             event = threading.Event()
 
-            def set_event():
+            def set_event(*args, **kwargs):
                 event.set()
 
-            values['set_repeat'].side_effect = set_event
+            values['set_single'].side_effect = set_event
 
             provider.prepare_change()
             provider.prepare_change()
 
-            if event.wait(timeout=1.0):
+            if event.wait(timeout=5.0):
                 values['set_repeat'].assert_called_once_with()
                 values['set_random'].assert_called_once_with(False)
                 values['set_consume'].assert_called_once_with(False)
@@ -314,14 +315,14 @@ def test_auto_setup_resets_for_non_pandora_tracks(provider):
 
             event = threading.Event()
 
-            def set_event():
+            def set_event(*args, **kwargs):
                 event.set()
 
-            values['set_repeat'].side_effect = set_event
+            values['set_single'].side_effect = set_event
 
             provider.prepare_change()
 
-            if event.wait(timeout=1.0):
+            if event.wait(timeout=5.0):
                 values['set_repeat'].assert_called_once_with()
                 values['set_random'].assert_called_once_with(False)
                 values['set_consume'].assert_called_once_with(False)
