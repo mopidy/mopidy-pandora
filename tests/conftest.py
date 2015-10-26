@@ -52,7 +52,7 @@ def config():
             'password': 'doe',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
-            'auto_set_repeat': True,
+            'auto_setup': True,
 
             'event_support_enabled': True,
             'double_click_interval': '0.1',
@@ -65,6 +65,8 @@ def config():
 
 def get_backend(config, simulate_request_exceptions=False):
     obj = backend.PandoraBackend(config=config, audio=Mock())
+
+    obj.rpc_client._do_rpc = Mock()
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock

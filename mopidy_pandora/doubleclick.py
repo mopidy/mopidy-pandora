@@ -14,21 +14,32 @@ class DoubleClickHandler(object):
         self.on_pause_previous_click = config["on_pause_previous_click"]
         self.double_click_interval = config['double_click_interval']
         self.client = client
-        self.click_time = 0
+        self._click_time = 0
 
-    def set_click(self):
-        self.click_time = time.time()
+    def set_click_time(self, click_time=None):
+        if click_time is None:
+            self._click_time = time.time()
+        else:
+            self._click_time = click_time
+
+    def get_click_time(self):
+        return self._click_time
 
     def is_double_click(self):
-        return time.time() - self.click_time < float(self.double_click_interval)
+
+        double_clicked = self._click_time > 0 and time.time() - self._click_time < float(self.double_click_interval)
+
+        if double_clicked is False:
+            self._click_time = 0
+
+        return double_clicked
 
     def on_change_track(self, active_track_uri, new_track_uri):
         from mopidy_pandora.uri import PandoraUri
 
         if not self.is_double_click():
-            return
+            return False
 
-        # TODO: Won't work if 'shuffle' or 'consume' modes are enabled
         if active_track_uri is not None:
 
             new_track_index = int(PandoraUri.parse(new_track_uri).index)
@@ -40,18 +51,24 @@ class DoubleClickHandler(object):
             elif new_track_index < active_track_index or new_track_index == active_track_index:
                 self.process_click(self.on_pause_previous_click, active_track_uri)
 
+        return True
+
     def on_resume_click(self, track_uri, time_position):
         if not self.is_double_click() or time_position == 0:
-            return
+            return False
 
         self.process_click(self.on_pause_resume_click, track_uri)
 
+        return True
+
     def process_click(self, method, track_uri):
+
         uri = PandoraUri.parse(track_uri)
         logger.info("Triggering event '%s' for song: %s", method, uri.name)
         func = getattr(self, method)
         func(uri.token)
-        self.click_time = 0
+
+        self.set_click_time(0)
 
     def thumbs_up(self, track_token):
         self.client.add_feedback(track_token, True)

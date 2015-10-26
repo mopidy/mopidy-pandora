@@ -8,7 +8,7 @@ from mopidy import config, ext
 from pandora import BaseAPIClient
 
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class Extension(ext.Extension):
                                                                                   BaseAPIClient.MED_AUDIO_QUALITY,
                                                                                   BaseAPIClient.HIGH_AUDIO_QUALITY])
         schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
-        schema['auto_set_repeat'] = config.Boolean()
+        schema['auto_setup'] = config.Boolean()
         schema['event_support_enabled'] = config.Boolean()
         schema['double_click_interval'] = config.String()
         schema['on_pause_resume_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
