@@ -66,7 +66,7 @@ def config():
 def get_backend(config, simulate_request_exceptions=False):
     obj = backend.PandoraBackend(config=config, audio=Mock())
 
-    obj.rpc_client._do_rpc = Mock()
+    obj.rpc_client._do_rpc = rpc_call_not_implemented_mock
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock
@@ -192,4 +192,13 @@ def transport_call_not_implemented_mock(self, method, **data):
 
 
 class TransportCallTestNotImplemented(Exception):
+    pass
+
+
+@pytest.fixture
+def rpc_call_not_implemented_mock(self, method, params=None):
+    raise RPCCallTestNotImplemented(method + "(" + params + ")")
+
+
+class RPCCallTestNotImplemented(Exception):
     pass

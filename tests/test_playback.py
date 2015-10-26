@@ -336,6 +336,6 @@ def test_auto_setup_resets_for_non_pandora_tracks(provider):
             provider.prepare_change()
 
             if event.wait(timeout=1.0):
-                assert provider.backend.auto_setup
+                assert provider.backend.auto_setup is True
             else:
                 assert False
