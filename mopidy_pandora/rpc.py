@@ -18,9 +18,21 @@ class RPCClient(object):
 
         return requests.request('POST', self.url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
 
-    def set_repeat(self):
+    def set_repeat(self, value=True):
 
-        self._do_rpc('core.tracklist.set_repeat', {'value': True})
+        self._do_rpc('core.tracklist.set_repeat', {'value': value})
+
+    def set_consume(self, value=True):
+
+        self._do_rpc('core.tracklist.set_consume', {'value': value})
+
+    def set_single(self, value=True):
+
+        self._do_rpc('core.tracklist.set_single', {'value': value})
+
+    def set_random(self, value=True):
+
+        self._do_rpc('core.tracklist.set_random', {'value': value})
 
     def get_current_track_uri(self):
 

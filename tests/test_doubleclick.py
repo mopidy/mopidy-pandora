@@ -39,10 +39,18 @@ def test_is_double_click(handler):
 
     assert handler.is_double_click()
 
-    assert handler.is_double_click(0) is False
+    time.sleep(float(handler.double_click_interval) + 0.1)
+    assert handler.is_double_click() is False
+
+
+def test_is_double_click_resets_click_time(handler):
+
+    assert handler.is_double_click()
 
     time.sleep(float(handler.double_click_interval) + 0.1)
     assert handler.is_double_click() is False
+
+    assert handler.get_click_time() == 0
 
 
 def test_on_change_track_forward(config, handler, playlist_item_mock):
@@ -98,6 +106,19 @@ def test_on_resume_click(config, handler, playlist_item_mock):
         handler.on_resume_click(track_uri, 100)
 
         handler.process_click.assert_called_once_with(config['pandora']['on_pause_resume_click'], track_uri)
+
+
+def test_process_click_resets_click_time(config, handler, playlist_item_mock):
+
+    thumbs_up_mock = mock.PropertyMock()
+
+    handler.thumbs_up = thumbs_up_mock
+
+    track_uri = TrackUri.from_track(playlist_item_mock).uri
+
+    handler.process_click(config['pandora']['on_pause_resume_click'], track_uri)
+
+    assert handler.get_click_time() == 0
 
 
 def test_process_click_resume(config, handler, playlist_item_mock):

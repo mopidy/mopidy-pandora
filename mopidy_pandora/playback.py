@@ -26,18 +26,25 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
-    def _auto_set_repeat(self):
+    def _auto_setup(self):
 
         uri = self.backend.rpc_client.get_current_track_uri()
 
         # Make sure that tracks are being played in 'repeat mode'.
         if uri is not None and uri.startswith("pandora:"):
-            self.backend.rpc_client.set_repeat()
+            if self.backend.auto_setup:
+                self.backend.rpc_client.set_repeat()
+                self.backend.rpc_client.set_consume(False)
+                self.backend.rpc_client.set_random(False)
+                self.backend.rpc_client.set_single(False)
+                self.backend.auto_setup = False
+
+        else:
+            self.backend.reset_auto_setup()
 
     def prepare_change(self):
 
-        if self.backend.auto_set_repeat:
-            Thread(target=self._auto_set_repeat).start()
+        Thread(target=self._auto_setup).start()
 
         super(PandoraPlaybackProvider, self).prepare_change()
 
@@ -95,11 +102,10 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def change_track(self, track):
 
-        self._double_click_handler.on_change_track(self.active_track_uri, track.uri)
+        event_processed = self._double_click_handler.on_change_track(self.active_track_uri, track.uri)
         return_value = super(EventSupportPlaybackProvider, self).change_track(track)
 
-        if self._double_click_handler.get_click_time() > 0:
-            self._double_click_handler.set_click_time(0)
+        if event_processed:
             Thread(target=self.backend.rpc_client.resume_playback).start()
 
         return return_value
@@ -113,8 +119,5 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def resume(self):
         self._double_click_handler.on_resume_click(self.active_track_uri, self.get_time_position())
-
-        if self._double_click_handler.get_click_time() > 0:
-            self._double_click_handler.set_click_time(0)
 
         return super(EventSupportPlaybackProvider, self).resume()

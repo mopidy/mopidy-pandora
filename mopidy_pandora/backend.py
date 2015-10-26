@@ -33,7 +33,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
 
-        self.auto_set_repeat = self._config['auto_set_repeat']
+        self.reset_auto_setup()
         self.rpc_client = rpc.RPCClient(config['http']['hostname'], config['http']['port'])
 
         self.supports_events = False
@@ -50,3 +50,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
             self.api.login(self._config["username"], self._config["password"])
         except requests.exceptions.RequestException as e:
             logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
+
+    def reset_auto_setup(self):
+        self.auto_setup = self._config['auto_setup']
+        return self.auto_setup
