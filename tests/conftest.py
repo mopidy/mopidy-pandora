@@ -29,13 +29,18 @@ MOCK_TRACK_AUDIO_MED = "http://mockup.com/medium_quality_audiofile.mp4?..."
 MOCK_TRACK_AUDIO_LOW = "http://mockup.com/low_quality_audiofile.mp4?..."
 MOCK_TRACK_DETAIL_URL = " http://mockup.com/track/detail_url?..."
 MOCK_TRACK_ART_URL = " http://mockup.com/track/art_url?..."
+MOCK_TRACK_INDEX = "1"
 
-MOCK_DEFAULT_AUDIO_QUALITY = "high_quality"
+MOCK_DEFAULT_AUDIO_QUALITY = "highQuality"
 
 
 @pytest.fixture(scope="session")
 def config():
     return {
+        'http': {
+            'hostname': '127.0.0.1',
+            'port': '6680'
+        },
         'pandora': {
             'api_host': 'test_host',
             'partner_encryption_key': 'test_encryption_key',
@@ -47,15 +52,22 @@ def config():
             'password': 'doe',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
+            'auto_set_repeat': True,
+
+            'event_support_enabled': True,
+            'double_click_interval': '0.1',
+            'on_pause_resume_click': 'thumbs_up',
+            'on_pause_next_click': 'thumbs_down',
+            'on_pause_previous_click': 'sleep',
         }
     }
 
 
 def get_backend(config, simulate_request_exceptions=False):
-    obj = backend.PandoraBackend(config=config, audio=None)
+    obj = backend.PandoraBackend(config=config, audio=Mock())
 
     if simulate_request_exceptions:
-        type(obj.api.transport).__call__ = transport_call_request_exception_mock
+        type(obj.api.transport).__call__ = request_exception_mock
     else:
         # Ensure that we never do an actual call to the Pandora server while
         # running tests
@@ -143,11 +155,6 @@ def get_station_playlist_mock(self):
 
 
 @pytest.fixture(scope="session")
-def get_station_playlist_request_exception_mock(self):
-    raise requests.exceptions.RequestException
-
-
-@pytest.fixture(scope="session")
 def playlist_item_mock():
     return PlaylistItem.from_json(get_backend(
         config()).api, playlist_result_mock()["items"][0])
@@ -173,23 +180,13 @@ def get_station_list_mock(self):
 
 
 @pytest.fixture(scope="session")
-def get_is_playable_request_exception_mock(self):
-    raise requests.exceptions.RequestException
-
-
-@pytest.fixture(scope="session")
-def transport_call_request_exception_mock(self, method, **data):
+def request_exception_mock(self, *args, **kwargs):
     raise requests.exceptions.RequestException
 
 
 @pytest.fixture
 def transport_call_not_implemented_mock(self, method, **data):
     raise TransportCallTestNotImplemented(method + "(" + json.dumps(self.remove_empty_values(data)) + ")")
-
-
-@pytest.fixture(scope="session")
-def login_exception_mock(self, username, password):
-    raise requests.exceptions.RequestException
 
 
 class TransportCallTestNotImplemented(Exception):
