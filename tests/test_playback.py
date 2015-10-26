@@ -311,7 +311,7 @@ def test_auto_setup_only_called_once(provider):
 def test_auto_setup_resets_for_non_pandora_tracks(provider):
     with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
                              set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
-        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="pandora::::::") as mock_get_uri:
+        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="pandora::::::"):
 
             event = threading.Event()
 
@@ -331,7 +331,7 @@ def test_auto_setup_resets_for_non_pandora_tracks(provider):
             else:
                 assert False
 
-            mock_get_uri.return_value = "not_a_pandora_uri::::::"
+            provider.backend.rpc_client.get_current_track_uri = mock.Mock(return_value="not_a_pandora_uri::::::")
 
             provider.prepare_change()
 
