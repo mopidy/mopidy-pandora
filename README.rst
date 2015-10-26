@@ -119,7 +119,7 @@ v0.1.6 (Oct 26, 2015)
 
 - Release to pypi
 
-v0.1.5 (UNRELEASED)
+v0.1.5 (Aug 20, 2015)
 ----------------------------------------
 
 - Add option to automatically set tracks to play in repeat mode when Mopidy-Pandora starts.
@@ -129,14 +129,14 @@ v0.1.5 (UNRELEASED)
 - Fix to retrieve stations by ID instead of token.
 - Add unit tests to increase test coverage.
 
-v0.1.4 (UNRELEASED)
+v0.1.4 (Aug 17, 2015)
 ----------------------------------------
 
 - Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the user's Pandora account.
 - Better handling of exceptions that occur in the backend to prevent Mopidy actor crashes.
 - Add support for unicode characters in station and track names.
 
-v0.1.3 (UNRELEASED)
+v0.1.3 (Jul 11, 2015)
 ----------------------------------------
 
 - Update to work with release of Mopidy version 1.0
@@ -145,19 +145,19 @@ v0.1.3 (UNRELEASED)
 - Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
 - Fill artist name to improve how tracks are displayed in various Mopidy front-end extensions.
 
-v0.1.2 (UNRELEASED)
+v0.1.2 (Jun 20, 2015)
 ----------------------------------------
 
 - Enhancement to handle 'Invalid Auth Token' exceptions when the Pandora session expires after long periods of
   inactivity. Allows Mopidy-Pandora to run indefinitely on dedicated music servers like the Pi MusicBox.
 - Add configuration option to sort stations alphabetically, instead of by date.
 
-v0.1.1 (UNRELEASED)
+v0.1.1 (Mar 22, 2015)
 ----------------------------------------
 
 - Added ability to make preferred audio quality user-configurable.
 
-v0.1.0 (UNRELEASED)
+v0.1.0 (Dec 28, 2014)
 ----------------------------------------
 
 - Initial release.
