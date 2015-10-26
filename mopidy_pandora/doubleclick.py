@@ -2,6 +2,7 @@ import logging
 
 import time
 
+from mopidy_pandora.client import PandoraResult
 from mopidy_pandora.library import PandoraUri
 
 logger = logging.getLogger(__name__)
@@ -46,41 +47,44 @@ class DoubleClickHandler(object):
             active_track_index = int(PandoraUri.parse(active_track_uri).index)
 
             if new_track_index > active_track_index or new_track_index == 0 and active_track_index == 2:
-                self.process_click(self.on_pause_next_click, active_track_uri)
+                return self.process_click(self.on_pause_next_click, active_track_uri)
 
             elif new_track_index < active_track_index or new_track_index == active_track_index:
-                self.process_click(self.on_pause_previous_click, active_track_uri)
+                return self.process_click(self.on_pause_previous_click, active_track_uri)
 
-        return True
+        return False
 
     def on_resume_click(self, track_uri, time_position):
         if not self.is_double_click() or time_position == 0:
             return False
 
-        self.process_click(self.on_pause_resume_click, track_uri)
-
-        return True
+        return self.process_click(self.on_pause_resume_click, track_uri)
 
     def process_click(self, method, track_uri):
+
+        self.set_click_time(0)
 
         uri = PandoraUri.parse(track_uri)
         logger.info("Triggering event '%s' for song: %s", method, uri.name)
         func = getattr(self, method)
-        func(uri.token)
+        result = PandoraResult(func(uri.token))
 
-        self.set_click_time(0)
+        if not result.status_ok:
+            logger.error('Error calling event: %s (code %s)', result.message, result.code)
+
+        return result.status_ok
 
     def thumbs_up(self, track_token):
-        self.client.add_feedback(track_token, True)
+        return self.client.add_feedback(track_token, True)
 
     def thumbs_down(self, track_token):
-        self.client.add_feedback(track_token, False)
+        return self.client.add_feedback(track_token, False)
 
     def sleep(self, track_token):
-        self.client.sleep_song(track_token)
+        return self.client.sleep_song(track_token)
 
     def add_artist_bookmark(self, track_token):
-        self.client.add_artist_bookmark(track_token)
+        return self.client.add_artist_bookmark(track_token)
 
     def add_song_bookmark(self, track_token):
-        self.client.add_song_bookmark(track_token)
+        return self.client.add_song_bookmark(track_token)

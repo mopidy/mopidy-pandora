@@ -39,3 +39,32 @@ class MopidyPandoraAPIClient(pandora.APIClient):
         except TypeError:
             # Could not find station_id in cached list, try retrieving from Pandora server.
             return super(MopidyPandoraAPIClient, self).get_station(station_id)
+
+
+class PandoraResult(object):
+
+    """Object for storing results of API calls for easy reference"""
+
+    def __init__(self, result):
+
+        self._raw_result = result
+        self.status_ok = False
+        self.message = ""
+        self.code = 0000
+
+        if str(result['stat']).upper() == 'OK':
+            self.status_ok = True
+        else:
+            self.status_ok = False
+
+        try:
+            self.message = result['message']
+        except KeyError as e:
+            if not self.status_ok:
+                raise e
+
+        try:
+            self.code = result['code']
+        except KeyError as e:
+            if not self.status_ok:
+                raise e

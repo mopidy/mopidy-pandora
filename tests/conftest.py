@@ -80,6 +80,25 @@ def get_backend(config, simulate_request_exceptions=False):
 
 
 @pytest.fixture(scope="session")
+def success_result_mock():
+    mock_result = {"stat": "ok",
+                   "result": {}
+                   }
+
+    return mock_result
+
+
+@pytest.fixture(scope="session")
+def fail_result_mock():
+    mock_result = {"stat": "fail",
+                   "message": "An unexpected error occurred",
+                   "code": 9999
+                   }
+
+    return mock_result
+
+
+@pytest.fixture(scope="session")
 def station_result_mock():
     mock_result = {"stat": "ok",
                    "result":
@@ -90,12 +109,12 @@ def station_result_mock():
                         "stationName": MOCK_STATION_NAME},
                    }
 
-    return mock_result["result"]
+    return mock_result
 
 
 @pytest.fixture(scope="session")
 def station_mock(simulate_request_exceptions=False):
-    return Station.from_json(get_backend(config(), simulate_request_exceptions).api, station_result_mock())
+    return Station.from_json(get_backend(config(), simulate_request_exceptions).api, station_result_mock()["result"])
 
 
 @pytest.fixture(scope="session")
@@ -138,12 +157,12 @@ def playlist_result_mock():
                                  "stationId": MOCK_STATION_ID,
                                  "songRating": 0, }]}}
 
-    return mock_result["result"]
+    return mock_result
 
 
 @pytest.fixture(scope="session")
 def playlist_mock(simulate_request_exceptions=False):
-    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock())
+    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock()["result"])
 
 
 @pytest.fixture(scope="session")
@@ -159,7 +178,7 @@ def get_station_playlist_mock(self):
 @pytest.fixture(scope="session")
 def playlist_item_mock():
     return PlaylistItem.from_json(get_backend(
-        config()).api, playlist_result_mock()["items"][0])
+        config()).api, playlist_result_mock()["result"]["items"][0])
 
 
 @pytest.fixture(scope="session")

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import threading
+import time
 
 import conftest
 
@@ -141,7 +142,7 @@ def test_change_track(audio_mock, provider):
                 assert audio_mock.prepare_change.call_count == 0
                 assert audio_mock.start_playback.call_count == 0
                 audio_mock.set_uri.assert_called_once_with(PlaylistItem.get_audio_url(
-                    conftest.playlist_result_mock()["items"][0],
+                    conftest.playlist_result_mock()["result"]["items"][0],
                     conftest.MOCK_DEFAULT_AUDIO_QUALITY))
 
 
@@ -195,7 +196,7 @@ def test_change_track_resumes_playback(provider, playlist_item_mock):
             assert False
 
 
-def test_change_track_does_not_resume_playback_if_not_doubleclick(provider, playlist_item_mock):
+def test_change_track_does_not_resume_playback_if_not_doubleclick(config, provider, playlist_item_mock):
     with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
         with mock.patch.object(RPCClient, 'resume_playback') as mock_rpc:
             assert provider.backend.supports_events
@@ -212,8 +213,39 @@ def test_change_track_does_not_resume_playback_if_not_doubleclick(provider, play
 
             process_click_mock = mock.PropertyMock()
 
+            click_interval = float(config['pandora']['double_click_interval']) + 1.0
+
             provider._double_click_handler.process_click = process_click_mock
-            provider._double_click_handler.set_click_time(0)
+            provider._double_click_handler.set_click_time(time.time() - click_interval)
+            provider.active_track_uri = track_0
+            provider.change_track(models.Track(uri=track_1))
+
+        if event.wait(timeout=1.0):
+            assert False
+        else:
+            assert not mock_rpc.called
+
+
+def test_change_track_does_not_resume_playback_if_event_failed(provider, playlist_item_mock):
+    with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
+        with mock.patch.object(RPCClient, 'resume_playback') as mock_rpc:
+            assert provider.backend.supports_events
+
+            event = threading.Event()
+
+            def set_event():
+                event.set()
+
+            mock_rpc.side_effect = set_event
+
+            track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
+            track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
+
+            process_click_mock = mock.PropertyMock()
+            process_click_mock.return_value = False
+
+            provider._double_click_handler.process_click = process_click_mock
+            provider._double_click_handler.set_click_time()
             provider.active_track_uri = track_0
             provider.change_track(models.Track(uri=track_1))
 
@@ -237,53 +269,6 @@ def test_translate_uri_returns_audio_url(provider):
     assert provider.translate_uri("pandora:track:test:::::audio_url") == "audio_url"
 
 
-def test_auto_setup_off_for_non_pandora_uri(provider):
-    with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
-                             set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
-        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="not_a_pandora_uri::::::"):
-
-            event = threading.Event()
-
-            def set_event(*args, **kwargs):
-                event.set()
-
-            values['set_single'].side_effect = set_event
-
-            provider.prepare_change()
-
-            if event.wait(timeout=5.0):
-                assert False
-            else:
-                assert not values['set_repeat'].called
-                assert not values['set_random'].called
-                assert not values['set_consume'].called
-                assert not values['set_single'].called
-
-
-def test_auto_setup_on_for_pandora_uri(provider):
-    with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
-                             set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
-
-        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="pandora::::::"):
-
-            event = threading.Event()
-
-            def set_event(*args, **kwargs):
-                event.set()
-
-            values['set_single'].side_effect = set_event
-
-            provider.prepare_change()
-
-            if event.wait(timeout=5.0):
-                values['set_repeat'].assert_called_once_with()
-                values['set_random'].assert_called_once_with(False)
-                values['set_consume'].assert_called_once_with(False)
-                values['set_single'].assert_called_once_with(False)
-            else:
-                assert False
-
-
 def test_auto_setup_only_called_once(provider):
     with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
                              set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
@@ -304,38 +289,5 @@ def test_auto_setup_only_called_once(provider):
                 values['set_random'].assert_called_once_with(False)
                 values['set_consume'].assert_called_once_with(False)
                 values['set_single'].assert_called_once_with(False)
-            else:
-                assert False
-
-
-def test_auto_setup_resets_for_non_pandora_tracks(provider):
-    with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
-                             set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
-        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="pandora::::::"):
-
-            event = threading.Event()
-
-            def set_event(*args, **kwargs):
-                event.set()
-
-            values['set_single'].side_effect = set_event
-
-            provider.prepare_change()
-
-            if event.wait(timeout=5.0):
-                values['set_repeat'].assert_called_once_with()
-                values['set_random'].assert_called_once_with(False)
-                values['set_consume'].assert_called_once_with(False)
-                values['set_single'].assert_called_once_with(False)
-                assert not provider.backend.auto_setup
-            else:
-                assert False
-
-            provider.backend.rpc_client.get_current_track_uri = mock.Mock(return_value="not_a_pandora_uri::::::")
-
-            provider.prepare_change()
-
-            if event.wait(timeout=1.0):
-                assert provider.backend.auto_setup is True
             else:
                 assert False

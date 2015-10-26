@@ -1,4 +1,4 @@
-from mopidy import backend
+from mopidy import backend, core
 from mopidy.internal import encoding
 
 from pandora import BaseAPIClient, clientbuilder
@@ -15,7 +15,7 @@ from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybac
 from mopidy_pandora.uri import logger
 
 
-class PandoraBackend(pykka.ThreadingActor, backend.Backend):
+class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener):
 
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
@@ -33,7 +33,9 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
 
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
 
-        self.reset_auto_setup()
+        self.auto_setup = self._config['auto_setup']
+        self.setup_required = self.auto_setup
+
         self.rpc_client = rpc.RPCClient(config['http']['hostname'], config['http']['port'])
 
         self.supports_events = False
@@ -51,6 +53,5 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend):
         except requests.exceptions.RequestException as e:
             logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
 
-    def reset_auto_setup(self):
-        self.auto_setup = self._config['auto_setup']
-        return self.auto_setup
+    def tracklist_changed(self):
+        self.setup_required = self.auto_setup

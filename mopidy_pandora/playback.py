@@ -28,23 +28,17 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def _auto_setup(self):
 
-        uri = self.backend.rpc_client.get_current_track_uri()
+        self.backend.rpc_client.set_repeat()
+        self.backend.rpc_client.set_consume(False)
+        self.backend.rpc_client.set_random(False)
+        self.backend.rpc_client.set_single(False)
 
-        # Make sure that tracks are being played in 'repeat mode'.
-        if uri is not None and uri.startswith("pandora:"):
-            if self.backend.auto_setup:
-                self.backend.rpc_client.set_repeat()
-                self.backend.rpc_client.set_consume(False)
-                self.backend.rpc_client.set_random(False)
-                self.backend.rpc_client.set_single(False)
-                self.backend.auto_setup = False
-
-        else:
-            self.backend.reset_auto_setup()
+        self.backend.setup_required = False
 
     def prepare_change(self):
 
-        Thread(target=self._auto_setup).start()
+        if self.backend.auto_setup and self.backend.setup_required:
+            Thread(target=self._auto_setup).start()
 
         super(PandoraPlaybackProvider, self).prepare_change()
 
