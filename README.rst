@@ -111,8 +111,8 @@ v0.1.6 (UNRELEASED)
 ----------------------------------------
 
 - Fix to resume playback after a track has been rated.
-- Changed auto_setup routines to also ensure that 'random' and 'consome' modes are disabled.
-- Optimized auto_setup routines: now only called once and only when the first pandora track starts to play.
+- Changed auto_setup routines to also ensure that 'consume', 'shuffle', and 'single' modes are disabled.
+- Optimized auto_setup routines: now only called once, and only when the first pandora track starts to play.
 
 v0.1.5 (UNRELEASED)
 ----------------------------------------
