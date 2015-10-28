@@ -284,12 +284,24 @@ def test_auto_setup_only_called_once(provider):
             values['set_single'].side_effect = set_event
 
             provider.prepare_change()
-            provider.prepare_change()
 
-            if event.wait(timeout=5.0):
+            if event.wait(timeout=1.0):
                 values['set_repeat'].assert_called_once_with()
                 values['set_random'].assert_called_once_with(False)
                 values['set_consume'].assert_called_once_with(False)
                 values['set_single'].assert_called_once_with(False)
             else:
                 assert False
+
+            event = threading.Event()
+            values['set_single'].side_effect = set_event
+
+            provider.prepare_change()
+
+            if event.wait(timeout=1.0):
+                assert False
+            else:
+                values['set_repeat'].assert_called_once_with()
+                values['set_random'].assert_called_once_with(False)
+                values['set_consume'].assert_called_once_with(False)
+                values['set_single'].assert_called_once_with(False)
