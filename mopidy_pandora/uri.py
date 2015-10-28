@@ -1,6 +1,7 @@
 import logging
 import urllib
 
+from pandora.models.pandora import AdItem, PlaylistItem
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,14 @@ class TrackUri(StationUri):
 
     @classmethod
     def from_track(cls, track, index=0):
-        return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
-                        track.album_art_url, track.ad_token, track.audio_url, index)
+
+        if isinstance(track, PlaylistItem):
+            return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
+                            track.album_art_url, track.ad_token, track.audio_url, index)
+        elif isinstance(track, AdItem):
+            return TrackUri("", "", track.title, "", "", "", track.audio_url, index)
+        else:
+            raise NotImplementedError("Track type not supported")
 
     @property
     def uri(self):

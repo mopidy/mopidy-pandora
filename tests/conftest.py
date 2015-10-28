@@ -4,7 +4,7 @@ import json
 
 from mock import Mock
 
-from pandora.models.pandora import Playlist, PlaylistItem, Station, StationList
+from pandora.models.pandora import AdItem, Playlist, PlaylistItem, Station, StationList
 
 import pytest
 
@@ -107,7 +107,6 @@ def get_station_mock(self, station_token):
 
 @pytest.fixture(scope="session")
 def playlist_result_mock():
-    # TODO: Test inclusion of add tokens
     mock_result = {"stat": "ok",
                    "result": dict(items=[{
                        "trackToken": MOCK_TRACK_TOKEN,
@@ -138,8 +137,44 @@ def playlist_result_mock():
                        "songDetailUrl": MOCK_TRACK_DETAIL_URL,
                        "stationId": MOCK_STATION_ID,
                        "songRating": 0,
-                       "adToken": "",
+                       "adToken": None,
                    }])}
+
+    return mock_result
+
+
+@pytest.fixture(scope="session")
+def ad_metadata_result_mock():
+    mock_result = {"stat": "ok",
+                   "result": {
+                       "title": MOCK_TRACK_TOKEN,
+                       "companyName": "Mock Company Name",
+                       "audioUrlMap": {
+                           "highQuality": {
+                               "bitrate": "64",
+                               "encoding": "aacplus",
+                               "audioUrl": MOCK_TRACK_AUDIO_HIGH,
+                               "protocol": "http"
+                           },
+                           "mediumQuality": {
+                               "bitrate": "64",
+                               "encoding": "aacplus",
+                               "audioUrl": MOCK_TRACK_AUDIO_MED,
+                               "protocol": "http"
+                           },
+                           "lowQuality": {
+                               "bitrate": "32",
+                               "encoding": "aacplus",
+                               "audioUrl": MOCK_TRACK_AUDIO_LOW,
+                               "protocol": "http"
+                           }
+                       },
+                       "adTrackingTokens": {
+                           MOCK_TRACK_AD_TOKEN,
+                           MOCK_TRACK_AD_TOKEN,
+                           MOCK_TRACK_AD_TOKEN
+                       },
+                   }}
 
     return mock_result
 
@@ -163,6 +198,12 @@ def get_station_playlist_mock(self):
 def playlist_item_mock():
     return PlaylistItem.from_json(get_backend(
         config()).api, playlist_result_mock()["result"]["items"][0])
+
+
+@pytest.fixture
+def ad_item_mock():
+    return AdItem.from_json(get_backend(
+        config()).api, ad_metadata_result_mock()["result"])
 
 
 @pytest.fixture(scope="session")

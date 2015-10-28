@@ -67,14 +67,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         for track in self._station_iter:
             try:
-                if not track.audio_url and track.ad_token and self.backend.play_ads:
-                    data = self.backend.api.get_ad_metadata(track.ad_token)
-                    track.audio_url = track.get_audio_url(data, self.backend.api.default_audio_quality)
-
-                    track.song_name = data['title']
-                    track.artist_name = data['companyName']
-
-                    self.backend.api.register_ad(self._station.id, data['adTrackingTokens'])
+                if track.is_ad and self.backend.play_ads:
+                    track = self.backend.api.get_ad_item(track.ad_token)
+                    track.register_ad(self._station.id)
 
                 is_playable = track.audio_url and track.get_is_playable()
             except requests.exceptions.RequestException as e:
@@ -83,7 +78,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
             if is_playable:
                 self.active_track_uri = TrackUri.from_track(track, index).uri
-                if track.ad_token is not None and len(track.ad_token) > 0:
+                if track.is_ad:
                     logger.info("Up next: Advertisement")
                 else:
                     logger.info("Up next: '%s' by %s", track.song_name, track.artist_name)
