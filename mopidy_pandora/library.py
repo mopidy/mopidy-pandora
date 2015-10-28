@@ -32,7 +32,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 tracks.append(models.Ref.track(name=pandora_uri.name,
                                                uri=TrackUri(pandora_uri.station_id, pandora_uri.token, pandora_uri.name,
                                                             pandora_uri.detail_url, pandora_uri.art_url,
-                                                            index=str(i)).uri))
+                                                            pandora_uri.ad_token, index=str(i)).uri))
 
             return tracks
 

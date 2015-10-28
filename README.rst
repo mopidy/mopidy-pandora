@@ -51,6 +51,7 @@ Mopidy-Pandora to your Mopidy configuration file::
     password =
     sort_order = date
     auto_setup = true
+    ad_support = true
 
     ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
     event_support_enabled = false
@@ -110,6 +111,7 @@ Changelog
 v0.1.7 (UNRELEASED)
 ----------------------------------------
 
+- Add support for playing advertisements. This should prevent free Pandora accounts from locking up.
 - Configuration parameter 'auto_set_repeat' has been renamed to 'auto_setup' - please update your Mopidy configuration file.
 - Now resumes playback after a track has been rated.
 - Enhanced auto_setup routines to ensure that 'consume', 'shuffle', and 'single' modes are disabled as well.

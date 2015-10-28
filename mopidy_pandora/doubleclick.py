@@ -68,6 +68,11 @@ class DoubleClickHandler(object):
         self.set_click_time(0)
 
         uri = PandoraUri.parse(track_uri)
+
+        if uri.ad_token is not None and len(uri.ad_token) > 0:
+            logger.info("Skipping event for advertisement")
+            return True
+
         logger.info("Triggering event '%s' for song: %s", method, uri.name)
 
         func = getattr(self, method)
