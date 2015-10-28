@@ -69,7 +69,7 @@ class DoubleClickHandler(object):
 
         uri = PandoraUri.parse(track_uri)
 
-        if uri.ad_token is not None and len(uri.ad_token) > 0:
+        if uri.token == "":
             logger.info("Skipping event for advertisement")
             return True
 

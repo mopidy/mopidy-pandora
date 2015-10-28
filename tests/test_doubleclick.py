@@ -121,15 +121,13 @@ def test_process_click_resets_click_time(config, handler, playlist_item_mock):
     assert handler.get_click_time() == 0
 
 
-def test_events_not_processed_for_ads(config, handler, playlist_item_mock):
-
-    playlist_item_mock.ad_token = conftest.MOCK_TRACK_AD_TOKEN
+def test_events_not_processed_for_ads(config, handler, ad_item_mock):
 
     thumbs_up_mock = mock.PropertyMock()
 
     handler.thumbs_up = thumbs_up_mock
 
-    track_uri = TrackUri.from_track(playlist_item_mock).uri
+    track_uri = TrackUri.from_track(ad_item_mock).uri
 
     handler.process_click(config['pandora']['on_pause_resume_click'], track_uri)
 

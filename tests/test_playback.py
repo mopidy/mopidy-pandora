@@ -152,7 +152,7 @@ def test_change_track_enforces_skip_limit(provider):
     with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
             with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=False):
-                track = models.Track(uri="pandora:track:test:::::")
+                track = models.Track(uri="pandora:track:test::::")
 
                 assert provider.change_track(track) is False
                 assert PlaylistItem.get_is_playable.call_count == 4
@@ -161,7 +161,7 @@ def test_change_track_enforces_skip_limit(provider):
 def test_change_track_handles_request_exceptions(config, caplog):
     with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.request_exception_mock):
-            track = models.Track(uri="pandora:track:test:::::")
+            track = models.Track(uri="pandora:track:test::::")
 
             playback = conftest.get_backend(config).playback
 
@@ -261,14 +261,14 @@ def test_is_playable_handles_request_exceptions(provider, caplog):
     with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
             with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.request_exception_mock):
-                track = models.Track(uri="pandora:track:test:::::")
+                track = models.Track(uri="pandora:track:test::::")
 
                 assert provider.change_track(track) is False
                 assert 'Error checking if track is playable' in caplog.text()
 
 
 def test_translate_uri_returns_audio_url(provider):
-    assert provider.translate_uri("pandora:track:test::::::audio_url") == "audio_url"
+    assert provider.translate_uri("pandora:track:test:::::audio_url") == "audio_url"
 
 
 def test_auto_setup_only_called_once(provider):

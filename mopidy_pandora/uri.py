@@ -1,7 +1,6 @@
 import logging
 import urllib
 
-from pandora.models.pandora import AdItem, PlaylistItem
 
 logger = logging.getLogger(__name__)
 
@@ -74,29 +73,24 @@ class StationUri(PandoraUri):
 class TrackUri(StationUri):
     scheme = 'track'
 
-    def __init__(self, station_id, track_token, name, detail_url, art_url, ad_token, audio_url='none_generated',
-                 index=0):
+    def __init__(self, station_id, track_token, name, detail_url, art_url, audio_url='none_generated', index=0):
         super(TrackUri, self).__init__(station_id, track_token, name, detail_url, art_url)
-        self.ad_token = ad_token
         self.audio_url = audio_url
         self.index = index
 
     @classmethod
     def from_track(cls, track, index=0):
 
-        if isinstance(track, PlaylistItem):
+        if not track.is_ad:
             return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
-                            track.album_art_url, track.ad_token, track.audio_url, index)
-        elif isinstance(track, AdItem):
-            return TrackUri("", "", track.title, "", "", "", track.audio_url, index)
+                            track.album_art_url, track.audio_url, index)
         else:
-            raise NotImplementedError("Track type not supported")
+            return TrackUri(None, None, track.title, None, None, track.audio_url, index)
 
     @property
     def uri(self):
-        return "{}:{}:{}:{}".format(
+        return "{}:{}:{}".format(
             super(TrackUri, self).uri,
-            self.quote(self.ad_token),
             self.quote(self.audio_url),
             self.quote(self.index),
         )
