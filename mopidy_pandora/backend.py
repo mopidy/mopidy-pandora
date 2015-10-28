@@ -45,6 +45,8 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener):
         else:
             self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
+        self.play_ads = self._config['ad_support_enabled']
+
         self.uri_schemes = ['pandora']
 
     def on_start(self):

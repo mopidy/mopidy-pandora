@@ -67,7 +67,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         for track in self._station_iter:
             try:
-                if not track.audio_url and track.ad_token:
+                if not track.audio_url and track.ad_token and self.backend.play_ads:
                     data = self.backend.api.get_ad_metadata(track.ad_token)
                     track.audio_url = track.get_audio_url(data, self.backend.api.default_audio_quality)
 
