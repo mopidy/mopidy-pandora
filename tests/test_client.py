@@ -11,8 +11,6 @@ from pandora.models.pandora import StationList
 
 import pytest
 
-from mopidy_pandora.client import PandoraResult
-
 from tests.conftest import get_backend
 from tests.conftest import get_station_list_mock
 
@@ -93,37 +91,3 @@ def test_get_invalid_station(config):
             backend = get_backend(config)
 
             backend.api.get_station("9999999999999999999")
-
-
-def test_pandora_result_success():
-
-    result = PandoraResult(conftest.success_result_mock())
-    assert result.status_ok is True
-
-
-def test_pandora_result_fail():
-
-    result = PandoraResult(conftest.fail_result_mock())
-    assert result.status_ok is False
-    assert result.message == "An unexpected error occurred"
-    assert result.code == 9999
-
-
-def test_pandora_result_no_message_raises_exception():
-    with pytest.raises(KeyError):
-
-        inconsitent_result_mock_no_message = {"stat": "fail",
-                                              "code": 9999
-                                              }
-
-        PandoraResult(inconsitent_result_mock_no_message)
-
-
-def test_pandora_result_no_code_raises_exception():
-    with pytest.raises(KeyError):
-
-        inconsitent_result_mock_no_code = {"stat": "fail",
-                                           "message": "An unexpected error occurred",
-                                           }
-
-        PandoraResult(inconsitent_result_mock_no_code)

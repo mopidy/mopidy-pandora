@@ -9,6 +9,8 @@ import mock
 
 from mopidy import audio, backend as backend_api, models
 
+from pandora.errors import PandoraException
+
 from pandora.models.pandora import PlaylistItem, Station
 
 import pytest
@@ -241,10 +243,10 @@ def test_change_track_does_not_resume_playback_if_event_failed(provider, playlis
             track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
             track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
 
-            process_click_mock = mock.PropertyMock()
-            process_click_mock.return_value = False
+            e = PandoraException().from_code(0000, "Mock exception")
+            provider._double_click_handler.thumbs_down = mock.Mock()
+            provider._double_click_handler.thumbs_down.side_effect = e
 
-            provider._double_click_handler.process_click = process_click_mock
             provider._double_click_handler.set_click_time()
             provider.active_track_uri = track_0
             provider.change_track(models.Track(uri=track_1))

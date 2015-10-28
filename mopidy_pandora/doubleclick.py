@@ -2,7 +2,10 @@ import logging
 
 import time
 
-from mopidy_pandora.client import PandoraResult
+from mopidy.internal import encoding
+
+from pandora.errors import PandoraException
+
 from mopidy_pandora.library import PandoraUri
 
 logger = logging.getLogger(__name__)
@@ -66,13 +69,16 @@ class DoubleClickHandler(object):
 
         uri = PandoraUri.parse(track_uri)
         logger.info("Triggering event '%s' for song: %s", method, uri.name)
+
         func = getattr(self, method)
-        result = PandoraResult(func(uri.token))
 
-        if not result.status_ok:
-            logger.error('Error calling event: %s (code %s)', result.message, result.code)
+        try:
+            func(uri.token)
+        except PandoraException as e:
+            logger.error('Error calling event: %s', encoding.locale_decode(e))
+            return False
 
-        return result.status_ok
+        return True
 
     def thumbs_up(self, track_token):
         return self.client.add_feedback(track_token, True)
