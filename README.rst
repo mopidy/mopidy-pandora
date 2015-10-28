@@ -51,7 +51,7 @@ Mopidy-Pandora to your Mopidy configuration file::
     password =
     sort_order = date
     auto_setup = true
-    ad_support = true
+    ad_support_enabled = true
 
     ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
     event_support_enabled = false

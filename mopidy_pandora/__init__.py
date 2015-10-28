@@ -45,7 +45,7 @@ class Extension(ext.Extension):
         schema['on_pause_resume_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
         schema['on_pause_next_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
         schema['on_pause_previous_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['ad_support'] = config.Boolean()
+        schema['ad_support_enabled'] = config.Boolean()
         return schema
 
     def setup(self, registry):
