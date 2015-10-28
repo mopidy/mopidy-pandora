@@ -111,9 +111,9 @@ v0.1.7 (UNRELEASED)
 ----------------------------------------
 
 - Configuration parameter 'auto_set_repeat' has been renamed to 'auto_setup' - please update your Mopidy configuration file.
-- Fix to resume playback after a track has been rated.
-- Changed auto_setup routines to also ensure that 'consume', 'shuffle', and 'single' modes are disabled.
-- Optimized auto_setup routines: now only called once, and only when the first pandora track starts to play.
+- Now resumes playback after a track has been rated.
+- Enhanced auto_setup routines to ensure that 'consume', 'shuffle', and 'single' modes are disabled as well.
+- Optimized auto_setup routines: now only called when the Mopidy tracklist changes.
 
 v0.1.6 (Oct 26, 2015)
 ----------------------------------------

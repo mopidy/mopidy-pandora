@@ -80,25 +80,6 @@ def get_backend(config, simulate_request_exceptions=False):
 
 
 @pytest.fixture(scope="session")
-def success_result_mock():
-    mock_result = {"stat": "ok",
-                   "result": {}
-                   }
-
-    return mock_result
-
-
-@pytest.fixture(scope="session")
-def fail_result_mock():
-    mock_result = {"stat": "fail",
-                   "message": "An unexpected error occurred",
-                   "code": 9999
-                   }
-
-    return mock_result
-
-
-@pytest.fixture(scope="session")
 def station_result_mock():
     mock_result = {"stat": "ok",
                    "result":
