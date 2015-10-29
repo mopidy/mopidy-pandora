@@ -126,3 +126,16 @@ def test_track_uri_parse(playlist_item_mock):
     assert obj.audio_url == conftest.MOCK_TRACK_AUDIO_HIGH
 
     assert obj.uri == track_uri.uri
+
+
+def test_track_uri_is_ad(playlist_item_mock, ad_item_mock):
+
+    track_uri = TrackUri.from_track(ad_item_mock)
+    obj = TrackUri.parse(track_uri.uri)
+
+    assert obj.is_ad()
+
+    track_uri = TrackUri.from_track(playlist_item_mock)
+    obj = TrackUri.parse(track_uri.uri)
+
+    assert not obj.is_ad()

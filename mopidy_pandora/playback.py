@@ -72,10 +72,12 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         for track in self._station_iter:
             try:
                 track = self.process_track(track)
+
                 if track is None:
                     return None
 
                 is_playable = track.audio_url and track.get_is_playable()
+
             except requests.exceptions.RequestException as e:
                 is_playable = False
                 logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
@@ -102,6 +104,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def process_track(self, track):
         if track.is_ad:
             track = self.process_ad(track)
+
         return track
 
     def process_ad(self, track):

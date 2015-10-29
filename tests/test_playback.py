@@ -11,7 +11,7 @@ from mopidy import audio, backend as backend_api, models
 
 from pandora.errors import PandoraException
 
-from pandora.models.pandora import PlaylistItem, PlaylistModel, Station
+from pandora.models.pandora import AdItem, PlaylistItem, PlaylistModel, Station
 
 import pytest
 
@@ -162,6 +162,20 @@ def test_change_track_skip_ads(caplog, provider):
                         assert provider.change_track(track) is False
                         # Check that skipping of ads is caught and logged
                         assert 'Skipping advertisement...' in caplog.text()
+
+
+def test_change_track_processes_ads(provider):
+    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
+            with mock.patch.object(PlaylistModel, 'get_is_playable', return_value=True):
+                with mock.patch.object(MopidyPandoraAPIClient, 'get_ad_item', conftest.get_ad_item_mock):
+                    with mock.patch.object(AdItem, 'register_ad', mock.Mock()) as mock_register:
+                        track = models.Track(uri=TrackUri.from_track(conftest.ad_item_mock()).uri)
+
+                        assert provider.change_track(track) is True
+                        assert provider.change_track(track) is True
+                        # Check that ads are registered
+                        mock_register.assert_called_once_with(conftest.MOCK_STATION_ID)
 
 
 def test_change_track_enforces_skip_limit(provider):
