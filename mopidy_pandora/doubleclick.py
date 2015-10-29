@@ -49,6 +49,8 @@ class DoubleClickHandler(object):
             new_track_index = int(PandoraUri.parse(new_track_uri).index)
             active_track_index = int(PandoraUri.parse(active_track_uri).index)
 
+            # TODO: the order of the tracks will no longer be sequential if the user has 'shuffled' the tracklist
+            # Need to find a better approach for determining whether 'next' or 'previous' was clicked.
             if new_track_index > active_track_index or new_track_index == 0 and active_track_index == 2:
                 return self.process_click(self.on_pause_next_click, active_track_uri)
 
