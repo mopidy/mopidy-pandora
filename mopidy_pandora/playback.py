@@ -13,6 +13,8 @@ from mopidy_pandora.uri import PandoraUri, TrackUri, logger
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
+    SKIP_LIMIT = 3
+
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
         self._station = None
@@ -22,7 +24,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # TODO: add gapless playback when it is supported in Mopidy > 1.1
         # self.audio.set_about_to_finish_callback(self.callback).get()
 
-    # def callback(self):
+        # def callback(self):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
@@ -47,14 +49,16 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             return False
 
+        track_uri = TrackUri.parse(track.uri)
+
         station_id = PandoraUri.parse(track.uri).station_id
 
-        if not self._station or station_id != self._station.id:
+        if not self._station or (station_id != self._station.id and not track_uri.is_ad()):
             self._station = self.backend.api.get_station(station_id)
             self._station_iter = iterate_forever(self._station.get_playlist)
 
         try:
-            next_track = self.get_next_track(TrackUri.parse(track.uri).index)
+            next_track = self.get_next_track(track_uri.index)
             if next_track:
                 return super(PandoraPlaybackProvider, self).change_track(next_track)
         except requests.exceptions.RequestException as e:
@@ -67,9 +71,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         for track in self._station_iter:
             try:
-                if track.is_ad and self.backend.play_ads:
-                    track = self.backend.api.get_ad_item(track.ad_token)
-                    track.register_ad(self._station.id)
+                track = self.process_track(track)
+                if track is None:
+                    return None
 
                 is_playable = track.audio_url and track.get_is_playable()
             except requests.exceptions.RequestException as e:
@@ -86,7 +90,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             else:
                 consecutive_track_skips += 1
                 logger.warning("Track with uri '%s' is not playable.", TrackUri.from_track(track).uri)
-                if consecutive_track_skips >= 4:
+                if consecutive_track_skips >= self.SKIP_LIMIT:
                     logger.error('Unplayable track skip limit exceeded!')
                     return None
 
@@ -94,6 +98,21 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def translate_uri(self, uri):
         return PandoraUri.parse(uri).audio_url
+
+    def process_track(self, track):
+        if track.is_ad:
+            track = self.process_ad(track)
+        return track
+
+    def process_ad(self, track):
+        if self.backend.play_ads:
+            track = self.backend.api.get_ad_item(track.ad_token)
+            track.register_ad(self._station.id)
+        else:
+            logger.info('Skipping advertisement...')
+            return None
+
+        return track
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):

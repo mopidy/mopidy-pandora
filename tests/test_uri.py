@@ -97,6 +97,18 @@ def test_track_uri_from_track(playlist_item_mock):
         track_uri.quote(0)
 
 
+def test_track_uri_from_track_for_ads(ad_item_mock):
+
+    track_uri = TrackUri.from_track(ad_item_mock)
+
+    assert track_uri.uri == "pandora:" + \
+        track_uri.quote(conftest.MOCK_TRACK_SCHEME) + "::" + \
+        track_uri.quote(TrackUri.ADVERTISEMENT_TOKEN) + ":" + \
+        track_uri.quote(conftest.MOCK_TRACK_NAME) + ":::" + \
+        track_uri.quote(conftest.MOCK_TRACK_AUDIO_HIGH) + ":" + \
+        track_uri.quote(0)
+
+
 def test_track_uri_parse(playlist_item_mock):
 
     track_uri = TrackUri.from_track(playlist_item_mock)
