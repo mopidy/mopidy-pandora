@@ -86,7 +86,7 @@ Usage
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
 Mopidy-Pandora represents each Pandora station as a separate playlist. The Playlist needs to be played **in repeat mode**
-and **consume**, **shuffle**, and **single** should be turned off. Mopidy-Pandora will set this up automatically unless
+and **consume**, **random**, and **single** should be turned off. Mopidy-Pandora will set this up automatically unless
 you set the **auto_setup** config parameter to 'false'.
 
 Each time a track is played, the next dynamic track for that Pandora station will be played. The playlist will consist
@@ -112,7 +112,7 @@ v0.1.7 (UNRELEASED)
 
 - Configuration parameter 'auto_set_repeat' has been renamed to 'auto_setup' - please update your Mopidy configuration file.
 - Now resumes playback after a track has been rated.
-- Enhanced auto_setup routines to ensure that 'consume', 'shuffle', and 'single' modes are disabled as well.
+- Enhanced auto_setup routines to ensure that 'consume', 'random', and 'single' modes are disabled as well.
 - Optimized auto_setup routines: now only called when the Mopidy tracklist changes.
 
 v0.1.6 (Oct 26, 2015)
