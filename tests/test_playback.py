@@ -155,7 +155,7 @@ def test_change_track_enforces_skip_limit(provider):
                 track = models.Track(uri="pandora:track:test::::")
 
                 assert provider.change_track(track) is False
-                assert PlaylistItem.get_is_playable.call_count == 4
+                assert PlaylistItem.get_is_playable.call_count == PandoraPlaybackProvider.SKIP_LIMIT
 
 
 def test_change_track_handles_request_exceptions(config, caplog):

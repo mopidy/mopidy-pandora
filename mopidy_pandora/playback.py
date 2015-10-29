@@ -13,6 +13,8 @@ from mopidy_pandora.uri import PandoraUri, TrackUri, logger
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
+    SKIP_LIMIT = 3
+
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
         self._station = None
@@ -47,6 +49,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             return False
 
+        track_uri = TrackUri.parse(track.uri)
+
         station_id = PandoraUri.parse(track.uri).station_id
 
         if not self._station or station_id != self._station.id:
@@ -54,7 +58,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self._station_iter = iterate_forever(self._station.get_playlist)
 
         try:
-            next_track = self.get_next_track(TrackUri.parse(track.uri).index)
+            next_track = self.get_next_track(track_uri.index)
             if next_track:
                 return super(PandoraPlaybackProvider, self).change_track(next_track)
         except requests.exceptions.RequestException as e:
@@ -79,7 +83,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             else:
                 consecutive_track_skips += 1
                 logger.warning("Track with uri '%s' is not playable.", TrackUri.from_track(track).uri)
-                if consecutive_track_skips >= 4:
+                if consecutive_track_skips >= self.SKIP_LIMIT:
                     logger.error('Unplayable track skip limit exceeded!')
                     return None
 
