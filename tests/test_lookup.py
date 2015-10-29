@@ -103,8 +103,8 @@ def test_browse_track_uri(config, playlist_item_mock, caplog):
     assert TrackUri.parse(results[0].uri).index == str(0)
 
     # Track should not have an audio URL at this stage
-    assert TrackUri.parse(results[0].uri).audio_url == ""
+    assert TrackUri.parse(results[0].uri).audio_url == "none_generated"
 
     # Also clear reference track's audio URI so that we can compare more easily
-    track_uri.audio_url = ""
+    track_uri.audio_url = "none_generated"
     assert results[0].uri == track_uri.uri
