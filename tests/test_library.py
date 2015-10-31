@@ -41,6 +41,26 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     assert track.album.uri == track_uri.detail_url
     assert next(iter(track.album.images)) == track_uri.art_url
 
+# For now, ad tracks will appear exactly as normal tracks in the Mopidy tracklist.
+# This test should fail when dynamic tracklist support ever becomes available.
+def test_lookup_of_ad_track_uri(config, ad_item_mock):
+
+    backend = conftest.get_backend(config)
+
+    track_uri = TrackUri.from_track(ad_item_mock)
+    results = backend.library.lookup(track_uri.uri)
+
+    assert len(results) == 1
+
+    track = results[0]
+
+    assert track.name == track_uri.name
+    assert track.uri == track_uri.uri
+    assert next(iter(track.artists)).name == "Pandora"
+    assert track.album.name == track_uri.name
+    assert track.album.uri == track_uri.detail_url
+    assert next(iter(track.album.images)) == track_uri.art_url
+
 
 def test_browse_directory_uri(config, caplog):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):

@@ -87,7 +87,7 @@ class TrackUri(StationUri):
             return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
                             track.album_art_url, track.audio_url, index)
         elif isinstance(track, AdItem):
-            return TrackUri(None, cls.ADVERTISEMENT_TOKEN, track.title, None, None, track.audio_url, index)
+            return TrackUri('', cls.ADVERTISEMENT_TOKEN, track.title, '', '', track.audio_url, index)
         else:
             raise NotImplementedError("Unsupported playlist item type")
 

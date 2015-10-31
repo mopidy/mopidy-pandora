@@ -53,7 +53,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         station_id = PandoraUri.parse(track.uri).station_id
 
-        if not self._station or (station_id != self._station.id and not track_uri.is_ad()):
+        # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
+        # if not self._station or (not track.is_ad() and station_id != self._station.id):
+        if not self._station or (station_id != '' and station_id != self._station.id):
             self._station = self.backend.api.get_station(station_id)
             self._station_iter = iterate_forever(self._station.get_playlist)
 
@@ -113,7 +115,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             track.register_ad(self._station.id)
         else:
             logger.info('Skipping advertisement...')
-            return None
+            track = None
 
         return track
 

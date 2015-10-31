@@ -140,27 +140,36 @@ def playlist_result_mock():
                        "adToken": None, },
 
                        # Also add an advertisement to the playlist.
-                       {'trackToken': None, 'artistName': None, 'albumName': None, 'albumArtUrl': None, 'audioUrlMap': {
-                           "highQuality": {
-                               "bitrate": "64",
-                               "encoding": "aacplus",
-                               "audioUrl": MOCK_TRACK_AUDIO_HIGH,
-                               "protocol": "http"
+                       {
+                           'trackToken': None,
+                           'artistName': None,
+                           'albumName': None,
+                           'albumArtUrl': None,
+                           'audioUrlMap': {
+                               "highQuality": {
+                                   "bitrate": "64",
+                                   "encoding": "aacplus",
+                                   "audioUrl": MOCK_TRACK_AUDIO_HIGH,
+                                   "protocol": "http"
+                               },
+                               "mediumQuality": {
+                                   "bitrate": "64",
+                                   "encoding": "aacplus",
+                                   "audioUrl": MOCK_TRACK_AUDIO_MED,
+                                   "protocol": "http"
+                               },
+                               "lowQuality": {
+                                   "bitrate": "32",
+                                   "encoding": "aacplus",
+                                   "audioUrl": MOCK_TRACK_AUDIO_LOW,
+                                   "protocol": "http"
+                               }
                            },
-                           "mediumQuality": {
-                               "bitrate": "64",
-                               "encoding": "aacplus",
-                               "audioUrl": MOCK_TRACK_AUDIO_MED,
-                               "protocol": "http"
-                           },
-                           "lowQuality": {
-                               "bitrate": "32",
-                               "encoding": "aacplus",
-                               "audioUrl": MOCK_TRACK_AUDIO_LOW,
-                               "protocol": "http"
-                           }
-                       }, 'songName': None, 'songDetailUrl': None, 'stationId': None, 'songRating': None,
-                          'adToken': MOCK_TRACK_AD_TOKEN}
+                           'songName': None,
+                           'songDetailUrl': None,
+                           'stationId': None,
+                           'songRating': None,
+                           'adToken': MOCK_TRACK_AD_TOKEN}
                    ])}
 
     return mock_result
