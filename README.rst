@@ -108,10 +108,14 @@ Project resources
 Changelog
 =========
 
-v0.1.7 (UNRELEASED)
+v0.1.8 (UNRELEASED)
 ----------------------------------------
 
 - Add support for playing advertisements. This should prevent free Pandora accounts from locking up.
+
+v0.1.7 (Oct 31, 2015)
+----------------------------------------
+
 - Configuration parameter 'auto_set_repeat' has been renamed to 'auto_setup' - please update your Mopidy configuration file.
 - Now resumes playback after a track has been rated.
 - Enhanced auto_setup routines to ensure that 'consume', 'random', and 'single' modes are disabled as well.
