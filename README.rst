@@ -107,7 +107,7 @@ Project resources
 Changelog
 =========
 
-v0.1.7 (UNRELEASED)
+v0.1.7 (Oct 31, 2015)
 ----------------------------------------
 
 - Configuration parameter 'auto_set_repeat' has been renamed to 'auto_setup' - please update your Mopidy configuration file.
