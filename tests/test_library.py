@@ -41,6 +41,7 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     assert track.album.uri == track_uri.detail_url
     assert next(iter(track.album.images)) == track_uri.art_url
 
+
 # For now, ad tracks will appear exactly as normal tracks in the Mopidy tracklist.
 # This test should fail when dynamic tracklist support ever becomes available.
 def test_lookup_of_ad_track_uri(config, ad_item_mock):
