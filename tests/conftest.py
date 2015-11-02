@@ -52,7 +52,7 @@ def config():
             'password': 'doe',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
-            'auto_set_repeat': True,
+            'auto_setup': True,
 
             'event_support_enabled': True,
             'double_click_interval': '0.1',
@@ -65,6 +65,8 @@ def config():
 
 def get_backend(config, simulate_request_exceptions=False):
     obj = backend.PandoraBackend(config=config, audio=Mock())
+
+    obj.rpc_client._do_rpc = rpc_call_not_implemented_mock
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock
@@ -88,12 +90,12 @@ def station_result_mock():
                         "stationName": MOCK_STATION_NAME},
                    }
 
-    return mock_result["result"]
+    return mock_result
 
 
 @pytest.fixture(scope="session")
 def station_mock(simulate_request_exceptions=False):
-    return Station.from_json(get_backend(config(), simulate_request_exceptions).api, station_result_mock())
+    return Station.from_json(get_backend(config(), simulate_request_exceptions).api, station_result_mock()["result"])
 
 
 @pytest.fixture(scope="session")
@@ -136,12 +138,12 @@ def playlist_result_mock():
                                  "stationId": MOCK_STATION_ID,
                                  "songRating": 0, }]}}
 
-    return mock_result["result"]
+    return mock_result
 
 
 @pytest.fixture(scope="session")
 def playlist_mock(simulate_request_exceptions=False):
-    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock())
+    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock()["result"])
 
 
 @pytest.fixture(scope="session")
@@ -157,7 +159,7 @@ def get_station_playlist_mock(self):
 @pytest.fixture(scope="session")
 def playlist_item_mock():
     return PlaylistItem.from_json(get_backend(
-        config()).api, playlist_result_mock()["items"][0])
+        config()).api, playlist_result_mock()["result"]["items"][0])
 
 
 @pytest.fixture(scope="session")
@@ -190,4 +192,13 @@ def transport_call_not_implemented_mock(self, method, **data):
 
 
 class TransportCallTestNotImplemented(Exception):
+    pass
+
+
+@pytest.fixture
+def rpc_call_not_implemented_mock(method, params=None):
+    raise RPCCallTestNotImplemented(method + "(" + params + ")")
+
+
+class RPCCallTestNotImplemented(Exception):
     pass

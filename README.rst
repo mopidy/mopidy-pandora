@@ -50,7 +50,7 @@ Mopidy-Pandora to your Mopidy configuration file::
     username =
     password =
     sort_order = date
-    auto_set_repeat = true
+    auto_setup = true
 
     ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
     event_support_enabled = false
@@ -74,9 +74,9 @@ alphabetical order.
 and web extensions:
 
 - double_click_interval - successive button clicks that occur within this interval (in seconds) will trigger the event.
-- on_pause_resume_click - click pause and then play while a song is playing to trigger the event. Song continues afterwards.
-- on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song. You will have to click play again for the next song to start :(
-- on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song. You will have to click play again for the next song to start :(
+- on_pause_resume_click - click pause and then play while a song is playing to trigger the event.
+- on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song.
+- on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song.
 
 The supported events are: thumbs_up, thumbs_down, sleep, add_artist_bookmark, add_song_bookmark
 
@@ -85,9 +85,9 @@ Usage
 
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
-Mopidy-Pandora represents each Pandora station as a separate playlist. The Playlist needs to be played **in repeat mode**,
-and Mopidy-Pandora will enable this automatically just before each track is changed unless you set the **auto_set_repeat**
-config parameter to 'false'.
+Mopidy-Pandora represents each Pandora station as a separate playlist. The Playlist needs to be played **in repeat mode**
+and **consume**, **random**, and **single** should be turned off. Mopidy-Pandora will set this up automatically unless
+you set the **auto_setup** config parameter to 'false'.
 
 Each time a track is played, the next dynamic track for that Pandora station will be played. The playlist will consist
 of a single track unless the experimental ratings support is enabled. With ratings support enabled, the playlist will
@@ -107,29 +107,37 @@ Project resources
 Changelog
 =========
 
+v0.1.7 (Oct 31, 2015)
+----------------------------------------
+
+- Configuration parameter 'auto_set_repeat' has been renamed to 'auto_setup' - please update your Mopidy configuration file.
+- Now resumes playback after a track has been rated.
+- Enhanced auto_setup routines to ensure that 'consume', 'random', and 'single' modes are disabled as well.
+- Optimized auto_setup routines: now only called when the Mopidy tracklist changes.
+
 v0.1.6 (Oct 26, 2015)
 ----------------------------------------
 
 - Release to pypi
 
-v0.1.5 (UNRELEASED)
+v0.1.5 (Aug 20, 2015)
 ----------------------------------------
 
-- Add option to automatically set tracks to play in repeat mode, using Mopidy's 'about-to-finish' callback.
+- Add option to automatically set tracks to play in repeat mode when Mopidy-Pandora starts.
 - Add experimental support for rating songs by re-using buttons available in the current front-end Mopidy extensions.
 - Audio quality now defaults to the highest setting.
 - Improved caching to revert to Pandora server if station cannot be found in the local cache.
 - Fix to retrieve stations by ID instead of token.
 - Add unit tests to increase test coverage.
 
-v0.1.4 (UNRELEASED)
+v0.1.4 (Aug 17, 2015)
 ----------------------------------------
 
 - Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the user's Pandora account.
 - Better handling of exceptions that occur in the backend to prevent Mopidy actor crashes.
 - Add support for unicode characters in station and track names.
 
-v0.1.3 (UNRELEASED)
+v0.1.3 (Jul 11, 2015)
 ----------------------------------------
 
 - Update to work with release of Mopidy version 1.0
@@ -138,19 +146,19 @@ v0.1.3 (UNRELEASED)
 - Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
 - Fill artist name to improve how tracks are displayed in various Mopidy front-end extensions.
 
-v0.1.2 (UNRELEASED)
+v0.1.2 (Jun 20, 2015)
 ----------------------------------------
 
 - Enhancement to handle 'Invalid Auth Token' exceptions when the Pandora session expires after long periods of
   inactivity. Allows Mopidy-Pandora to run indefinitely on dedicated music servers like the Pi MusicBox.
 - Add configuration option to sort stations alphabetically, instead of by date.
 
-v0.1.1 (UNRELEASED)
+v0.1.1 (Mar 22, 2015)
 ----------------------------------------
 
 - Added ability to make preferred audio quality user-configurable.
 
-v0.1.0 (UNRELEASED)
+v0.1.0 (Dec 28, 2014)
 ----------------------------------------
 
 - Initial release.

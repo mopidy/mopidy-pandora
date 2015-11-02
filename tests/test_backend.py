@@ -74,3 +74,14 @@ def test_on_start_handles_request_exception(config, caplog):
 
     # Check that request exceptions are caught and logged
     assert 'Error logging in to Pandora' in caplog.text()
+
+
+def test_auto_setup_resets_when_tracklist_changes(config):
+
+    backend = get_backend(config, True)
+
+    backend.setup_required = False
+
+    backend.tracklist_changed()
+
+    assert backend.setup_required
