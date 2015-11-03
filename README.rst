@@ -35,8 +35,7 @@ Or, if available, install the Debian/Ubuntu package from `apt.mopidy.com
 Configuration
 =============
 
-Before starting Mopidy, you must add configuration for
-Mopidy-Pandora to your Mopidy configuration file::
+Before starting Mopidy, you must add the configuration settings for Mopidy-Pandora to your Mopidy configuration file::
 
     [pandora]
     enabled = true
@@ -78,7 +77,7 @@ and web extensions:
 - on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song.
 - on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song.
 
-The supported events are: thumbs_up, thumbs_down, sleep, add_artist_bookmark, add_song_bookmark
+The supported events are: 'thumbs_up', 'thumbs_down', 'sleep', 'add_artist_bookmark', and 'add_song_bookmark'.
 
 Usage
 =====
@@ -89,11 +88,10 @@ Mopidy-Pandora represents each Pandora station as a separate playlist. The Playl
 and **consume**, **random**, and **single** should be turned off. Mopidy-Pandora will set this up automatically unless
 you set the **auto_setup** config parameter to 'false'.
 
-Each time a track is played, the next dynamic track for that Pandora station will be played. The playlist will consist
-of a single track unless the experimental ratings support is enabled. With ratings support enabled, the playlist will
-contain three tracks. These are just used to determine whether the user clicked on the 'previous' or 'next' playback
-buttons, and all three tracks point to the same dynamic track for that Pandora station (i.e. it does not matter which
-one you select to play).
+Each time a track is played, the next dynamic track for that Pandora station will be retrieved and played. If ratings
+support is enabled, Mopidy-Pandora will add three tracks to the playlist for each dynamic track. These are just used to
+determine whether the user clicked on the 'previous' or 'next' playback buttons, and all three tracks point to the same
+dynamic track for that Pandora station (i.e. it does not matter which one you select to play).
 
 
 Project resources
