@@ -16,10 +16,10 @@ class MopidyPandoraAPIClient(pandora.APIClient):
     """
 
     def __init__(self, transport, partner_user, partner_password, device,
-                 default_audio_quality=pandora.BaseAPIClient.MED_AUDIO_QUALITY, ad_support_enabled=True):
+                 default_audio_quality=pandora.BaseAPIClient.MED_AUDIO_QUALITY):
 
         super(MopidyPandoraAPIClient, self).__init__(transport, partner_user, partner_password, device,
-                                                     default_audio_quality, ad_support_enabled)
+                                                     default_audio_quality)
         self._station_list = []
 
     def get_station_list(self):

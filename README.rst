@@ -111,7 +111,7 @@ Changelog
 v0.1.8 (UNRELEASED)
 ----------------------------------------
 
-- Add support for playing advertisements. This should prevent free Pandora accounts from locking up.
+- Add support for handling advertisements which was introduced in version 1.6 of the pydora API.
 
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------
