@@ -110,7 +110,7 @@ v0.1.8 (UNRELEASED)
 ----------------------------------------
 
 - Add support for handling advertisements which was introduced in version 1.6 of the pydora API.
-- Enforce Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
+- Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
 
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------
