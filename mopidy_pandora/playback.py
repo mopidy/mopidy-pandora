@@ -88,11 +88,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 return models.Track(uri=self.active_track_uri)
             else:
                 logger.warning("Audio URI for track '%s' cannot be played.", TrackUri.from_track(track).uri)
-                if self.increment_skip_exceeds_limit():
+                if self._increment_skip_exceeds_limit():
                     return None
 
         logger.warning("No tracks left in playlist")
-        if self.increment_skip_exceeds_limit():
+        if self._increment_skip_exceeds_limit():
             return None
 
         return None
@@ -100,12 +100,12 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def translate_uri(self, uri):
         return PandoraUri.parse(uri).audio_url
 
-    def increment_skip_exceeds_limit(self):
+    def _increment_skip_exceeds_limit(self):
         self.consecutive_track_skips += 1
 
         if self.consecutive_track_skips >= self.SKIP_LIMIT:
             logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
-            self.backend.rpc_client.stop_playback()
+            Thread(target=self.backend.rpc_client.stop_playback).start()
             return True
 
         return False
