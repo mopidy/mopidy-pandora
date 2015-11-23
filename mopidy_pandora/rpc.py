@@ -42,3 +42,7 @@ class RPCClient(object):
     def resume_playback(self):
 
         self._do_rpc('core.playback.resume')
+
+    def stop_playback(self):
+
+        self._do_rpc('core.playback.stop')

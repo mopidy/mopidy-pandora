@@ -272,7 +272,7 @@ class TransportCallTestNotImplemented(Exception):
 
 
 @pytest.fixture
-def rpc_call_not_implemented_mock(method, params=None):
+def rpc_call_not_implemented_mock(method, params=''):
     raise RPCCallTestNotImplemented(method + "(" + params + ")")
 
 

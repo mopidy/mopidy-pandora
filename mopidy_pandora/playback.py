@@ -21,6 +21,10 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         self._station_iter = None
         self.active_track_uri = None
 
+        # TODO: It shouldn't be necessary to keep track of the number of tracks that have been skipped in the
+        # player anymore once https://github.com/mopidy/mopidy/issues/1221 has been fixed.
+        self.consecutive_track_skips = 0
+
         # TODO: add gapless playback when it is supported in Mopidy > 1.1
         # self.audio.set_about_to_finish_callback(self.callback).get()
 
@@ -62,6 +66,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         try:
             next_track = self.get_next_track(track_uri.index)
             if next_track:
+                self.consecutive_track_skips = 0
                 return super(PandoraPlaybackProvider, self).change_track(next_track)
         except requests.exceptions.RequestException as e:
             logger.error('Error changing track: %s', encoding.locale_decode(e))
@@ -69,7 +74,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         return False
 
     def get_next_track(self, index):
-        consecutive_track_skips = 0
 
         for track in self._station_iter:
             try:
@@ -86,16 +90,28 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                     logger.info("Up next: '%s' by %s", track.song_name, track.artist_name)
                 return models.Track(uri=self.active_track_uri)
             else:
-                consecutive_track_skips += 1
-                logger.warning("Track with uri '%s' is not playable.", TrackUri.from_track(track).uri)
-                if consecutive_track_skips >= self.SKIP_LIMIT:
-                    logger.error('Unplayable track skip limit exceeded!')
+                logger.warning("Audio URI for track '%s' cannot be played.", TrackUri.from_track(track).uri)
+                if self.increment_skip_exceeds_limit():
                     return None
+
+        logger.warning("No tracks left in playlist")
+        if self.increment_skip_exceeds_limit():
+            return None
 
         return None
 
     def translate_uri(self, uri):
         return PandoraUri.parse(uri).audio_url
+
+    def increment_skip_exceeds_limit(self):
+        self.consecutive_track_skips += 1
+
+        if self.consecutive_track_skips >= self.SKIP_LIMIT:
+            logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
+            self.backend.rpc_client.stop_playback()
+            return True
+
+        return False
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
