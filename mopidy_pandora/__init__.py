@@ -9,7 +9,7 @@ from mopidy.config import Deprecated
 from pandora import BaseAPIClient
 
 
-__version__ = '0.1.7'
+__version__ = '0.1.7.1'
 
 logger = logging.getLogger(__name__)
 

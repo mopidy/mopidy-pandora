@@ -105,6 +105,11 @@ Project resources
 Changelog
 =========
 
+v0.1.7.1 (UNRELEASED)
+----------------------------------------
+
+- Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
+
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------
 
