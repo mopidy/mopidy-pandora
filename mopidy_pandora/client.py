@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class MopidyPandoraAPIClient(pandora.APIClient):
     """Pydora API Client for Mopidy-Pandora
 
-    This API client implements caching of the station list.
+    This API api implements caching of the station list.
     """
 
     def __init__(self, transport, partner_user, partner_password, device,

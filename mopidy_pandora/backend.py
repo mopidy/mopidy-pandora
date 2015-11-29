@@ -36,7 +36,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener):
         self.auto_setup = self._config['auto_setup']
         self.setup_required = self.auto_setup
 
-        self.rpc_client = rpc.RPCClient(config['http']['hostname'], config['http']['port'])
+        rpc.RPCClient.configure(config['http']['hostname'], config['http']['port'])
 
         self.supports_events = False
         if self._config['event_support_enabled']:

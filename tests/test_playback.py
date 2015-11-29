@@ -20,7 +20,7 @@ from mopidy_pandora import playback
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 
 from mopidy_pandora.playback import PandoraPlaybackProvider
-from mopidy_pandora.rpc import RPCClient
+from mopidy_pandora import rpc
 
 from mopidy_pandora.uri import TrackUri
 
@@ -100,7 +100,7 @@ def test_change_track_checks_for_double_click(provider):
             process_click_mock = mock.PropertyMock()
             provider._double_click_handler.is_double_click = is_double_click_mock
             provider._double_click_handler.process_click = process_click_mock
-            provider.backend.rpc_client.resume_playback = mock.PropertyMock()
+            rpc.RPCClient.core_playback_resume = mock.PropertyMock()
             provider.change_track(models.Track(uri=TrackUri.from_track(conftest.playlist_item_mock()).uri))
 
             provider._double_click_handler.is_double_click.assert_called_once_with()
@@ -117,7 +117,7 @@ def test_change_track_double_click_call(config, provider, playlist_item_mock):
         process_click_mock = mock.PropertyMock()
 
         provider._double_click_handler.process_click = process_click_mock
-        provider.backend.rpc_client.resume_playback = mock.PropertyMock()
+        rpc.RPCClient.core_playback_resume = mock.PropertyMock()
         provider._double_click_handler.set_click_time()
         provider.active_track_uri = track_0
         provider.change_track(models.Track(uri=track_1))
@@ -154,10 +154,10 @@ def test_change_track_enforces_skip_limit(provider):
             with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=False):
                 track = models.Track(uri="pandora:track:test::::")
 
-                provider.backend.rpc_client.stop_playback = mock.PropertyMock()
+                rpc.RPCClient.core_playback_stop = mock.PropertyMock()
 
                 assert provider.change_track(track) is False
-                provider.backend.rpc_client.stop_playback.assert_called_once_with()
+                rpc.RPCClient.core_playback_stop.assert_called_once_with()
                 assert PlaylistItem.get_is_playable.call_count == PandoraPlaybackProvider.SKIP_LIMIT
 
 
@@ -167,8 +167,8 @@ def test_change_track_handles_request_exceptions(config, caplog):
             track = models.Track(uri="pandora:track:test::::")
 
             playback = conftest.get_backend(config).playback
-            playback.backend.rpc_client._do_rpc = mock.PropertyMock()
-            playback.backend.rpc_client.stop_playback = mock.PropertyMock()
+            rpc.RPCClient._do_rpc = mock.PropertyMock()
+            rpc.RPCClient.rpc_client.core_playback_stop = mock.PropertyMock()
 
             assert playback.change_track(track) is False
             assert 'Error changing track' in caplog.text()
@@ -268,7 +268,7 @@ def test_is_playable_handles_request_exceptions(provider, caplog):
             with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.request_exception_mock):
                 track = models.Track(uri="pandora:track:test::::")
 
-                provider.backend.rpc_client.stop_playback = mock.PropertyMock()
+                rpc.RPCClient.core_playback_stop = mock.PropertyMock()
 
                 assert provider.change_track(track) is False
                 assert 'Error checking if track is playable' in caplog.text()

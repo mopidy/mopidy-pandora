@@ -1,10 +1,13 @@
+import Queue
 import logging
+from threading import Thread
 
 import time
 
 from mopidy.internal import encoding
 
 from pandora.errors import PandoraException
+from mopidy_pandora import rpc
 
 from mopidy_pandora.library import PandoraUri
 
@@ -12,19 +15,27 @@ logger = logging.getLogger(__name__)
 
 
 class DoubleClickHandler(object):
-    def __init__(self, config, client):
+    def __init__(self, backend):
+        self.backend = backend
+        config = self.backend._config
         self.on_pause_resume_click = config["on_pause_resume_click"]
         self.on_pause_next_click = config["on_pause_next_click"]
         self.on_pause_previous_click = config["on_pause_previous_click"]
         self.double_click_interval = config['double_click_interval']
-        self.client = client
+        self.api = self.backend.api
         self._click_time = 0
+
+        self.previous_tlid = Queue.Queue()
+        self.next_tlid = Queue.Queue()
 
     def set_click_time(self, click_time=None):
         if click_time is None:
             self._click_time = time.time()
         else:
             self._click_time = click_time
+
+        rpc.RPCClient.core_tracklist_get_previous_tlid(queue=self.previous_tlid)
+        rpc.RPCClient.core_tracklist_get_next_tlid(queue=self.next_tlid)
 
     def get_click_time(self):
         return self._click_time
@@ -38,23 +49,42 @@ class DoubleClickHandler(object):
 
         return double_clicked
 
-    def on_change_track(self, track, previous_tlid, next_tlid):
-        from mopidy_pandora.uri import PandoraUri
+    def on_change_track(self, event_track_uri):
 
         if not self.is_double_click():
             return False
 
-        # TODO: the order of the tracks will no longer be sequential if the user has 'shuffled' the tracklist
-        # Need to find a better approach for determining whether 'next' or 'previous' was clicked.
-        if track.tlid == next_tlid:
-            return self.process_click(self.on_pause_next_click, track.uri)
+        # Start playing the next song so long...
+        rpc.RPCClient.core_playback_resume()
 
-        elif track.tlid == previous_tlid:
-            return self.process_click(self.on_pause_previous_click, track.uri)
+        try:
+            # These tlids should already have been retrieved when 'pause' was clicked to trigger the event
+            previous_tlid = self.previous_tlid.get_nowait()
+            next_tlid = self.next_tlid.get_nowait()
+
+            # Try to retrieve the current tlid, time out if not found
+            queue = Queue.Queue()
+            rpc.RPCClient.core_playback_get_current_tlid(queue=queue)
+            current_tlid = queue.get(timeout=2)
+
+            # Cleanup asynchronous queues
+            queue.task_done()
+            self.previous_tlid.task_done()
+            self.next_tlid.task_done()
+
+        except Queue.Empty as e:
+            logger.error('Error retrieving tracklist IDs: %s. Ignoring event...', encoding.locale_decode(e))
+            return False
+
+        if current_tlid == next_tlid:
+            return self.process_click(self.on_pause_next_click, event_track_uri)
+
+        elif current_tlid.tlid == previous_tlid:
+            return self.process_click(self.on_pause_previous_click, event_track_uri)
 
         return False
 
-    def on_resume_click(self, time_position):
+    def on_resume_click(self, time_position, track_uri):
         if not self.is_double_click() or time_position == 0:
             return False
 
@@ -65,7 +95,8 @@ class DoubleClickHandler(object):
         self.set_click_time(0)
 
         uri = PandoraUri.parse(track_uri)
-        logger.info("Triggering event '%s' for song: %s", method, uri.name)
+        logger.info("Triggering event '%s' for song: %s", method,
+                    self.backend.library.lookup_pandora_track(track_uri).song_name)
 
         func = getattr(self, method)
 
@@ -78,16 +109,16 @@ class DoubleClickHandler(object):
         return True
 
     def thumbs_up(self, track_token):
-        return self.client.add_feedback(track_token, True)
+        return self.api.add_feedback(track_token, True)
 
     def thumbs_down(self, track_token):
-        return self.client.add_feedback(track_token, False)
+        return self.api.add_feedback(track_token, False)
 
     def sleep(self, track_token):
-        return self.client.sleep_song(track_token)
+        return self.api.sleep_song(track_token)
 
     def add_artist_bookmark(self, track_token):
-        return self.client.add_artist_bookmark(track_token)
+        return self.api.add_artist_bookmark(track_token)
 
     def add_song_bookmark(self, track_token):
-        return self.client.add_song_bookmark(track_token)
+        return self.api.add_song_bookmark(track_token)

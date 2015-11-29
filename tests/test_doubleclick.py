@@ -25,10 +25,10 @@ def client_mock():
 def handler(config):
     handler = DoubleClickHandler(config['pandora'], client_mock)
     add_feedback_mock = mock.PropertyMock()
-    handler.client.add_feedback = add_feedback_mock
+    handler.api.add_feedback = add_feedback_mock
 
     sleep_mock = mock.PropertyMock()
-    handler.client.sleep_song = sleep_mock
+    handler.api.sleep_song = sleep_mock
 
     handler.set_click_time()
 
