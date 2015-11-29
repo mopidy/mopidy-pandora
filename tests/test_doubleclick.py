@@ -7,7 +7,7 @@ import conftest
 import mock
 
 import pytest
-
+from mopidy_pandora import rpc
 
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 from mopidy_pandora.doubleclick import DoubleClickHandler
@@ -23,7 +23,8 @@ def client_mock():
 
 @pytest.fixture
 def handler(config):
-    handler = DoubleClickHandler(config['pandora'], client_mock)
+
+    handler = DoubleClickHandler(conftest.get_backend(config))
     add_feedback_mock = mock.PropertyMock()
     handler.api.add_feedback = add_feedback_mock
 
@@ -53,28 +54,32 @@ def test_is_double_click_resets_click_time(handler):
     assert handler.get_click_time() == 0
 
 
-def test_on_change_track_forward(config, handler, playlist_item_mock):
+def test_on_change_track_forward(config, handler):
+    with mock.patch.object(rpc.RPCClient, '_do_rpc', mock.PropertyMock):
 
-    track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
-    track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
-    track_2 = TrackUri.from_track(playlist_item_mock, 2).uri
+        process_click_mock = mock.PropertyMock()
+        handler.process_click = process_click_mock
 
-    process_click_mock = mock.PropertyMock()
-    handler.process_click = process_click_mock
+        rpc.RPCClient.core_playback_resume=mock.PropertyMock()
 
-    handler.on_change_track(track_0, track_1)
-    handler.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track_0)
-    handler.on_change_track(track_1, track_2)
-    handler.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track_1)
-    handler.on_change_track(track_2, track_0)
-    handler.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track_2)
+        handler.previous_tlid_queue.get_nowait = mock.PropertyMock(return_value=0)
+        handler.next_tlid_queue.get_nowait = mock.PropertyMock(return_value=2)
+
+        rpc.RPCClient.core_playback_get_current_tlid = mock.PropertyMock(return_value=1)
+
+        handler.on_change_track(track_1)
+        handler.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track_0)
+        handler.on_change_track(track_1, track_2)
+        handler.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track_1)
+        handler.on_change_track(track_2, track_0)
+        handler.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track_2)
 
 
 def test_on_change_track_back(config, handler, playlist_item_mock):
 
-    track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
-    track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
-    track_2 = TrackUri.from_track(playlist_item_mock, 2).uri
+    track_0 = TrackUri.from_track(playlist_item_mock).uri
+    track_1 = TrackUri.from_track(playlist_item_mock).uri
+    track_2 = TrackUri.from_track(playlist_item_mock).uri
 
     process_click_mock = mock.PropertyMock()
     handler.process_click = process_click_mock
@@ -91,7 +96,7 @@ def test_on_resume_click_ignored_if_start_of_track(handler, playlist_item_mock):
 
     process_click_mock = mock.PropertyMock()
     handler.process_click = process_click_mock
-    handler.on_resume_click(TrackUri.from_track(playlist_item_mock).uri, 0)
+    handler.on_resume_click(TrackUri.from_track(playlist_item_mock).uri)
 
     handler.process_click.assert_not_called()
 

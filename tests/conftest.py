@@ -10,7 +10,7 @@ import pytest
 
 import requests
 
-from mopidy_pandora import backend
+from mopidy_pandora import backend, rpc
 
 MOCK_STATION_SCHEME = "station"
 MOCK_STATION_NAME = "Mock Station"
@@ -66,7 +66,7 @@ def config():
 def get_backend(config, simulate_request_exceptions=False):
     obj = backend.PandoraBackend(config=config, audio=Mock())
 
-    obj.rpc_client._do_rpc = rpc_call_not_implemented_mock
+    rpc.RPCClient._do_rpc = rpc_call_not_implemented_mock
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock
@@ -82,20 +82,27 @@ def get_backend(config, simulate_request_exceptions=False):
 @pytest.fixture(scope="session")
 def station_result_mock():
     mock_result = {"stat": "ok",
-                   "result":
-                       {"stationId": MOCK_STATION_ID,
-                        "stationDetailUrl": MOCK_STATION_DETAIL_URL,
-                        "artUrl": MOCK_STATION_ART_URL,
-                        "stationToken": MOCK_STATION_TOKEN,
-                        "stationName": MOCK_STATION_NAME},
-                   }
+                   "result":{
+                       "stations":[
+                           {"stationId": MOCK_STATION_ID,
+                            "stationDetailUrl": MOCK_STATION_DETAIL_URL,
+                            "artUrl": MOCK_STATION_ART_URL,
+                            "stationToken": MOCK_STATION_TOKEN,
+                            "stationName": MOCK_STATION_NAME},
+                           {"stationId": MOCK_STATION_ID,
+                            "stationDetailUrl": MOCK_STATION_DETAIL_URL,
+                            "artUrl": MOCK_STATION_ART_URL,
+                            "stationToken": MOCK_STATION_TOKEN,
+                            "stationName": "QuikMix"},
+                       ]}}
 
     return mock_result
 
 
 @pytest.fixture(scope="session")
 def station_mock(simulate_request_exceptions=False):
-    return Station.from_json(get_backend(config(), simulate_request_exceptions).api, station_result_mock()["result"])
+    return Station.from_json(get_backend(config(), simulate_request_exceptions).api,
+                             station_result_mock()["result"]["items"][0])
 
 
 @pytest.fixture(scope="session")

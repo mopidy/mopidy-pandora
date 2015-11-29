@@ -68,8 +68,10 @@ def test_browse_directory_sort_za(config, caplog):
 
         results = backend.library.browse(backend.library.root_directory.uri)
 
-        assert results[0].name == conftest.MOCK_STATION_NAME + " 1"
-        assert results[1].name == conftest.MOCK_STATION_NAME + " 2"
+        assert results[0].name == "Browse Genres"
+        assert results[1].name == "QuickMix"
+        assert results[2].name == conftest.MOCK_STATION_NAME + " 1"
+        assert results[3].name == conftest.MOCK_STATION_NAME + " 2"
 
 
 def test_browse_directory_sort_date(config, caplog):
@@ -80,31 +82,21 @@ def test_browse_directory_sort_date(config, caplog):
 
         results = backend.library.browse(backend.library.root_directory.uri)
 
-        assert results[0].name == conftest.MOCK_STATION_NAME + " 2"
-        assert results[1].name == conftest.MOCK_STATION_NAME + " 1"
+        assert results[0].name == "Browse Genres"
+        assert results[1].name == "QuickMix"
+        assert results[2].name == conftest.MOCK_STATION_NAME + " 2"
+        assert results[3].name == conftest.MOCK_STATION_NAME + " 1"
 
 
-def test_browse_track_uri(config, playlist_item_mock, caplog):
+def test_browse_station_uri(config, station_mock, caplog):
 
     backend = conftest.get_backend(config)
-    track_uri = TrackUri.from_track(playlist_item_mock)
+    station_uri = StationUri.from_track(station_mock)
 
-    results = backend.library.browse(track_uri.uri)
+    results = backend.library.browse(station_uri.uri)
 
-    assert len(results) == 3
-
-    backend.supports_events = False
-
-    results = backend.library.browse(track_uri.uri)
     assert len(results) == 1
 
-    assert results[0].type == models.Ref.TRACK
-    assert results[0].name == track_uri.name
-    assert TrackUri.parse(results[0].uri).index == str(0)
+    assert results[0].uri == station_uri.name
+    assert results[0].name == station_uri.name
 
-    # Track should not have an audio URL at this stage
-    assert TrackUri.parse(results[0].uri).audio_url == "none_generated"
-
-    # Also clear reference track's audio URI so that we can compare more easily
-    track_uri.audio_url = "none_generated"
-    assert results[0].uri == track_uri.uri

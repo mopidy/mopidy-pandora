@@ -58,10 +58,7 @@ def test_station_uri_from_station(station_mock):
     assert station_uri.uri == "pandora:" + \
         station_uri.quote(conftest.MOCK_STATION_SCHEME) + ":" + \
         station_uri.quote(conftest.MOCK_STATION_ID) + ":" + \
-        station_uri.quote(conftest.MOCK_STATION_TOKEN) + ":" + \
-        station_uri.quote(conftest.MOCK_STATION_NAME) + ":" + \
-        station_uri.quote(conftest.MOCK_STATION_DETAIL_URL) + ":" + \
-        station_uri.quote(conftest.MOCK_STATION_ART_URL)
+        station_uri.quote(conftest.MOCK_STATION_TOKEN)
 
 
 def test_station_uri_parse(station_mock):
@@ -75,9 +72,6 @@ def test_station_uri_parse(station_mock):
     assert obj.scheme == conftest.MOCK_STATION_SCHEME
     assert obj.station_id == conftest.MOCK_STATION_ID
     assert obj.token == conftest.MOCK_STATION_TOKEN
-    assert obj.name == conftest.MOCK_STATION_NAME
-    assert obj.detail_url == conftest.MOCK_STATION_DETAIL_URL
-    assert obj.art_url == conftest.MOCK_STATION_ART_URL
 
     assert obj.uri == station_uri.uri
 
@@ -89,12 +83,7 @@ def test_track_uri_from_track(playlist_item_mock):
     assert track_uri.uri == "pandora:" + \
         track_uri.quote(conftest.MOCK_TRACK_SCHEME) + ":" + \
         track_uri.quote(conftest.MOCK_STATION_ID) + ":" + \
-        track_uri.quote(conftest.MOCK_TRACK_TOKEN) + ":" + \
-        track_uri.quote(conftest.MOCK_TRACK_NAME) + ":" + \
-        track_uri.quote(conftest.MOCK_TRACK_DETAIL_URL) + ":" + \
-        track_uri.quote(conftest.MOCK_TRACK_ART_URL) + ":" + \
-        track_uri.quote(conftest.MOCK_TRACK_AUDIO_HIGH) + ":" + \
-        track_uri.quote(0)
+        track_uri.quote(conftest.MOCK_TRACK_TOKEN)
 
 
 def test_track_uri_parse(playlist_item_mock):
@@ -108,9 +97,5 @@ def test_track_uri_parse(playlist_item_mock):
     assert obj.scheme == conftest.MOCK_TRACK_SCHEME
     assert obj.station_id == conftest.MOCK_STATION_ID
     assert obj.token == conftest.MOCK_TRACK_TOKEN
-    assert obj.name == conftest.MOCK_TRACK_NAME
-    assert obj.detail_url == conftest.MOCK_TRACK_DETAIL_URL
-    assert obj.art_url == conftest.MOCK_TRACK_ART_URL
-    assert obj.audio_url == conftest.MOCK_TRACK_AUDIO_HIGH
 
     assert obj.uri == track_uri.uri
