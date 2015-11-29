@@ -105,9 +105,13 @@ Project resources
 Changelog
 =========
 
-v0.1.7.1 (UNRELEASED)
+v0.2.0 (UNRELEASED)
 ----------------------------------------
 
+- Major overhaul that completely changes how tracks are handled. Finally allows all track information to be accessible
+  during playback (e.g. song and artist names, album covers, etc.).
+- Simulate dynamic tracklist (workaround for https://github.com/rectalogic/mopidy-pandora/issues/2)
+- Add support for browsing genre stations
 - Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
 
 v0.1.7 (Oct 31, 2015)

@@ -43,50 +43,54 @@ class PandoraUri(object):
             return cls(*parts[1:])
 
 
-class StationUri(PandoraUri):
-    scheme = 'station'
+class GenreUri(PandoraUri):
+    scheme = 'genre'
 
-    def __init__(self, station_id, station_token, name, detail_url, art_url):
-        super(StationUri, self).__init__()
-        self.station_id = station_id
-        self.token = station_token
-        self.name = name
-        self.detail_url = detail_url
-        self.art_url = art_url
-
-    @classmethod
-    def from_station(cls, station):
-        return StationUri(station.id, station.token, station.name, station.detail_url, station.art_url)
+    def __init__(self, category_name):
+        super(GenreUri, self).__init__()
+        self.category_name = category_name
 
     @property
     def uri(self):
-        return "{}:{}:{}:{}:{}:{}".format(
+        return "{}:{}".format(
+            super(GenreUri, self).uri,
+            self.quote(self.category_name),
+        )
+
+
+class StationUri(PandoraUri):
+    scheme = 'station'
+
+    def __init__(self, station_id, token):
+        super(StationUri, self).__init__()
+        self.station_id = station_id
+        self.token = token
+
+    @classmethod
+    def from_station(cls, station):
+        return StationUri(station.id, station.token)
+
+    @property
+    def uri(self):
+        return "{}:{}:{}".format(
             super(StationUri, self).uri,
             self.quote(self.station_id),
             self.quote(self.token),
-            self.quote(self.name),
-            self.quote(self.detail_url),
-            self.quote(self.art_url),
         )
 
 
 class TrackUri(StationUri):
     scheme = 'track'
 
-    def __init__(self, station_id, track_token, name, detail_url, art_url, audio_url='none_generated', index=0):
-        super(TrackUri, self).__init__(station_id, track_token, name, detail_url, art_url)
-        self.audio_url = audio_url
-        self.index = index
+    def __init__(self, station_id, token):
+        super(TrackUri, self).__init__(station_id, token)
 
     @classmethod
-    def from_track(cls, track, index=0):
-        return TrackUri(track.station_id, track.track_token, track.song_name, track.song_detail_url,
-                        track.album_art_url, track.audio_url, index)
+    def from_track(cls, track):
+        return TrackUri(track.station_id, track.track_token)
 
     @property
     def uri(self):
-        return "{}:{}:{}".format(
+        return "{}".format(
             super(TrackUri, self).uri,
-            self.quote(self.audio_url),
-            self.quote(self.index),
         )

@@ -1,3 +1,4 @@
+import Queue
 from threading import Thread
 
 from mopidy import backend, models
@@ -17,9 +18,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-        self._station = None
-        self._station_iter = None
-        self.active_track_uri = None
 
         # TODO: It shouldn't be necessary to keep track of the number of tracks that have been skipped in the
         # player anymore once https://github.com/mopidy/mopidy/issues/1221 has been fixed.
@@ -34,17 +32,22 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def _auto_setup(self):
 
-        self.backend.rpc_client.set_repeat()
-        self.backend.rpc_client.set_consume(False)
+        self.backend.rpc_client.set_repeat(False)
+        self.backend.rpc_client.set_consume(True)
         self.backend.rpc_client.set_random(False)
         self.backend.rpc_client.set_single(False)
 
         self.backend.setup_required = False
 
+    def _update_tracklist(self):
+
+        tracklist_length = self.backend.rpc_client.tracklist_get_length()
+
+
     def prepare_change(self):
 
         if self.backend.auto_setup and self.backend.setup_required:
-            Thread(target=self._auto_setup).start()
+            self._auto_setup()
 
         super(PandoraPlaybackProvider, self).prepare_change()
 
@@ -53,76 +56,73 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             return False
 
-        track_uri = TrackUri.parse(track.uri)
-
-        station_id = PandoraUri.parse(track.uri).station_id
-
-        # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
-        # if not self._station or (not track.is_ad() and station_id != self._station.id):
-        if self._station is None or (station_id != '' and station_id != self._station.id):
-            self._station = self.backend.api.get_station(station_id)
-            self._station_iter = iterate_forever(self._station.get_playlist)
+        pandora_track = self.backend.library.lookup_pandora_track(track.uri)
 
         try:
-            next_track = self.get_next_track(track_uri.index)
-            if next_track:
-                self.consecutive_track_skips = 0
-                return super(PandoraPlaybackProvider, self).change_track(next_track)
+            is_playable = pandora_track.audio_url and pandora_track.get_is_playable()
         except requests.exceptions.RequestException as e:
-            logger.error('Error changing track: %s', encoding.locale_decode(e))
+            is_playable = False
+            logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
 
-        return False
+        if is_playable:
+            logger.info("Up next: '%s' by %s", pandora_track.song_name, pandora_track.artist_name)
+            self.consecutive_track_skips = 0
 
-    def get_next_track(self, index):
+            Thread(target=self._update_tracklist).start()
 
-        for track in self._station_iter:
-            try:
-                is_playable = track.audio_url and track.get_is_playable()
-            except requests.exceptions.RequestException as e:
-                is_playable = False
-                logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
-
-            if is_playable:
-                self.active_track_uri = TrackUri.from_track(track, index).uri
-                logger.info("Up next: '%s' by %s", track.song_name, track.artist_name)
-                return models.Track(uri=self.active_track_uri)
-            else:
-                logger.warning("Audio URI for track '%s' cannot be played.", TrackUri.from_track(track).uri)
-                if self._increment_skip_exceeds_limit():
-                    return None
-
-        logger.warning("No tracks left in playlist")
-        if self._increment_skip_exceeds_limit():
-            return None
-
-        return None
+            return super(PandoraPlaybackProvider, self).change_track(track)
+        else:
+            # TODO: also remove from tracklist? Handled by consume?
+            logger.warning("Audio URI for track '%s' cannot be played.", track.uri)
+            self._check_skip_limit()
+            return False
 
     def translate_uri(self, uri):
-        return PandoraUri.parse(uri).audio_url
+        return self.backend.library.lookup_pandora_track(uri).audio_url
 
-    def _increment_skip_exceeds_limit(self):
+    def _check_skip_limit(self):
         self.consecutive_track_skips += 1
 
         if self.consecutive_track_skips >= self.SKIP_LIMIT:
             logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
-            Thread(target=self.backend.rpc_client.stop_playback).start()
+            self.backend.rpc_client.stop_playback()
             return True
 
         return False
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
+
     def __init__(self, audio, backend):
         super(EventSupportPlaybackProvider, self).__init__(audio, backend)
         self._double_click_handler = DoubleClickHandler(backend._config, backend.api)
 
+        self.next_tlid = None
+        self.previous_tlid = None
+
+    # def play(self):
+    #
+    #     Thread(target=self._update_tlids).start()
+    #     super(EventSupportPlaybackProvider, self).play()
+
     def change_track(self, track):
 
-        event_processed = self._double_click_handler.on_change_track(self.active_track_uri, track.uri)
+        event_processed = False
+
+        t = self.backend.rpc_client.tracklist_get_previous_tlid()
+        try:
+            x = t.result_queue.get_nowait()
+        except Queue.Empty:
+            pass
+
+        if self.next_tlid and self.previous_tlid:
+            event_processed = self._double_click_handler.on_change_track(track, self.previous_tlid,
+                                                                         self.next_tlid)
+
         return_value = super(EventSupportPlaybackProvider, self).change_track(track)
 
         if event_processed:
-            Thread(target=self.backend.rpc_client.resume_playback).start()
+            self.backend.rpc_client.resume_playback()
 
         return return_value
 
@@ -134,6 +134,13 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         return super(EventSupportPlaybackProvider, self).pause()
 
     def resume(self):
-        self._double_click_handler.on_resume_click(self.active_track_uri, self.get_time_position())
+        self._double_click_handler.on_resume_click(self.get_time_position())
 
         return super(EventSupportPlaybackProvider, self).resume()
+
+    # @threaded
+    # def _update_tlids(self, a, b):
+    #     # self.next_tlid = self.backend.rpc_client.tracklist_get_next_tlid()
+    #     # self.previous_tlid = self.backend.rpc_client.tracklist_get_previous_tlid()
+    #     a = self.backend.rpc_client.tracklist_get_next_tlid()
+    #     b = self.backend.rpc_client.tracklist_get_previous_tlid()

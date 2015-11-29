@@ -275,40 +275,39 @@ def test_is_playable_handles_request_exceptions(provider, caplog):
 
 
 def test_translate_uri_returns_audio_url(provider):
-    assert provider.translate_uri("pandora:track:test:::::audio_url") == "audio_url"
+    assert provider.lookup_pandora_track("pandora:track:test:::::audio_url") == "audio_url"
 
 
 def test_auto_setup_only_called_once(provider):
     with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', set_repeat=mock.DEFAULT, set_random=mock.DEFAULT,
                              set_consume=mock.DEFAULT, set_single=mock.DEFAULT) as values:
-        with mock.patch.object(RPCClient, 'get_current_track_uri', return_value="pandora::::::"):
 
-            event = threading.Event()
+        event = threading.Event()
 
-            def set_event(*args, **kwargs):
-                event.set()
+        def set_event(*args, **kwargs):
+            event.set()
 
-            values['set_single'].side_effect = set_event
+        values['set_single'].side_effect = set_event
 
-            provider.prepare_change()
+        provider.prepare_change()
 
-            if event.wait(timeout=1.0):
-                values['set_repeat'].assert_called_once_with()
-                values['set_random'].assert_called_once_with(False)
-                values['set_consume'].assert_called_once_with(False)
-                values['set_single'].assert_called_once_with(False)
-            else:
-                assert False
+        if event.wait(timeout=1.0):
+            values['set_repeat'].assert_called_once_with()
+            values['set_random'].assert_called_once_with(False)
+            values['set_consume'].assert_called_once_with(False)
+            values['set_single'].assert_called_once_with(False)
+        else:
+            assert False
 
-            event = threading.Event()
-            values['set_single'].side_effect = set_event
+        event = threading.Event()
+        values['set_single'].side_effect = set_event
 
-            provider.prepare_change()
+        provider.prepare_change()
 
-            if event.wait(timeout=1.0):
-                assert False
-            else:
-                values['set_repeat'].assert_called_once_with()
-                values['set_random'].assert_called_once_with(False)
-                values['set_consume'].assert_called_once_with(False)
-                values['set_single'].assert_called_once_with(False)
+        if event.wait(timeout=1.0):
+            assert False
+        else:
+            values['set_repeat'].assert_called_once_with()
+            values['set_random'].assert_called_once_with(False)
+            values['set_consume'].assert_called_once_with(False)
+            values['set_single'].assert_called_once_with(False)

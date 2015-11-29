@@ -38,28 +38,23 @@ class DoubleClickHandler(object):
 
         return double_clicked
 
-    def on_change_track(self, active_track_uri, new_track_uri):
+    def on_change_track(self, track, previous_tlid, next_tlid):
         from mopidy_pandora.uri import PandoraUri
 
         if not self.is_double_click():
             return False
 
-        if active_track_uri is not None:
+        # TODO: the order of the tracks will no longer be sequential if the user has 'shuffled' the tracklist
+        # Need to find a better approach for determining whether 'next' or 'previous' was clicked.
+        if track.tlid == next_tlid:
+            return self.process_click(self.on_pause_next_click, track.uri)
 
-            new_track_index = int(PandoraUri.parse(new_track_uri).index)
-            active_track_index = int(PandoraUri.parse(active_track_uri).index)
-
-            # TODO: the order of the tracks will no longer be sequential if the user has 'shuffled' the tracklist
-            # Need to find a better approach for determining whether 'next' or 'previous' was clicked.
-            if new_track_index > active_track_index or new_track_index == 0 and active_track_index == 2:
-                return self.process_click(self.on_pause_next_click, active_track_uri)
-
-            elif new_track_index < active_track_index or new_track_index == active_track_index:
-                return self.process_click(self.on_pause_previous_click, active_track_uri)
+        elif track.tlid == previous_tlid:
+            return self.process_click(self.on_pause_previous_click, track.uri)
 
         return False
 
-    def on_resume_click(self, track_uri, time_position):
+    def on_resume_click(self, time_position):
         if not self.is_double_click() or time_position == 0:
             return False
 

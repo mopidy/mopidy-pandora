@@ -21,6 +21,7 @@ class MopidyPandoraAPIClient(pandora.APIClient):
         super(MopidyPandoraAPIClient, self).__init__(transport, partner_user, partner_password, device,
                                                      default_audio_quality)
         self._station_list = []
+        self._genre_stations = []
 
     def get_station_list(self):
 
@@ -39,3 +40,15 @@ class MopidyPandoraAPIClient(pandora.APIClient):
         except TypeError:
             # Could not find station_id in cached list, try retrieving from Pandora server.
             return super(MopidyPandoraAPIClient, self).get_station(station_id)
+
+    def get_genre_stations(self):
+
+        if not any(self._genre_stations) or self._genre_stations.has_changed():
+            try:
+                self._genre_stations = super(MopidyPandoraAPIClient, self).get_genre_stations()
+                # if any(self._genre_stations):
+                #     self._genre_stations.sort(key=lambda x: x[0], reverse=False)
+            except requests.exceptions.RequestException as e:
+                logger.error('Error retrieving genre stations: %s', encoding.locale_decode(e))
+
+        return self._genre_stations
