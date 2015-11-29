@@ -55,8 +55,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             pandora_track = self.lookup_pandora_track(uri)
 
-            track = models.Track(name=pandora_track.song_name, uri=uri,
-                                 artists=[models.Artist(name=pandora_track.artist_name)],
+            track = models.Track(name=pandora_track.song_name, uri=uri, length=pandora_track.track_length*1000,
+                                 bitrate=int(pandora_track.bitrate), artists=[models.Artist(name=pandora_track.artist_name)],
                                  album=models.Album(name=pandora_track.album_name, uri=pandora_track.album_detail_url,
                                                     images=[pandora_track.album_art_url]))
             return [track]
