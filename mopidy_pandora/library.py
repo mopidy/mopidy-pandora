@@ -32,25 +32,18 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if pandora_uri.scheme == StationUri.scheme:
 
-            # Thread(target=self.backend.rpc_client.add_to_tracklist(track)).start()
-
             # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
             # if not self._station or (not track.is_ad() and station_id != self._station.id):
             if self._station is None or (pandora_uri.station_id != '' and pandora_uri.station_id != self._station.id):
                 self._station = self.backend.api.get_station(pandora_uri.station_id)
                 self._station_iter = iterate_forever(self._station.get_playlist)
 
+            self._uri_translation_map.clear()
             tracks = []
             number_of_tracks = 3
 
             for i in range(0, number_of_tracks):
-                track = self._station_iter.next()
-
-                track_uri = TrackUri(track.station_id, track.track_token)
-
-                tracks.append(models.Ref.track(name=track.song_name, uri=track_uri.uri))
-
-                self._uri_translation_map[track_uri.uri] = track
+                tracks.append(self.next_track())
 
             return tracks
 
@@ -107,3 +100,15 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup_pandora_track(self, uri):
         return self._uri_translation_map[uri]
+
+    def next_track(self):
+        pandora_track = self._station_iter.next()
+
+        if pandora_track.track_token is None:
+            # TODO process add tokens properly when pydora 1.6 is available
+            return self.next_track()
+
+        track = models.Ref.track(name=pandora_track.song_name, uri=TrackUri.from_track(pandora_track).uri)
+        self._uri_translation_map[track.uri] = pandora_track
+
+        return track

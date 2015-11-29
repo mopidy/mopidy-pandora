@@ -25,8 +25,8 @@ class DoubleClickHandler(object):
         self.api = self.backend.api
         self._click_time = 0
 
-        self.previous_tlid = Queue.Queue()
-        self.next_tlid = Queue.Queue()
+        self.previous_tlid_queue = Queue.Queue()
+        self.next_tlid_queue = Queue.Queue()
 
     def set_click_time(self, click_time=None):
         if click_time is None:
@@ -34,8 +34,8 @@ class DoubleClickHandler(object):
         else:
             self._click_time = click_time
 
-        rpc.RPCClient.core_tracklist_get_previous_tlid(queue=self.previous_tlid)
-        rpc.RPCClient.core_tracklist_get_next_tlid(queue=self.next_tlid)
+        rpc.RPCClient.core_tracklist_get_previous_tlid(queue=self.previous_tlid_queue)
+        rpc.RPCClient.core_tracklist_get_next_tlid(queue=self.next_tlid_queue)
 
     def get_click_time(self):
         return self._click_time
@@ -59,18 +59,18 @@ class DoubleClickHandler(object):
 
         try:
             # These tlids should already have been retrieved when 'pause' was clicked to trigger the event
-            previous_tlid = self.previous_tlid.get_nowait()
-            next_tlid = self.next_tlid.get_nowait()
+            previous_tlid = self.previous_tlid_queue.get_nowait()
+            next_tlid = self.next_tlid_queue.get_nowait()
 
             # Try to retrieve the current tlid, time out if not found
-            queue = Queue.Queue()
-            rpc.RPCClient.core_playback_get_current_tlid(queue=queue)
-            current_tlid = queue.get(timeout=2)
+            current_tlid_queue = Queue.Queue()
+            rpc.RPCClient.core_playback_get_current_tlid(queue=current_tlid_queue)
+            current_tlid = current_tlid_queue.get(timeout=2)
 
             # Cleanup asynchronous queues
-            queue.task_done()
-            self.previous_tlid.task_done()
-            self.next_tlid.task_done()
+            current_tlid_queue.task_done()
+            self.previous_tlid_queue.task_done()
+            self.next_tlid_queue.task_done()
 
         except Queue.Empty as e:
             logger.error('Error retrieving tracklist IDs: %s. Ignoring event...', encoding.locale_decode(e))

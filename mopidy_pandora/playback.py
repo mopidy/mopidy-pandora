@@ -1,4 +1,5 @@
 import Queue
+import copy
 from threading import Thread
 
 from mopidy import backend, models
@@ -42,10 +43,32 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         self.backend.setup_required = False
 
-    def _update_tracklist(self, current_track_uri):
+    def _sync_tracklist(self, current_track_uri):
 
         self.last_played_track_uri = current_track_uri
-        # tracklist_length = rpc.RPCClient.core_tracklist_get_length()
+
+        length_queue = Queue.Queue()
+        rpc.RPCClient.core_tracklist_get_length(queue=length_queue)
+
+        current_tlid_queue = Queue.Queue()
+        rpc.RPCClient.core_playback_get_current_tlid(queue=current_tlid_queue)
+
+        current_tlid = current_tlid_queue.get(timeout=2)
+
+        index_queue = Queue.Queue()
+        rpc.RPCClient.core_tracklist_index(tlid=current_tlid, queue=index_queue)
+
+        index = index_queue.get(timeout=2)
+        length = length_queue.get(timeout=2)
+
+        if index == length-1:
+            # Need to add more tracks
+            track = self.backend.library.next_track()
+            rpc.RPCClient.core_tracklist_add(uris=[track.uri])
+
+        length_queue.task_done()
+        current_tlid_queue.task_done()
+        index_queue.task_done()
 
     def prepare_change(self):
 
@@ -71,7 +94,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.info("Up next: '%s' by %s", pandora_track.song_name, pandora_track.artist_name)
             self.consecutive_track_skips = 0
 
-            self._update_tracklist(track.uri)
+            t = Thread(target=self._sync_tracklist, args=[track.uri])
+            t.start()
 
             return super(PandoraPlaybackProvider, self).change_track(track)
         else:
@@ -102,7 +126,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def change_track(self, track):
 
-        t = Thread(target=self._double_click_handler.on_change_track, args=[self.last_played_track_uri])
+        t = Thread(target=self._double_click_handler.on_change_track, args=[copy.copy(self.last_played_track_uri)])
         t.start()
 
         return super(EventSupportPlaybackProvider, self).change_track(track)
@@ -118,7 +142,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
     def resume(self):
 
         t = Thread(target=self._double_click_handler.on_resume_click,
-                   args=[self.get_time_position(), self.last_played_track_uri])
+                   args=[self.get_time_position(), copy.copy(self.last_played_track_uri)])
         t.start()
 
         return super(EventSupportPlaybackProvider, self).resume()

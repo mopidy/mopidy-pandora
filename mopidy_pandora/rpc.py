@@ -83,9 +83,9 @@ class RPCClient(object):
     def core_tracklist_add(cls, tracks, queue=None):
         return cls._start_thread('core.tracklist.add', params={'tracks': tracks}, queue=queue)
 
-    @classmethod
-    def core_tracklist_get_length(cls, queue=None):
-        return cls._start_thread('core.tracklist.get_length', queue=queue)
+    # @classmethod
+    # def core_tracklist_get_length(cls, queue=None):
+    #     return cls._start_thread('core.tracklist.get_length', queue=queue)
 
     @classmethod
     def core_tracklist_get_next_tlid(cls, queue=None):
@@ -99,6 +99,20 @@ class RPCClient(object):
     def core_playback_get_current_tlid(cls, queue=None):
         return cls._start_thread('core.playback.get_current_tlid', queue=queue)
 
+    # @classmethod
+    # def core_playback_get_current_tl_track(cls, queue=None):
+    #     return cls._start_thread('core.playback.get_current_tl_track', queue=queue)
+
     @classmethod
-    def core_playback_get_current_tl_track(cls, queue=None):
-        return cls._start_thread('core.playback.get_current_tl_track', queue=queue)
+    def core_tracklist_index(cls, tl_track=None, tlid=None, queue=None):
+        return cls._start_thread('core.tracklist.index', params={'tl_track': tl_track, 'tlid': tlid},
+                                 queue=queue)
+
+    @classmethod
+    def core_tracklist_get_length(cls, queue=None):
+        return cls._start_thread('core.tracklist.get_length', queue=queue)
+
+    @classmethod
+    def core_tracklist_add(cls, tracks=None, at_position=None, uri=None, uris=None, queue=None):
+        return cls._start_thread('core.tracklist.add', params={'tracks': tracks, 'at_position': at_position,
+                                                                 'uri': uri, 'uris': uris}, queue=queue)
