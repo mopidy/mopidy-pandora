@@ -61,8 +61,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         index = index_queue.get(timeout=2)
         length = length_queue.get(timeout=2)
 
-        if index == length-1:
-            # Need to add more tracks
+        if index >= length-1:
+            # We're at the end of the tracklist, add teh next Pandora track
             track = self.backend.library.next_track()
             rpc.RPCClient.core_tracklist_add(uris=[track.uri])
 
