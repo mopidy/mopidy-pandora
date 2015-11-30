@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+
 import Queue
 
 import time
@@ -8,6 +9,7 @@ import conftest
 import mock
 
 import pytest
+
 from mopidy_pandora import rpc
 
 from mopidy_pandora.backend import MopidyPandoraAPIClient

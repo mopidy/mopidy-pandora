@@ -2,17 +2,16 @@ import Queue
 import copy
 from threading import Thread
 
-from mopidy import backend, models
+from mopidy import backend
 from mopidy.internal import encoding
 
-from pydora.utils import iterate_forever
-
 import requests
+
 from mopidy_pandora import rpc
 
 from mopidy_pandora.doubleclick import DoubleClickHandler
 
-from mopidy_pandora.uri import PandoraUri, TrackUri, logger
+from mopidy_pandora.uri import logger
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):

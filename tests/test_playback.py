@@ -15,13 +15,12 @@ from pandora.models.pandora import PlaylistItem, Station
 
 import pytest
 
-from mopidy_pandora import playback
+from mopidy_pandora import playback, rpc
 
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
 from mopidy_pandora.playback import PandoraPlaybackProvider
-from mopidy_pandora import rpc
 
 from mopidy_pandora.uri import TrackUri
 

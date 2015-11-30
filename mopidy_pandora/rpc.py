@@ -6,7 +6,6 @@ import requests
 
 
 class RPCClient(object):
-
     hostname = '127.0.0.1'
     port = '6680'
 
@@ -45,7 +44,7 @@ class RPCClient(object):
 
     @classmethod
     def _start_thread(cls, *args, **kwargs):
-        
+
         queue = kwargs.get('queue', None)
 
         t = Thread(target=cls._do_rpc, args=args, kwargs=kwargs)
@@ -79,10 +78,6 @@ class RPCClient(object):
     def core_playback_stop(cls, queue=None):
         return cls._start_thread('core.playback.stop', queue=queue)
 
-    @classmethod
-    def core_tracklist_add(cls, tracks, queue=None):
-        return cls._start_thread('core.tracklist.add', params={'tracks': tracks}, queue=queue)
-
     # @classmethod
     # def core_tracklist_get_length(cls, queue=None):
     #     return cls._start_thread('core.tracklist.get_length', queue=queue)
@@ -115,4 +110,4 @@ class RPCClient(object):
     @classmethod
     def core_tracklist_add(cls, tracks=None, at_position=None, uri=None, uris=None, queue=None):
         return cls._start_thread('core.tracklist.add', params={'tracks': tracks, 'at_position': at_position,
-                                                                 'uri': uri, 'uris': uris}, queue=queue)
+                                                               'uri': uri, 'uris': uris}, queue=queue)

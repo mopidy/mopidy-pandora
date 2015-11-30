@@ -1,12 +1,12 @@
 import Queue
 import logging
-from threading import Thread
 
 import time
 
 from mopidy.internal import encoding
 
 from pandora.errors import PandoraException
+
 from mopidy_pandora import rpc
 
 from mopidy_pandora.library import PandoraUri
