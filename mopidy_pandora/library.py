@@ -2,6 +2,7 @@ from threading import Thread
 from mopidy import backend, models
 from pandora.models.pandora import Station
 from pydora.utils import iterate_forever
+from mopidy.internal import encoding
 
 from mopidy_pandora.uri import PandoraUri, StationUri, TrackUri, logger, GenreUri
 
@@ -55,11 +56,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             pandora_track = self.lookup_pandora_track(uri)
 
-            track = models.Track(name=pandora_track.song_name, uri=uri, length=pandora_track.track_length*1000,
-                                 bitrate=int(pandora_track.bitrate), artists=[models.Artist(name=pandora_track.artist_name)],
-                                 album=models.Album(name=pandora_track.album_name, uri=pandora_track.album_detail_url,
-                                                    images=[pandora_track.album_art_url]))
-            return [track]
+            if pandora_track:
+
+                track = models.Track(name=pandora_track.song_name, uri=uri, length=pandora_track.track_length*1000,
+                                     bitrate=int(pandora_track.bitrate), artists=[models.Artist(name=pandora_track.artist_name)],
+                                     album=models.Album(name=pandora_track.album_name, uri=pandora_track.album_detail_url,
+                                                        images=[pandora_track.album_art_url]))
+                return [track]
 
         logger.error("Failed to lookup '%s'", uri)
         return []
@@ -99,7 +102,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 for station in self.backend.api.get_genre_stations()[GenreUri.parse(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
-        return self._uri_translation_map[uri]
+        try:
+            return self._uri_translation_map[uri]
+        except KeyError as e:
+            logger.error("Failed to lookup '%s' in uri translation map: %s", uri, encoding.locale_decode(e))
+            return None
 
     def next_track(self):
         pandora_track = self._station_iter.next()

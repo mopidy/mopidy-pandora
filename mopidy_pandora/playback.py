@@ -85,7 +85,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         pandora_track = self.backend.library.lookup_pandora_track(track.uri)
 
         try:
-            is_playable = pandora_track.audio_url and pandora_track.get_is_playable()
+            is_playable = pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()
         except requests.exceptions.RequestException as e:
             is_playable = False
             logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
