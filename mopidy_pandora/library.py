@@ -113,7 +113,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         try:
             return self._uri_translation_map[uri]
         except KeyError as e:
-            logger.error("Failed to lookup '%s' in uri translation map: %s", uri, encoding.locale_decode(e))
+            logger.error("Failed to lookup '%s' in uri translation map.", uri)
             return None
 
     def next_track(self):

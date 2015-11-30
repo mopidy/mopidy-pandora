@@ -81,9 +81,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             return False
 
-        pandora_track = self.backend.library.lookup_pandora_track(track.uri)
-
         try:
+            pandora_track = self.backend.library.lookup_pandora_track(track.uri)
+
             is_playable = pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()
         except requests.exceptions.RequestException as e:
             is_playable = False
