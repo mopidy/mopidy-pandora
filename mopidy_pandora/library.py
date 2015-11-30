@@ -8,8 +8,13 @@ from mopidy_pandora.uri import PandoraUri, StationUri, TrackUri, logger, GenreUr
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):
-    root_directory = models.Ref.directory(name='Pandora', uri=PandoraUri('directory').uri)
-    genre_directory = models.Ref.directory(name='Browse Genres', uri=PandoraUri('genres').uri)
+
+    ROOT_DIR_NAME = 'Pandora'
+    GENRE_DIR_NAME = 'Browse Genres'
+    QUICKMIX_DIR_NAME = 'QuickMix'
+
+    root_directory = models.Ref.directory(name=ROOT_DIR_NAME, uri=PandoraUri('directory').uri)
+    genre_directory = models.Ref.directory(name=GENRE_DIR_NAME, uri=PandoraUri('genres').uri)
 
     def __init__(self, backend, sort_order):
         self.sort_order = sort_order.upper()
@@ -71,7 +76,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         index = 0
         for item in list:
-            if item.name == "QuickMix":
+            if item.name == PandoraLibraryProvider.QUICKMIX_DIR_NAME:
                 index = list.index(item)
                 break
 
@@ -80,8 +85,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def _browse_stations(self):
         stations = self.backend.api.get_station_list()
 
-        if any(stations) and self.sort_order == "A-Z":
-            stations.sort(key=lambda x: x.name, reverse=False)
+        if any(stations):
+
+            if self.sort_order == "A-Z":
+                stations.sort(key=lambda x: x.name, reverse=False)
+
             self._prep_station_list(stations)
 
         station_directories = []

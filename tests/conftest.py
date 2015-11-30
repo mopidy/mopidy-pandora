@@ -82,19 +82,13 @@ def get_backend(config, simulate_request_exceptions=False):
 @pytest.fixture(scope="session")
 def station_result_mock():
     mock_result = {"stat": "ok",
-                   "result":{
-                       "stations":[
-                           {"stationId": MOCK_STATION_ID,
-                            "stationDetailUrl": MOCK_STATION_DETAIL_URL,
-                            "artUrl": MOCK_STATION_ART_URL,
-                            "stationToken": MOCK_STATION_TOKEN,
-                            "stationName": MOCK_STATION_NAME},
-                           {"stationId": MOCK_STATION_ID,
-                            "stationDetailUrl": MOCK_STATION_DETAIL_URL,
-                            "artUrl": MOCK_STATION_ART_URL,
-                            "stationToken": MOCK_STATION_TOKEN,
-                            "stationName": "QuikMix"},
-                       ]}}
+                   "result":
+                       {"stationId": MOCK_STATION_ID,
+                        "stationDetailUrl": MOCK_STATION_DETAIL_URL,
+                        "artUrl": MOCK_STATION_ART_URL,
+                        "stationToken": MOCK_STATION_TOKEN,
+                        "stationName": MOCK_STATION_NAME},
+                   }
 
     return mock_result
 
@@ -102,7 +96,7 @@ def station_result_mock():
 @pytest.fixture(scope="session")
 def station_mock(simulate_request_exceptions=False):
     return Station.from_json(get_backend(config(), simulate_request_exceptions).api,
-                             station_result_mock()["result"]["items"][0])
+                             station_result_mock()["result"])
 
 
 @pytest.fixture(scope="session")
@@ -173,11 +167,16 @@ def playlist_item_mock():
 def station_list_result_mock():
     mock_result = {"stat": "ok",
                    "result": {"stations": [
-                       {"stationId": MOCK_STATION_ID.replace("1", "2"), "stationToken": MOCK_STATION_TOKEN,
+                       {"stationId": MOCK_STATION_ID.replace("1", "2"),
+                        "stationToken": MOCK_STATION_TOKEN.replace("010","100"),
                         "stationName": MOCK_STATION_NAME + " 2"},
                        {"stationId": MOCK_STATION_ID,
                         "stationToken": MOCK_STATION_TOKEN,
-                        "stationName": MOCK_STATION_NAME + " 1"}, ], "checksum": MOCK_STATION_LIST_CHECKSUM}
+                        "stationName": MOCK_STATION_NAME + " 1"},
+                       {"stationId": MOCK_STATION_ID.replace("1", "3"),
+                        "stationToken": MOCK_STATION_TOKEN.replace("0010","1000"),
+                        "stationName": "QuickMix"},
+                   ], "checksum": MOCK_STATION_LIST_CHECKSUM},
                    }
 
     return mock_result["result"]

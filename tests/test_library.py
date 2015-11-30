@@ -9,7 +9,10 @@ from mopidy import models
 from pandora import APIClient
 from pandora.models.pandora import Station
 
-from mopidy_pandora.uri import StationUri, TrackUri
+from mopidy_pandora.client import MopidyPandoraAPIClient
+from mopidy_pandora.library import PandoraLibraryProvider
+
+from mopidy_pandora.uri import PandoraUri, StationUri, TrackUri
 
 from tests.conftest import get_station_list_mock
 
@@ -28,39 +31,59 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
     track_uri = TrackUri.from_track(playlist_item_mock)
+
+    backend.library._uri_translation_map[track_uri.uri] = playlist_item_mock
+
     results = backend.library.lookup(track_uri.uri)
 
     assert len(results) == 1
 
     track = results[0]
 
-    assert track.name == track_uri.name
     assert track.uri == track_uri.uri
-    assert next(iter(track.artists)).name == "Pandora"
-    assert track.album.name == track_uri.name
-    assert track.album.uri == track_uri.detail_url
-    assert next(iter(track.album.images)) == track_uri.art_url
 
 
-def test_browse_directory_uri(config, caplog):
+def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
+
+    backend = conftest.get_backend(config)
+
+    track_uri = TrackUri.from_track(playlist_item_mock)
+    results = backend.library.lookup(track_uri.uri)
+
+    assert len(results) == 0
+
+    assert "Failed to lookup '%s' in uri translation map: %s", track_uri.uri in caplog.text()
+
+
+def test_browse_directory_uri(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
 
         backend = conftest.get_backend(config)
         results = backend.library.browse(backend.library.root_directory.uri)
 
-        assert len(results) == 2
-        assert results[0].type == models.Ref.DIRECTORY
-        assert results[0].name == conftest.MOCK_STATION_NAME + " 2"
-        assert results[0].uri == StationUri.from_station(
-            Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][0])).uri
+        assert len(results) == 4
 
         assert results[0].type == models.Ref.DIRECTORY
-        assert results[1].name == conftest.MOCK_STATION_NAME + " 1"
+        assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
+        assert results[0].uri == PandoraUri('genres').uri
+
+        assert results[1].type == models.Ref.DIRECTORY
+        assert results[1].name == PandoraLibraryProvider.QUICKMIX_DIR_NAME
         assert results[1].uri == StationUri.from_station(
+            Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][2])).uri
+
+        assert results[2].type == models.Ref.DIRECTORY
+        assert results[2].name == conftest.MOCK_STATION_NAME + " 2"
+        assert results[2].uri == StationUri.from_station(
+            Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][0])).uri
+
+        assert results[3].type == models.Ref.DIRECTORY
+        assert results[3].name == conftest.MOCK_STATION_NAME + " 1"
+        assert results[3].uri == StationUri.from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][1])).uri
 
 
-def test_browse_directory_sort_za(config, caplog):
+def test_browse_directory_sort_za(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
 
         config['pandora']['sort_order'] = 'A-Z'
@@ -68,13 +91,13 @@ def test_browse_directory_sort_za(config, caplog):
 
         results = backend.library.browse(backend.library.root_directory.uri)
 
-        assert results[0].name == "Browse Genres"
-        assert results[1].name == "QuickMix"
+        assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
+        assert results[1].name == PandoraLibraryProvider.QUICKMIX_DIR_NAME
         assert results[2].name == conftest.MOCK_STATION_NAME + " 1"
         assert results[3].name == conftest.MOCK_STATION_NAME + " 2"
 
 
-def test_browse_directory_sort_date(config, caplog):
+def test_browse_directory_sort_date(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
 
         config['pandora']['sort_order'] = 'date'
@@ -82,21 +105,19 @@ def test_browse_directory_sort_date(config, caplog):
 
         results = backend.library.browse(backend.library.root_directory.uri)
 
-        assert results[0].name == "Browse Genres"
-        assert results[1].name == "QuickMix"
+        assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
+        assert results[1].name == PandoraLibraryProvider.QUICKMIX_DIR_NAME
         assert results[2].name == conftest.MOCK_STATION_NAME + " 2"
         assert results[3].name == conftest.MOCK_STATION_NAME + " 1"
 
 
-def test_browse_station_uri(config, station_mock, caplog):
+def test_browse_station_uri(config, station_mock):
+    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
 
-    backend = conftest.get_backend(config)
-    station_uri = StationUri.from_track(station_mock)
+            backend = conftest.get_backend(config)
+            station_uri = StationUri.from_station(station_mock)
 
-    results = backend.library.browse(station_uri.uri)
+            results = backend.library.browse(station_uri.uri)
 
-    assert len(results) == 1
-
-    assert results[0].uri == station_uri.name
-    assert results[0].name == station_uri.name
-
+            assert len(results) == 3
