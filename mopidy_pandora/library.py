@@ -43,7 +43,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 self._station = self.backend.api.get_station(pandora_uri.station_id)
                 self._station_iter = iterate_forever(self._station.get_playlist)
 
-            self._uri_translation_map.clear()
+            # TODO: find sensible location for clearing the uri translation map to avoid excessive memory usage
+            #self._uri_translation_map.clear()
             tracks = []
             number_of_tracks = 3
 
