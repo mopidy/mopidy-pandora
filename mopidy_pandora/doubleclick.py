@@ -28,6 +28,7 @@ class DoubleClickHandler(object):
         self.previous_tlid_queue = Queue.Queue()
         self.next_tlid_queue = Queue.Queue()
 
+    @rpc.run_async
     def set_click_time(self, click_time=None):
         if click_time is None:
             self._click_time = time.time()
@@ -49,6 +50,7 @@ class DoubleClickHandler(object):
 
         return double_clicked
 
+    @rpc.run_async
     def on_change_track(self, event_track_uri):
 
         if not self.is_double_click():
@@ -84,6 +86,7 @@ class DoubleClickHandler(object):
 
         return False
 
+    @rpc.run_async
     def on_resume_click(self, time_position, track_uri):
         if not self.is_double_click() or time_position == 0:
             return False

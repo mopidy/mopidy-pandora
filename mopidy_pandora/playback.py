@@ -42,6 +42,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         self.backend.setup_required = False
 
+    @rpc.run_async
     def _sync_tracklist(self, current_track_uri):
 
         self.last_played_track_uri = current_track_uri
@@ -60,6 +61,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         index = index_queue.get(timeout=2)
         length = length_queue.get(timeout=2)
 
+        # TODO note that tlid's will be changed to start at '1' instead of '0' in the next release of Mopidy.
+        # the following statement should change to 'if index >= length:' when that happens.
+        # see https://github.com/mopidy/mopidy/commit/4c5e80a2790c6bea971b105f11ab3f7c16617173
         if index >= length-1:
             # We're at the end of the tracklist, add teh next Pandora track
             track = self.backend.library.next_track()
@@ -81,6 +85,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             return False
 
+        self._sync_tracklist(track.uri)
+
         try:
             pandora_track = self.backend.library.lookup_pandora_track(track.uri)
 
@@ -92,9 +98,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if is_playable:
             logger.info("Up next: '%s' by %s", pandora_track.song_name, pandora_track.artist_name)
             self.consecutive_track_skips = 0
-
-            t = Thread(target=self._sync_tracklist, args=[track.uri])
-            t.start()
 
             return super(PandoraPlaybackProvider, self).change_track(track)
         else:
@@ -125,23 +128,19 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def change_track(self, track):
 
-        t = Thread(target=self._double_click_handler.on_change_track, args=[copy.copy(self.last_played_track_uri)])
-        t.start()
+        self._double_click_handler.on_change_track(copy.copy(self.last_played_track_uri))
 
         return super(EventSupportPlaybackProvider, self).change_track(track)
 
     def pause(self):
 
         if self.get_time_position() > 0:
-            t = Thread(target=self._double_click_handler.set_click_time)
-            t.start()
+            self._double_click_handler.set_click_time()
 
         return super(EventSupportPlaybackProvider, self).pause()
 
     def resume(self):
 
-        t = Thread(target=self._double_click_handler.on_resume_click,
-                   args=[self.get_time_position(), copy.copy(self.last_played_track_uri)])
-        t.start()
+        self._double_click_handler.on_resume_click(self.get_time_position(), copy.copy(self.last_played_track_uri))
 
         return super(EventSupportPlaybackProvider, self).resume()
