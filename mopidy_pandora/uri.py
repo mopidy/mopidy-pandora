@@ -66,6 +66,9 @@ class StationUri(PandoraUri):
         self.station_id = station_id
         self.token = token
 
+    def is_genre_station_uri(self):
+        return self.station_id.startswith('G') and self.station_id == self.token
+
     @classmethod
     def from_station(cls, station):
         return StationUri(station.id, station.token)

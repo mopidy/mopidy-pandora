@@ -1,4 +1,5 @@
 from mopidy import backend, models
+from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
@@ -38,6 +39,12 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
             # if not self._station or (not track.is_ad() and station_id != self._station.id):
             if self._station is None or (pandora_uri.station_id != '' and pandora_uri.station_id != self._station.id):
+
+                if pandora_uri.is_genre_station_uri():
+                    json_result = self.backend.api.create_station(search_token=pandora_uri.token)
+                    new_station = Station.from_json(self.backend.api, json_result)
+                    pandora_uri = StationUri.from_station(new_station)
+
                 self._station = self.backend.api.get_station(pandora_uri.station_id)
                 self._station_iter = iterate_forever(self._station.get_playlist)
 
