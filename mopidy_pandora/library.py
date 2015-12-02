@@ -1,7 +1,5 @@
 from mopidy import backend, models
 
-from mopidy.internal import encoding
-
 from pydora.utils import iterate_forever
 
 from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
@@ -10,7 +8,7 @@ from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUr
 class PandoraLibraryProvider(backend.LibraryProvider):
     ROOT_DIR_NAME = 'Pandora'
     GENRE_DIR_NAME = 'Browse Genres'
-    QUICKMIX_DIR_NAME = 'QuickMix'
+    SHUFFLE_STATION_NAME = 'QuickMix'
 
     root_directory = models.Ref.directory(name=ROOT_DIR_NAME, uri=PandoraUri('directory').uri)
     genre_directory = models.Ref.directory(name=GENRE_DIR_NAME, uri=PandoraUri('genres').uri)
@@ -44,9 +42,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 self._station_iter = iterate_forever(self._station.get_playlist)
 
             # TODO: find sensible location for clearing the uri translation map to avoid excessive memory usage
-            #self._uri_translation_map.clear()
+            # self._uri_translation_map.clear()
             tracks = []
-            number_of_tracks = 3
+            # Need to add at least two tracks to determine direction of 'on_change' events
+            # that are handled by DoubleClickHandler
+            number_of_tracks = 2
 
             for i in range(0, number_of_tracks):
                 tracks.append(self.next_track())
@@ -73,15 +73,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         logger.error("Failed to lookup '%s'", uri)
         return []
 
-    def _prep_station_list(self, list):
+    def _move_shuffle_to_top(self, list):
 
-        index = 0
-        for item in list:
-            if item.name == PandoraLibraryProvider.QUICKMIX_DIR_NAME:
-                index = list.index(item)
-                break
-
-        list.insert(0, list.pop(index))
+        for station in list:
+            if station.name == PandoraLibraryProvider.SHUFFLE_STATION_NAME:
+                return list.insert(0, list.pop(list.index(station)))
 
     def _browse_stations(self):
         stations = self.backend.api.get_station_list()
@@ -91,7 +87,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             if self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
 
-            self._prep_station_list(stations)
+            self._move_shuffle_to_top(stations)
 
         station_directories = []
         for station in stations:
@@ -113,7 +109,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def lookup_pandora_track(self, uri):
         try:
             return self._uri_translation_map[uri]
-        except KeyError as e:
+        except KeyError:
             logger.error("Failed to lookup '%s' in uri translation map.", uri)
             return None
 

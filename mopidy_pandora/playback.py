@@ -1,17 +1,19 @@
 import Queue
-import copy
-from threading import Thread
+
+import threading
+
+import time
 
 from mopidy import backend
 from mopidy.internal import encoding
+
+from pandora.errors import PandoraException
 
 import requests
 
 from mopidy_pandora import rpc
 
-from mopidy_pandora.doubleclick import DoubleClickHandler
-
-from mopidy_pandora.uri import logger
+from mopidy_pandora.uri import logger, PandoraUri  # noqa I101
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
@@ -19,8 +21,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
-
-        self.last_played_track_uri = None
 
         # TODO: It shouldn't be necessary to keep track of the number of tracks that have been skipped in the
         # player anymore once https://github.com/mopidy/mopidy/issues/1221 has been fixed.
@@ -36,42 +36,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def _auto_setup(self):
 
         rpc.RPCClient.core_tracklist_set_repeat(False)
-        rpc.RPCClient.core_tracklist_set_consume(False)
+        rpc.RPCClient.core_tracklist_set_consume(True)
         rpc.RPCClient.core_tracklist_set_random(False)
         rpc.RPCClient.core_tracklist_set_single(False)
 
         self.backend.setup_required = False
-
-    @rpc.run_async
-    def _sync_tracklist(self, current_track_uri):
-
-        self.last_played_track_uri = current_track_uri
-
-        length_queue = Queue.Queue()
-        rpc.RPCClient.core_tracklist_get_length(queue=length_queue)
-
-        current_tlid_queue = Queue.Queue()
-        rpc.RPCClient.core_playback_get_current_tlid(queue=current_tlid_queue)
-
-        current_tlid = current_tlid_queue.get(timeout=2)
-
-        index_queue = Queue.Queue()
-        rpc.RPCClient.core_tracklist_index(tlid=current_tlid, queue=index_queue)
-
-        index = index_queue.get(timeout=2)
-        length = length_queue.get(timeout=2)
-
-        # TODO note that tlid's will be changed to start at '1' instead of '0' in the next release of Mopidy.
-        # the following statement should change to 'if index >= length:' when that happens.
-        # see https://github.com/mopidy/mopidy/commit/4c5e80a2790c6bea971b105f11ab3f7c16617173
-        if index >= length-1:
-            # We're at the end of the tracklist, add teh next Pandora track
-            track = self.backend.library.next_track()
-            rpc.RPCClient.core_tracklist_add(uris=[track.uri])
-
-        length_queue.task_done()
-        current_tlid_queue.task_done()
-        index_queue.task_done()
 
     def prepare_change(self):
 
@@ -83,9 +52,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def change_track(self, track):
 
         if track.uri is None:
+            logger.warning("No URI for track '%s': cannot be played.", track.name)
+            self._check_skip_limit()
             return False
-
-        self._sync_tracklist(track.uri)
 
         try:
             pandora_track = self.backend.library.lookup_pandora_track(track.uri)
@@ -121,26 +90,163 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
-
     def __init__(self, audio, backend):
         super(EventSupportPlaybackProvider, self).__init__(audio, backend)
-        self._double_click_handler = DoubleClickHandler(backend)
+
+        self._doubleclick_processed_event = threading.Event()
+
+        config = self.backend._config
+        self.on_pause_resume_click = config["on_pause_resume_click"]
+        self.on_pause_next_click = config["on_pause_next_click"]
+        self.on_pause_previous_click = config["on_pause_previous_click"]
+        self.double_click_interval = config['double_click_interval']
+
+        self._click_time = 0
+        self.thread_timeout = 2
+
+        self.previous_tl_track = None
+        self.current_tl_track = None
+        self.next_tl_track = None
+
+    def set_click_time(self, click_time=None):
+        if click_time is None:
+            self._click_time = time.time()
+        else:
+            self._click_time = click_time
+
+    def get_click_time(self):
+        return self._click_time
+
+    def is_double_click(self):
+
+        double_clicked = self._click_time > 0 and time.time() - self._click_time < float(self.double_click_interval)
+
+        if double_clicked:
+            self._doubleclick_processed_event.clear()
+        else:
+            self._click_time = 0
+
+        return double_clicked
 
     def change_track(self, track):
 
-        self._double_click_handler.on_change_track(copy.copy(self.last_played_track_uri))
+        if self.is_double_click():
 
+            if track.uri == self.next_tl_track['track']['uri']:
+                self.process_click(self.on_pause_next_click, track.uri)
+
+            elif track.uri == self.previous_tl_track['track']['uri']:
+                self.process_click(self.on_pause_previous_click, track.uri)
+
+            rpc.RPCClient.core_playback_resume()
+
+        self._sync_tracklist()
         return super(EventSupportPlaybackProvider, self).change_track(track)
+
+
+    def resume(self):
+        if self.is_double_click() and self.get_time_position() > 0:
+            self.process_click(self.on_pause_resume_click, self.current_tl_track['track']['uri'])
+
+        return super(EventSupportPlaybackProvider, self).resume()
 
     def pause(self):
 
         if self.get_time_position() > 0:
-            self._double_click_handler.set_click_time()
+            self.set_click_time()
 
         return super(EventSupportPlaybackProvider, self).pause()
 
-    def resume(self):
+    @rpc.run_async
+    def process_click(self, method, track_uri):
 
-        self._double_click_handler.on_resume_click(self.get_time_position(), copy.copy(self.last_played_track_uri))
+        self.set_click_time(0)
 
-        return super(EventSupportPlaybackProvider, self).resume()
+        uri = PandoraUri.parse(track_uri)
+        logger.info("Triggering event '%s' for song: %s", method,
+                    self.backend.library.lookup_pandora_track(track_uri).song_name)
+
+        func = getattr(self, method)
+
+        try:
+            func(uri.token)
+
+        except PandoraException as e:
+            logger.error('Error calling event: %s', encoding.locale_decode(e))
+            return False
+        finally:
+            self._doubleclick_processed_event.set()
+
+    def thumbs_up(self, track_token):
+        return self.backend.api.add_feedback(track_token, True)
+
+    def thumbs_down(self, track_token):
+        return self.backend.api.add_feedback(track_token, False)
+
+    def sleep(self, track_token):
+        return self.backend.api.sleep_song(track_token)
+
+    def add_artist_bookmark(self, track_token):
+        return self.backend.api.add_artist_bookmark(track_token)
+
+    def add_song_bookmark(self, track_token):
+        return self.backend.api.add_song_bookmark(track_token)
+
+    @rpc.run_async
+    def _sync_tracklist(self):
+
+        # Wait until doubleclick events have finished processing
+        self._doubleclick_processed_event.wait(self.thread_timeout)
+
+        previous_tl_track_queue = Queue.Queue(1)
+        current_tl_track_queue = Queue.Queue(1)
+        next_tl_track_queue = Queue.Queue(1)
+        length_queue = Queue.Queue(1)
+        index_queue = Queue.Queue(1)
+
+        try:
+            # Try to retrieve the current tlids, time out if not found
+            rpc.RPCClient.core_playback_get_current_tl_track(queue=current_tl_track_queue)
+            rpc.RPCClient.core_tracklist_get_length(queue=length_queue)
+
+            self.current_tl_track = current_tl_track_queue.get(timeout=self.thread_timeout)
+
+            rpc.RPCClient.core_tracklist_index(tlid=self.current_tl_track['tlid'], queue=index_queue)
+
+            tl_index = index_queue.get(timeout=self.thread_timeout)
+            tl_length = length_queue.get(timeout=self.thread_timeout)
+
+            # TODO note that tlid's will be changed to start at '1' instead of '0' in the next release of Mopidy.
+            # the following statement should change to 'if index >= length:' when that happens.
+            # see https://github.com/mopidy/mopidy/commit/4c5e80a2790c6bea971b105f11ab3f7c16617173
+            if tl_index >= tl_length-1:
+                # We're at the end of the tracklist, add the next Pandora track
+                track = self.backend.library.next_track()
+                add_track_queue = Queue.Queue()
+
+                rpc.RPCClient.core_tracklist_add(uris=[track.uri], queue=add_track_queue)
+                add_track_queue.get(timeout=self.thread_timeout*2)
+
+            # 'Previous' and 'next' would have changed after adding the new track. Fetch again.
+            rpc.RPCClient.core_tracklist_previous_track(self.current_tl_track, queue=previous_tl_track_queue)
+            rpc.RPCClient.core_tracklist_next_track(self.current_tl_track, queue=next_tl_track_queue)
+
+            self.previous_tl_track = previous_tl_track_queue.get(timeout=self.thread_timeout)
+            self.next_tl_track = next_tl_track_queue.get(timeout=self.thread_timeout)
+
+            self._doubleclick_processed_event.set()
+
+        except Exception as e:
+            logger.error('Error syncing tracklist: %s.', encoding.locale_decode(e))
+            self.previous_tl_track = self.current_tl_track = self.next_tl_track = None
+            return False
+
+        finally:
+            # Cleanup asynchronous queues
+            previous_tl_track_queue.task_done()
+            current_tl_track_queue.task_done()
+            next_tl_track_queue.task_done()
+            length_queue.task_done()
+            index_queue.task_done()
+
+        return True

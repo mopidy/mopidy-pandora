@@ -68,7 +68,7 @@ def test_browse_directory_uri(config):
         assert results[0].uri == PandoraUri('genres').uri
 
         assert results[1].type == models.Ref.DIRECTORY
-        assert results[1].name == PandoraLibraryProvider.QUICKMIX_DIR_NAME
+        assert results[1].name == PandoraLibraryProvider.SHUFFLE_STATION_NAME
         assert results[1].uri == StationUri.from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][2])).uri
 
@@ -92,7 +92,7 @@ def test_browse_directory_sort_za(config):
         results = backend.library.browse(backend.library.root_directory.uri)
 
         assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
-        assert results[1].name == PandoraLibraryProvider.QUICKMIX_DIR_NAME
+        assert results[1].name == PandoraLibraryProvider.SHUFFLE_STATION_NAME
         assert results[2].name == conftest.MOCK_STATION_NAME + " 1"
         assert results[3].name == conftest.MOCK_STATION_NAME + " 2"
 
@@ -106,7 +106,7 @@ def test_browse_directory_sort_date(config):
         results = backend.library.browse(backend.library.root_directory.uri)
 
         assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
-        assert results[1].name == PandoraLibraryProvider.QUICKMIX_DIR_NAME
+        assert results[1].name == PandoraLibraryProvider.SHUFFLE_STATION_NAME
         assert results[2].name == conftest.MOCK_STATION_NAME + " 2"
         assert results[3].name == conftest.MOCK_STATION_NAME + " 1"
 

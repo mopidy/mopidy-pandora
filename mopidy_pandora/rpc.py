@@ -44,10 +44,6 @@ class RPCClient(object):
     url = 'http://' + str(hostname) + ':' + str(port) + '/mopidy/rpc'
     id = 0
 
-    previous_tlid_queue = Queue.Queue()
-    current_tlid_queue = Queue.Queue()
-    next_tlid_queue = Queue.Queue()
-
     @classmethod
     def configure(cls, hostname, port):
         cls.hostname = hostname
@@ -102,16 +98,17 @@ class RPCClient(object):
         return cls._do_rpc('core.playback.stop', queue=queue)
 
     @classmethod
-    def core_tracklist_get_next_tlid(cls, queue=None):
-        return cls._do_rpc('core.tracklist.get_next_tlid', queue=queue)
+    def core_tracklist_previous_track(cls, tl_track, queue=None):
+        return cls._do_rpc('core.tracklist.previous_track', params={'tl_track': tl_track}, queue=queue)
 
     @classmethod
-    def core_tracklist_get_previous_tlid(cls, queue=None):
-        return cls._do_rpc('core.tracklist.get_previous_tlid', queue=queue)
+    def core_playback_get_current_tl_track(cls, queue=None):
+        return cls._do_rpc('core.playback.get_current_tl_track', queue=queue)
 
     @classmethod
-    def core_playback_get_current_tlid(cls, queue=None):
-        return cls._do_rpc('core.playback.get_current_tlid', queue=queue)
+    def core_tracklist_next_track(cls, tl_track, queue=None):
+        return cls._do_rpc('core.tracklist.next_track', params={'tl_track': tl_track}, queue=queue)
+
 
     @classmethod
     def core_tracklist_index(cls, tl_track=None, tlid=None, queue=None):

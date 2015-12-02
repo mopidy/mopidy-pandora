@@ -75,7 +75,7 @@ and web extensions:
 - double_click_interval - successive button clicks that occur within this interval (in seconds) will trigger the event.
 - on_pause_resume_click - click pause and then play while a song is playing to trigger the event.
 - on_pause_next_click - click pause and then next in quick succession. Calls event and skips to next song.
-- on_pause_previous_click - click pause and then previous in quick succession. Calls event and skips to next song.
+- on_pause_previous_click - click pause and then previous in quick succession. Calls event and restarts the current song.
 
 The supported events are: 'thumbs_up', 'thumbs_down', 'sleep', 'add_artist_bookmark', and 'add_song_bookmark'.
 
@@ -84,14 +84,13 @@ Usage
 
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
-Mopidy-Pandora represents each Pandora station as a separate playlist. The Playlist needs to be played **in repeat mode**
-and **consume**, **random**, and **single** should be turned off. Mopidy-Pandora will set this up automatically unless
-you set the **auto_setup** config parameter to 'false'.
+Mopidy-Pandora simulates dynamic playlists by adding the next track to the tracklist when the second to last track
+starts to play. It is recommended that the Playlist is played with **consume** turned on in order to simulate how
+Pandora clients are *supposed* to behave. For the same reason, **repeat**, **random**, and **single** should be turned
+off. Mopidy-Pandora will set all of this up automatically unless you set the **auto_setup** config parameter to 'false'.
 
-Each time a track is played, the next dynamic track for that Pandora station will be retrieved and played. If ratings
-support is enabled, Mopidy-Pandora will add three tracks to the playlist for each dynamic track. These are just used to
-determine whether the user clicked on the 'previous' or 'next' playback buttons, and all three tracks point to the same
-dynamic track for that Pandora station (i.e. it does not matter which one you select to play).
+Mopidy-Pandora will ensure that there are always at least two tracks in the playlist so that it is possible to determine
+the direction that tracks are changed in (i.e. whether the user clicked on the 'previous' or 'next' playback buttons).
 
 
 Project resources
