@@ -117,7 +117,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _browse_genre_stations(self, uri):
         return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
-                for station in self.backend.api.get_genre_stations()[GenreUri.parse(uri).category_name]]
+                for station in self.backend.api.get_genre_stations(refresh_cache=False)
+                [GenreUri.parse(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
         try:

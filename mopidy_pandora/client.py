@@ -23,9 +23,9 @@ class MopidyPandoraAPIClient(pandora.APIClient):
         self._station_list = []
         self._genre_stations = []
 
-    def get_station_list(self):
+    def get_station_list(self, refresh_cache=True):
 
-        if not any(self._station_list) or self._station_list.has_changed():
+        if not any(self._station_list) or (refresh_cache and self._station_list.has_changed()):
             try:
                 self._station_list = super(MopidyPandoraAPIClient, self).get_station_list()
             except requests.exceptions.RequestException as e:
@@ -41,9 +41,9 @@ class MopidyPandoraAPIClient(pandora.APIClient):
             # Could not find station_id in cached list, try retrieving from Pandora server.
             return super(MopidyPandoraAPIClient, self).get_station(station_id)
 
-    def get_genre_stations(self):
+    def get_genre_stations(self, refresh_cache=True):
 
-        if not any(self._genre_stations) or self._genre_stations.has_changed():
+        if not any(self._genre_stations) or (refresh_cache and self._genre_stations.has_changed()):
             try:
                 self._genre_stations = super(MopidyPandoraAPIClient, self).get_genre_stations()
                 # if any(self._genre_stations):
