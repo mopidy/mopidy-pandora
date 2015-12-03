@@ -84,13 +84,12 @@ Usage
 
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
-Mopidy-Pandora simulates dynamic playlists by adding the next track to the tracklist when the second to last track
-starts to play. It is recommended that the Playlist is played with **consume** turned on in order to simulate how
-Pandora clients are *supposed* to behave. For the same reason, **repeat**, **random**, and **single** should be turned
-off. Mopidy-Pandora will set all of this up automatically unless you set the **auto_setup** config parameter to 'false'.
+Mopidy-Pandora simulates dynamic playlists by adding more tracks to the tracklist as needed. It is recommended that the
+Playlist is played with **consume** turned on in order to simulate the behaviour of the standard Pandora clients. For
+the same reason, **repeat**, **random**, and **single** should be turned off. Mopidy-Pandora will set all of this up
+automatically unless you set the **auto_setup** config parameter to 'false'.
 
-Mopidy-Pandora will ensure that there are always at least two tracks in the playlist so that it is possible to determine
-the direction that tracks are changed in (i.e. whether the user clicked on the 'previous' or 'next' playback buttons).
+Mopidy-Pandora will ensure that there are always at least two tracks in the playlist to avoid playback gaps when switching tracks.
 
 
 Project resources
@@ -108,9 +107,10 @@ v0.2.0 (UNRELEASED)
 ----------------------------------------
 
 - Major overhaul that completely changes how tracks are handled. Finally allows all track information to be accessible
-  during playback (e.g. song and artist names, album covers, etc.).
+  during playback (e.g. song and artist names, album covers, track length, bitrate etc.).
 - Simulate dynamic tracklist (workaround for https://github.com/rectalogic/mopidy-pandora/issues/2)
-- Add support for browsing genre stations
+- Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
+  your profile. At the moment, there is no way to remove stations from within Mopidy-Pandora.
 - Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
 
 v0.1.7 (Oct 31, 2015)

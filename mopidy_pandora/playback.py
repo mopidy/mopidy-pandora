@@ -35,10 +35,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def _auto_setup(self):
 
-        rpc.RPCClient.core_tracklist_set_repeat(False)
-        rpc.RPCClient.core_tracklist_set_consume(True)
-        rpc.RPCClient.core_tracklist_set_random(False)
-        rpc.RPCClient.core_tracklist_set_single(False)
+        # Setup player to mirror behaviour of official Pandora front-ends.
+        rpc.RPCClient.tracklist_set_repeat(False)
+        rpc.RPCClient.tracklist_set_consume(True)
+        rpc.RPCClient.tracklist_set_random(False)
+        rpc.RPCClient.tracklist_set_single(False)
 
         self.backend.setup_required = False
 
@@ -53,13 +54,13 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         if track.uri is None:
             logger.warning("No URI for track '%s': cannot be played.", track.name)
-            self._check_skip_limit()
+            self._check_skip_limit_exceeded()
             return False
 
         try:
             pandora_track = self.backend.library.lookup_pandora_track(track.uri)
-
             is_playable = pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()
+
         except requests.exceptions.RequestException as e:
             is_playable = False
             logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
@@ -70,20 +71,19 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
             return super(PandoraPlaybackProvider, self).change_track(track)
         else:
-            # TODO: also remove from tracklist? Handled by consume?
             logger.warning("Audio URI for track '%s' cannot be played.", track.uri)
-            self._check_skip_limit()
+            self._check_skip_limit_exceeded()
             return False
 
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
-    def _check_skip_limit(self):
+    def _check_skip_limit_exceeded(self):
         self.consecutive_track_skips += 1
 
         if self.consecutive_track_skips >= self.SKIP_LIMIT:
             logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
-            rpc.RPCClient.core_playback_stop()
+            rpc.RPCClient.playback_stop()
             return True
 
         return False
@@ -138,11 +138,10 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
             elif track.uri == self.previous_tl_track['track']['uri']:
                 self.process_click(self.on_pause_previous_click, track.uri)
 
-            rpc.RPCClient.core_playback_resume()
+            rpc.RPCClient.playback_resume()
 
         self._sync_tracklist()
         return super(EventSupportPlaybackProvider, self).change_track(track)
-
 
     def resume(self):
         if self.is_double_click() and self.get_time_position() > 0:
@@ -194,27 +193,29 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     @rpc.run_async
     def _sync_tracklist(self):
+        """ Sync the current tracklist information, to be used when the next
+            event needs to be processed.
 
+        """
         # Wait until doubleclick events have finished processing
         self._doubleclick_processed_event.wait(self.thread_timeout)
 
-        previous_tl_track_queue = Queue.Queue(1)
-        current_tl_track_queue = Queue.Queue(1)
-        next_tl_track_queue = Queue.Queue(1)
-        length_queue = Queue.Queue(1)
-        index_queue = Queue.Queue(1)
+        previous_tl_track_q = Queue.Queue(1)
+        current_tl_track_q = Queue.Queue(1)
+        next_tl_track_q = Queue.Queue(1)
+        length_q = Queue.Queue(1)
+        index_q = Queue.Queue(1)
 
         try:
-            # Try to retrieve the current tlids, time out if not found
-            rpc.RPCClient.core_playback_get_current_tl_track(queue=current_tl_track_queue)
-            rpc.RPCClient.core_tracklist_get_length(queue=length_queue)
+            rpc.RPCClient.playback_get_current_tl_track(queue=current_tl_track_q)
+            rpc.RPCClient.tracklist_get_length(queue=length_q)
 
-            self.current_tl_track = current_tl_track_queue.get(timeout=self.thread_timeout)
+            self.current_tl_track = current_tl_track_q.get(timeout=self.thread_timeout)
 
-            rpc.RPCClient.core_tracklist_index(tlid=self.current_tl_track['tlid'], queue=index_queue)
+            rpc.RPCClient.tracklist_index(tlid=self.current_tl_track['tlid'], queue=index_q)
 
-            tl_index = index_queue.get(timeout=self.thread_timeout)
-            tl_length = length_queue.get(timeout=self.thread_timeout)
+            tl_index = index_q.get(timeout=self.thread_timeout)
+            tl_length = length_q.get(timeout=self.thread_timeout)
 
             # TODO note that tlid's will be changed to start at '1' instead of '0' in the next release of Mopidy.
             # the following statement should change to 'if index >= length:' when that happens.
@@ -222,17 +223,15 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
             if tl_index >= tl_length-1:
                 # We're at the end of the tracklist, add the next Pandora track
                 track = self.backend.library.next_track()
-                add_track_queue = Queue.Queue()
 
-                rpc.RPCClient.core_tracklist_add(uris=[track.uri], queue=add_track_queue)
-                add_track_queue.get(timeout=self.thread_timeout*2)
+                t = rpc.RPCClient.tracklist_add(uris=[track.uri])
+                t.join(self.thread_timeout*2)
 
-            # 'Previous' and 'next' would have changed after adding the new track. Fetch again.
-            rpc.RPCClient.core_tracklist_previous_track(self.current_tl_track, queue=previous_tl_track_queue)
-            rpc.RPCClient.core_tracklist_next_track(self.current_tl_track, queue=next_tl_track_queue)
+            rpc.RPCClient.tracklist_previous_track(self.current_tl_track, queue=previous_tl_track_q)
+            rpc.RPCClient.tracklist_next_track(self.current_tl_track, queue=next_tl_track_q)
 
-            self.previous_tl_track = previous_tl_track_queue.get(timeout=self.thread_timeout)
-            self.next_tl_track = next_tl_track_queue.get(timeout=self.thread_timeout)
+            self.previous_tl_track = previous_tl_track_q.get(timeout=self.thread_timeout)
+            self.next_tl_track = next_tl_track_q.get(timeout=self.thread_timeout)
 
             self._doubleclick_processed_event.set()
 
@@ -243,10 +242,10 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
         finally:
             # Cleanup asynchronous queues
-            previous_tl_track_queue.task_done()
-            current_tl_track_queue.task_done()
-            next_tl_track_queue.task_done()
-            length_queue.task_done()
-            index_queue.task_done()
+            previous_tl_track_q.task_done()
+            current_tl_track_q.task_done()
+            next_tl_track_q.task_done()
+            length_q.task_done()
+            index_q.task_done()
 
         return True

@@ -35,30 +35,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return self._browse_genre_stations(uri)
 
         if pandora_uri.scheme == StationUri.scheme:
-
-            # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
-            # if not self._station or (not track.is_ad() and station_id != self._station.id):
-            if self._station is None or (pandora_uri.station_id != '' and pandora_uri.station_id != self._station.id):
-
-                if pandora_uri.is_genre_station_uri():
-                    json_result = self.backend.api.create_station(search_token=pandora_uri.token)
-                    new_station = Station.from_json(self.backend.api, json_result)
-                    pandora_uri = StationUri.from_station(new_station)
-
-                self._station = self.backend.api.get_station(pandora_uri.station_id)
-                self._station_iter = iterate_forever(self._station.get_playlist)
-
-            # TODO: find sensible location for clearing the uri translation map to avoid excessive memory usage
-            # self._uri_translation_map.clear()
-            tracks = []
-            # Need to add at least two tracks to determine direction of 'on_change' events
-            # that are handled by DoubleClickHandler
-            number_of_tracks = 2
-
-            for i in range(0, number_of_tracks):
-                tracks.append(self.next_track())
-
-            return tracks
+            return self._browse_tracks(uri)
 
         raise Exception("Unknown or unsupported URI type '%s'", uri)
 
@@ -84,6 +61,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         for station in list:
             if station.name == PandoraLibraryProvider.SHUFFLE_STATION_NAME:
+                # Align with 'QuickMix' being renamed to 'Shuffle' in most other Pandora front-ends.
+                station.name = 'Shuffle'
                 return list.insert(0, list.pop(list.index(station)))
 
     def _browse_stations(self):
@@ -104,6 +83,28 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         station_directories.insert(0, self.genre_directory)
 
         return station_directories
+
+    def _browse_tracks(self, uri):
+
+        pandora_uri = PandoraUri.parse(uri)
+
+        # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
+        # if not self._station or (not track.is_ad() and station_id != self._station.id):
+        if self._station is None or (pandora_uri.station_id != '' and pandora_uri.station_id != self._station.id):
+
+            if pandora_uri.is_genre_station_uri():
+                pandora_uri = self._create_station_for_genre(pandora_uri.token)
+
+            self._station = self.backend.api.get_station(pandora_uri.station_id)
+            self._station_iter = iterate_forever(self._station.get_playlist)
+
+        return [self.next_track()]
+
+    def _create_station_for_genre(self, genre_token):
+        json_result = self.backend.api.create_station(search_token=genre_token)
+        new_station = Station.from_json(self.backend.api, json_result)
+
+        return StationUri.from_station(new_station)
 
     def _browse_genre_categories(self):
         return [models.Ref.directory(name=category, uri=GenreUri(category).uri)
@@ -127,7 +128,14 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             # TODO process add tokens properly when pydora 1.6 is available
             return self.next_track()
 
-        track = models.Ref.track(name=pandora_track.song_name, uri=TrackUri.from_track(pandora_track).uri)
+        track_uri = TrackUri.from_track(pandora_track)
+        track = models.Ref.track(name=pandora_track.song_name, uri=track_uri.uri)
+
+        if any(self._uri_translation_map) and \
+                        track_uri.station_id != TrackUri.parse(self._uri_translation_map.keys()[0]).station_id:
+            # We've switched stations, clear the translation map.
+            self._uri_translation_map.clear()
+
         self._uri_translation_map[track.uri] = pandora_track
 
         return track

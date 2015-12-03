@@ -98,10 +98,10 @@ def test_change_track_enforces_skip_limit(provider):
             with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=False):
                 track = models.Track(uri="pandora:track:test_station_id:test_token")
 
-                rpc.RPCClient.core_playback_stop = mock.PropertyMock()
+                rpc.RPCClient.playback_stop = mock.PropertyMock()
 
                 assert provider.change_track(track) is False
-                rpc.RPCClient.core_playback_stop.assert_called_once_with()
+                rpc.RPCClient.playback_stop.assert_called_once_with()
                 assert PlaylistItem.get_is_playable.call_count == PandoraPlaybackProvider.SKIP_LIMIT
 
 
@@ -112,7 +112,7 @@ def test_change_track_handles_request_exceptions(config, caplog):
 
             playback = conftest.get_backend(config).playback
             rpc.RPCClient._do_rpc = mock.PropertyMock()
-            rpc.RPCClient.core_playback_stop = mock.PropertyMock()
+            rpc.RPCClient.playback_stop = mock.PropertyMock()
 
             assert playback.change_track(track) is False
             assert 'Error changing track' in caplog.text()
@@ -212,7 +212,7 @@ def test_is_playable_handles_request_exceptions(provider, caplog):
             with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.request_exception_mock):
                 track = models.Track(uri="pandora:track:test::::")
 
-                rpc.RPCClient.core_playback_stop = mock.PropertyMock()
+                rpc.RPCClient.playback_stop = mock.PropertyMock()
 
                 assert provider.change_track(track) is False
                 assert 'Error checking if track is playable' in caplog.text()

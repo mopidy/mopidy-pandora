@@ -74,52 +74,51 @@ class RPCClient(object):
         return json_data['result']
 
     @classmethod
-    def core_tracklist_set_repeat(cls, value=True, queue=None):
+    def tracklist_set_repeat(cls, value=True, queue=None):
         return cls._do_rpc('core.tracklist.set_repeat', params={'value': value}, queue=queue)
 
     @classmethod
-    def core_tracklist_set_consume(cls, value=True, queue=None):
+    def tracklist_set_consume(cls, value=True, queue=None):
         return cls._do_rpc('core.tracklist.set_consume', params={'value': value}, queue=queue)
 
     @classmethod
-    def core_tracklist_set_single(cls, value=True, queue=None):
+    def tracklist_set_single(cls, value=True, queue=None):
         return cls._do_rpc('core.tracklist.set_single', params={'value': value}, queue=queue)
 
     @classmethod
-    def core_tracklist_set_random(cls, value=True, queue=None):
+    def tracklist_set_random(cls, value=True, queue=None):
         return cls._do_rpc('core.tracklist.set_random', params={'value': value}, queue=queue)
 
     @classmethod
-    def core_playback_resume(cls, queue=None):
+    def playback_resume(cls, queue=None):
         return cls._do_rpc('core.playback.resume', queue=queue)
 
     @classmethod
-    def core_playback_stop(cls, queue=None):
+    def playback_stop(cls, queue=None):
         return cls._do_rpc('core.playback.stop', queue=queue)
 
     @classmethod
-    def core_tracklist_previous_track(cls, tl_track, queue=None):
+    def tracklist_previous_track(cls, tl_track, queue=None):
         return cls._do_rpc('core.tracklist.previous_track', params={'tl_track': tl_track}, queue=queue)
 
     @classmethod
-    def core_playback_get_current_tl_track(cls, queue=None):
+    def playback_get_current_tl_track(cls, queue=None):
         return cls._do_rpc('core.playback.get_current_tl_track', queue=queue)
 
     @classmethod
-    def core_tracklist_next_track(cls, tl_track, queue=None):
+    def tracklist_next_track(cls, tl_track, queue=None):
         return cls._do_rpc('core.tracklist.next_track', params={'tl_track': tl_track}, queue=queue)
 
-
     @classmethod
-    def core_tracklist_index(cls, tl_track=None, tlid=None, queue=None):
+    def tracklist_index(cls, tl_track=None, tlid=None, queue=None):
         return cls._do_rpc('core.tracklist.index', params={'tl_track': tl_track, 'tlid': tlid},
                            queue=queue)
 
     @classmethod
-    def core_tracklist_get_length(cls, queue=None):
+    def tracklist_get_length(cls, queue=None):
         return cls._do_rpc('core.tracklist.get_length', queue=queue)
 
     @classmethod
-    def core_tracklist_add(cls, tracks=None, at_position=None, uri=None, uris=None, queue=None):
+    def tracklist_add(cls, tracks=None, at_position=None, uri=None, uris=None, queue=None):
         return cls._do_rpc('core.tracklist.add', params={'tracks': tracks, 'at_position': at_position,
                                                          'uri': uri, 'uris': uris}, queue=queue)
