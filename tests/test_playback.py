@@ -9,9 +9,7 @@ import mock
 
 from mopidy import audio, backend as backend_api, models
 
-from pandora.errors import PandoraException
-
-from pandora.models.pandora import PlaylistItem, Station
+from pandora.models.pandora import PlaylistItem
 
 import pytest
 
@@ -20,9 +18,9 @@ from mopidy_pandora import playback, rpc
 from mopidy_pandora.backend import MopidyPandoraAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
-from mopidy_pandora.playback import PandoraPlaybackProvider
+from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybackProvider
 
-from mopidy_pandora.uri import TrackUri
+from mopidy_pandora.uri import PandoraUri, TrackUri
 
 
 @pytest.fixture
@@ -33,15 +31,27 @@ def audio_mock():
 
 @pytest.fixture
 def provider(audio_mock, config):
+
+    provider = None
+
     if config['pandora']['event_support_enabled']:
         provider = playback.EventSupportPlaybackProvider(
             audio=audio_mock, backend=conftest.get_backend(config))
 
         provider.current_tl_track = {'track': {'uri': 'test'}}
-        return provider
+
+        provider._sync_tracklist = mock.PropertyMock()
     else:
-        return playback.PandoraPlaybackProvider(
+        provider = playback.PandoraPlaybackProvider(
             audio=audio_mock, backend=conftest.get_backend(config))
+
+    return provider
+
+
+@pytest.fixture(scope="session")
+def client_mock():
+    client_mock = mock.Mock(spec=MopidyPandoraAPIClient)
+    return client_mock
 
 
 def test_is_a_playback_provider(provider):
@@ -82,180 +92,247 @@ def test_resume_checks_for_double_click(provider):
         provider.is_double_click.assert_called_once_with()
 
 
-def test_change_track(audio_mock, provider):
-    with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=conftest.playlist_item_mock):
-        with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=True):
-            track = models.Track(uri=TrackUri.from_track(conftest.playlist_item_mock()).uri)
+def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
+    with mock.patch.object(EventSupportPlaybackProvider, 'is_double_click', return_value=False):
+        with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=None):
+            track = TrackUri.from_track(playlist_item_mock)
 
-            assert provider.change_track(track) is True
-            assert audio_mock.prepare_change.call_count == 0
-            assert audio_mock.start_playback.call_count == 0
-            audio_mock.set_uri.assert_called_once_with(PlaylistItem.get_audio_url(
-                conftest.playlist_result_mock()["result"]["items"][0],
-                conftest.MOCK_DEFAULT_AUDIO_QUALITY))
+            process_click_mock = mock.PropertyMock()
+            provider.process_click = process_click_mock
 
+            provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+            provider.next_tl_track = {'track': {'uri': track.uri}}
 
-def test_change_track_enforces_skip_limit(provider):
-    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
-        with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
-            with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=False):
-                track = models.Track(uri="pandora:track:test_station_id:test_token")
-
-                rpc.RPCClient.playback_stop = mock.PropertyMock()
-
-                assert provider.change_track(track) is False
-                rpc.RPCClient.playback_stop.assert_called_once_with()
-                assert PlaylistItem.get_is_playable.call_count == PandoraPlaybackProvider.SKIP_LIMIT
-
-
-def test_change_track_handles_request_exceptions(config, caplog):
-    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
-        with mock.patch.object(Station, 'get_playlist', conftest.request_exception_mock):
-            track = models.Track(uri="pandora:track:test_station_id:test_token")
-
-            playback = conftest.get_backend(config).playback
-            rpc.RPCClient._do_rpc = mock.PropertyMock()
             rpc.RPCClient.playback_stop = mock.PropertyMock()
 
-            assert playback.change_track(track) is False
-            assert 'Error changing track' in caplog.text()
+            for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
+                provider.change_track(track) is False
+
+            assert rpc.RPCClient.playback_stop.called
+            assert "Maximum track skip limit (%s) exceeded, stopping...", \
+                PandoraPlaybackProvider.SKIP_LIMIT in caplog.text()
+
+    # with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+    #     with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
+    #         with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=False):
+    #             track = models.Track(uri="pandora:track:test_station_id:test_token")
+    #
+    #             rpc.RPCClient.playback_stop = mock.PropertyMock()
+    #
+    #             assert provider.change_track(track) is False
+    #             rpc.RPCClient.playback_stop.assert_called_once_with()
+    #             assert PlaylistItem.get_is_playable.call_count == PandoraPlaybackProvider.SKIP_LIMIT
 
 
 def test_change_track_resumes_playback(provider, playlist_item_mock):
-    with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
-        with mock.patch.object(PandoraPlaybackProvider, 'resume_playback') as mock_rpc:
-            assert provider.backend.supports_events
+    with mock.patch.object(EventSupportPlaybackProvider, 'is_double_click', return_value=True):
+        track = TrackUri.from_track(playlist_item_mock)
 
-            event = threading.Event()
+        process_click_mock = mock.PropertyMock()
+        provider.process_click = process_click_mock
 
-            def set_event():
-                event.set()
+        provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+        provider.next_tl_track = {'track': {'uri': track.uri}}
 
-            mock_rpc.side_effect = set_event
+        rpc.RPCClient.playback_resume = mock.PropertyMock()
 
-            track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
-            track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
-
-            process_click_mock = mock.PropertyMock()
-
-            provider.process_click = process_click_mock
-            provider.set_click_time()
-            provider.active_track_uri = track_0
-
-            provider.change_track(models.Track(uri=track_1))
-
-        if event.wait(timeout=1.0):
-            mock_rpc.assert_called_once_with()
-        else:
-            assert False
+        provider.change_track(track)
+        assert rpc.RPCClient.playback_resume.called
 
 
-def test_change_track_does_not_resume_playback_if_not_doubleclick(config, provider, playlist_item_mock):
-    with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
-        with mock.patch.object(PandoraPlaybackProvider, 'resume_playback') as mock_rpc:
-            assert provider.backend.supports_events
+def test_change_track_does_not_resume_playback_if_not_doubleclick(provider, playlist_item_mock):
+    with mock.patch.object(EventSupportPlaybackProvider, 'is_double_click', return_value=False):
+        track = TrackUri.from_track(playlist_item_mock)
 
-            event = threading.Event()
+        process_click_mock = mock.PropertyMock()
+        provider.process_click = process_click_mock
 
-            def set_event():
-                event.set()
+        provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+        provider.next_tl_track = {'track': {'uri': track.uri}}
 
-            mock_rpc.side_effect = set_event
+        rpc.RPCClient.playback_resume = mock.PropertyMock()
 
-            track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
-            track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
-
-            process_click_mock = mock.PropertyMock()
-
-            click_interval = float(config['pandora']['double_click_interval']) + 1.0
-
-            provider.process_click = process_click_mock
-            provider.set_click_time(time.time() - click_interval)
-            provider.active_track_uri = track_0
-            provider.change_track(models.Track(uri=track_1))
-
-        if event.wait(timeout=1.0):
-            assert False
-        else:
-            assert not mock_rpc.called
+        provider.change_track(track)
+        assert not rpc.RPCClient.playback_resume.called
 
 
-def test_change_track_does_not_resume_playback_if_event_failed(provider, playlist_item_mock):
-    with mock.patch.object(PandoraPlaybackProvider, 'change_track', return_value=True):
-        with mock.patch.object(PandoraPlaybackProvider, 'resume_playback') as mock_rpc:
-            assert provider.backend.supports_events
+def test_change_track_handles_request_exceptions(config, caplog, playlist_item_mock):
+    with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
+        with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.request_exception_mock):
 
-            event = threading.Event()
+            track = models.Track(uri="pandora:track:test_station_id:test_token")
 
-            def set_event():
-                event.set()
+            playback = conftest.get_backend(config, True).playback
 
-            mock_rpc.side_effect = set_event
+            rpc.RPCClient._do_rpc = mock.PropertyMock()
+            rpc.RPCClient.playback_stop = mock.PropertyMock()
 
-            track_0 = TrackUri.from_track(playlist_item_mock, 0).uri
-            track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
+            rpc.RPCClient.playback_resume = mock.PropertyMock()
 
-            e = PandoraException().from_code(0000, "Mock exception")
-            provider.thumbs_down = mock.Mock()
-            provider.thumbs_down.side_effect = e
-
-            provider.set_click_time()
-            provider.active_track_uri = track_0
-            provider.change_track(models.Track(uri=track_1))
-
-        if event.wait(timeout=1.0):
-            assert False
-        else:
-            assert not mock_rpc.called
+            assert playback.change_track(track) is False
+            assert 'Error checking if track is playable' in caplog.text()
 
 
-def test_is_playable_handles_request_exceptions(provider, caplog):
-    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
-        with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
-            with mock.patch.object(PlaylistItem, 'get_is_playable', conftest.request_exception_mock):
-                track = models.Track(uri="pandora:track:test::::")
+def test_change_track_handles_unplayable(provider, caplog):
 
-                rpc.RPCClient.playback_stop = mock.PropertyMock()
+        track = models.Track(uri="pandora:track:test_station_id:test_token")
 
-                assert provider.change_track(track) is False
-                assert 'Error checking if track is playable' in caplog.text()
+        provider.previous_tl_track = {'track': {'uri': track.uri}}
+        provider.next_tl_track = {'track': {'uri': 'next_track'}}
+
+        rpc.RPCClient.playback_resume = mock.PropertyMock()
+
+        assert provider.change_track(track) is False
+        assert "Audio URI for track '%s' cannot be played", track.uri in caplog.text()
 
 
-def test_translate_uri_returns_audio_url(provider):
-    assert provider.lookup_pandora_track("pandora:track:test:::::audio_url") == "audio_url"
+def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
+
+    test_uri = "pandora:track:test_station_id:test_token"
+
+    provider.backend.library._uri_translation_map[test_uri] = playlist_item_mock
+
+    assert provider.translate_uri(test_uri) == conftest.MOCK_TRACK_AUDIO_HIGH
 
 
 def test_auto_setup_only_called_once(provider):
-    with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', core_tracklist_set_repeat=mock.DEFAULT,
-                             core_tracklist_set_random=mock.DEFAULT, core_tracklist_set_consume=mock.DEFAULT,
-                             core_tracklist_set_single=mock.DEFAULT) as values:
+    with mock.patch.multiple('mopidy_pandora.rpc.RPCClient', tracklist_set_repeat=mock.DEFAULT,
+                             tracklist_set_random=mock.DEFAULT, tracklist_set_consume=mock.DEFAULT,
+                             tracklist_set_single=mock.DEFAULT) as values:
 
         event = threading.Event()
 
         def set_event(*args, **kwargs):
             event.set()
 
-        values['core_tracklist_set_single'].side_effect = set_event
+        values['tracklist_set_single'].side_effect = set_event
 
         provider.prepare_change()
 
         if event.wait(timeout=1.0):
-            values['core_tracklist_set_repeat'].assert_called_once_with(False)
-            values['core_tracklist_set_random'].assert_called_once_with(False)
-            values['core_tracklist_set_consume'].assert_called_once_with(False)
-            values['core_tracklist_set_single'].assert_called_once_with(False)
+            values['tracklist_set_repeat'].assert_called_once_with(False)
+            values['tracklist_set_random'].assert_called_once_with(False)
+            values['tracklist_set_consume'].assert_called_once_with(True)
+            values['tracklist_set_single'].assert_called_once_with(False)
         else:
             assert False
 
         event = threading.Event()
-        values['core_tracklist_set_single'].side_effect = set_event
+        values['tracklist_set_single'].side_effect = set_event
 
         provider.prepare_change()
 
         if event.wait(timeout=1.0):
             assert False
         else:
-            values['core_tracklist_set_repeat'].assert_called_once_with(False)
-            values['core_tracklist_set_random'].assert_called_once_with(False)
-            values['core_tracklist_set_consume'].assert_called_once_with(False)
-            values['core_tracklist_set_single'].assert_called_once_with(False)
+            values['tracklist_set_repeat'].assert_called_once_with(False)
+            values['tracklist_set_random'].assert_called_once_with(False)
+            values['tracklist_set_consume'].assert_called_once_with(True)
+            values['tracklist_set_single'].assert_called_once_with(False)
+
+
+def test_is_double_click(provider):
+
+    provider.set_click_time()
+    assert provider.is_double_click()
+
+    time.sleep(float(provider.double_click_interval) + 0.1)
+    assert provider.is_double_click() is False
+
+
+def test_is_double_click_resets_click_time(provider):
+
+    provider.set_click_time()
+    assert provider.is_double_click()
+
+    time.sleep(float(provider.double_click_interval) + 0.1)
+    assert provider.is_double_click() is False
+
+    assert provider.get_click_time() == 0
+
+
+def test_change_track_next(config, provider, playlist_item_mock):
+
+    provider.set_click_time()
+    track = TrackUri.from_track(playlist_item_mock)
+
+    process_click_mock = mock.PropertyMock()
+    provider.process_click = process_click_mock
+
+    provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+    provider.next_tl_track = {'track': {'uri': track.uri}}
+
+    rpc.RPCClient._do_rpc = mock.PropertyMock()
+
+    provider.change_track(track)
+    provider.process_click.assert_called_with(config['pandora']['on_pause_next_click'], track.uri)
+
+
+def test_change_track_back(config, provider, playlist_item_mock):
+
+    provider.set_click_time()
+    track = TrackUri.from_track(playlist_item_mock)
+
+    process_click_mock = mock.PropertyMock()
+    provider.process_click = process_click_mock
+
+    provider.previous_tl_track = {'track': {'uri': track.uri}}
+    provider.next_tl_track = {'track': {'uri': 'next_track'}}
+
+    rpc.RPCClient._do_rpc = mock.PropertyMock()
+
+    provider.change_track(track)
+    provider.process_click.assert_called_with(config['pandora']['on_pause_previous_click'], track.uri)
+
+
+def test_resume_click_ignored_if_start_of_track(provider):
+    with mock.patch.object(PandoraPlaybackProvider, 'get_time_position', return_value=0):
+
+        process_click_mock = mock.PropertyMock()
+        provider.process_click = process_click_mock
+
+        provider.resume()
+
+        provider.process_click.assert_not_called()
+
+
+def test_process_click_resets_click_time(config, provider, playlist_item_mock):
+
+    provider.thumbs_up = mock.PropertyMock()
+
+    track_uri = TrackUri.from_track(playlist_item_mock).uri
+
+    provider.process_click(config['pandora']['on_pause_resume_click'], track_uri)
+
+    assert provider.get_click_time() == 0
+
+
+def test_process_click_triggers_event(config, provider, playlist_item_mock):
+    with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
+        with mock.patch.multiple(EventSupportPlaybackProvider, thumbs_up=mock.PropertyMock(),
+                                 thumbs_down=mock.PropertyMock(), sleep=mock.PropertyMock()):
+
+            track_uri = TrackUri.from_track(playlist_item_mock).uri
+
+            method = config['pandora']['on_pause_next_click']
+            method_call = getattr(provider, method)
+
+            t = provider.process_click(method, track_uri)
+            t.join()
+
+            token = PandoraUri.parse(track_uri).token
+            method_call.assert_called_once_with(token)
+
+
+def add_artist_bookmark(provider):
+
+    provider.add_artist_bookmark(conftest.MOCK_TRACK_TOKEN)
+
+    provider.client.add_artist_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)
+
+
+def add_song_bookmark(provider):
+
+    provider.add_song_bookmark(conftest.MOCK_TRACK_TOKEN)
+
+    provider.client.add_song_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)

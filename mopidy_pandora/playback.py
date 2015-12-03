@@ -81,7 +81,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def _check_skip_limit_exceeded(self):
         self.consecutive_track_skips += 1
 
-        if self.consecutive_track_skips >= self.SKIP_LIMIT:
+        if self.consecutive_track_skips >= self.SKIP_LIMIT-1:
             logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
             rpc.RPCClient.playback_stop()
             return True

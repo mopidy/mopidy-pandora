@@ -70,7 +70,8 @@ def test_on_start_handles_request_exception(config, caplog):
     backend = get_backend(config, True)
 
     backend.api.login = request_exception_mock
-    backend.on_start()
+    t = backend.on_start()
+    t.join()
 
     # Check that request exceptions are caught and logged
     assert 'Error logging in to Pandora' in caplog.text()
