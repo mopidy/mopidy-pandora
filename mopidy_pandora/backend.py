@@ -47,9 +47,12 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener):
 
         self.uri_schemes = ['pandora']
 
+    @rpc.run_async
     def on_start(self):
         try:
             self.api.login(self._config["username"], self._config["password"])
+            # Prefetch list of stations linked to the user's profile
+            self.api.get_station_list()
         except requests.exceptions.RequestException as e:
             logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
 

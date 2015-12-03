@@ -4,6 +4,8 @@ from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
+from mopidy_pandora import rpc
+
 from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
 
 
@@ -25,6 +27,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def browse(self, uri):
 
         if uri == self.root_directory.uri:
+            # Prefetch genre category list
+            rpc.run_async(self.backend.api.get_genre_stations)
             return self._browse_stations()
 
         if uri == self.genre_directory.uri:
