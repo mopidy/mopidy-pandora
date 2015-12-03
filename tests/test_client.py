@@ -23,9 +23,10 @@ def test_get_station_list(config):
 
         station_list = backend.api.get_station_list()
 
-        assert len(station_list) == 2
+        assert len(station_list) == len(conftest.station_list_result_mock()['stations'])
         assert station_list[0].name == conftest.MOCK_STATION_NAME + " 2"
         assert station_list[1].name == conftest.MOCK_STATION_NAME + " 1"
+        assert station_list[2].name == "QuickMix"
 
 
 def test_get_station_list_changed(config):
@@ -54,7 +55,7 @@ def test_get_station_list_changed(config):
 
             backend.api.get_station_list()
             assert backend.api._station_list.checksum == conftest.MOCK_STATION_LIST_CHECKSUM
-            assert len(backend.api._station_list) == 2
+            assert len(backend.api._station_list) == len(conftest.station_list_result_mock()['stations'])
 
 
 def test_get_station_list_handles_request_exception(config, caplog):

@@ -1,4 +1,5 @@
 from mopidy import backend, models
+
 from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
@@ -131,8 +132,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         track_uri = TrackUri.from_track(pandora_track)
         track = models.Ref.track(name=pandora_track.song_name, uri=track_uri.uri)
 
-        if any(self._uri_translation_map) and \
-                        track_uri.station_id != TrackUri.parse(self._uri_translation_map.keys()[0]).station_id:
+        if any(self._uri_translation_map) and track_uri.station_id != \
+                TrackUri.parse(self._uri_translation_map.keys()[0]).station_id:
+
             # We've switched stations, clear the translation map.
             self._uri_translation_map.clear()
 

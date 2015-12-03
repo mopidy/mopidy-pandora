@@ -1,4 +1,3 @@
-import Queue
 import json
 
 import requests

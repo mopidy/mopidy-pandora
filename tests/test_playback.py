@@ -34,8 +34,11 @@ def audio_mock():
 @pytest.fixture
 def provider(audio_mock, config):
     if config['pandora']['event_support_enabled']:
-        return playback.EventSupportPlaybackProvider(
+        provider = playback.EventSupportPlaybackProvider(
             audio=audio_mock, backend=conftest.get_backend(config))
+
+        provider.current_tl_track = {'track': {'uri': 'test'}}
+        return provider
     else:
         return playback.PandoraPlaybackProvider(
             audio=audio_mock, backend=conftest.get_backend(config))
@@ -54,17 +57,17 @@ def test_change_track_aborts_if_no_track_uri(provider):
 def test_pause_starts_double_click_timer(provider):
     with mock.patch.object(PandoraPlaybackProvider, 'get_time_position', return_value=100):
         assert provider.backend.supports_events
-        assert provider._double_click_handler.get_click_time() == 0
+        assert provider.get_click_time() == 0
         provider.pause()
-        assert provider._double_click_handler.get_click_time() > 0
+        assert provider.get_click_time() > 0
 
 
 def test_pause_does_not_start_timer_at_track_start(provider):
     with mock.patch.object(PandoraPlaybackProvider, 'get_time_position', return_value=0):
         assert provider.backend.supports_events
-        assert provider._double_click_handler.get_click_time() == 0
+        assert provider.get_click_time() == 0
         provider.pause()
-        assert provider._double_click_handler.get_click_time() == 0
+        assert provider.get_click_time() == 0
 
 
 def test_resume_checks_for_double_click(provider):
@@ -72,11 +75,11 @@ def test_resume_checks_for_double_click(provider):
         assert provider.backend.supports_events
         is_double_click_mock = mock.PropertyMock()
         process_click_mock = mock.PropertyMock()
-        provider._double_click_handler.is_double_click = is_double_click_mock
-        provider._double_click_handler.process_click = process_click_mock
+        provider.is_double_click = is_double_click_mock
+        provider.process_click = process_click_mock
         provider.resume()
 
-        provider._double_click_handler.is_double_click.assert_called_once_with()
+        provider.is_double_click.assert_called_once_with()
 
 
 def test_change_track(audio_mock, provider):
@@ -135,8 +138,8 @@ def test_change_track_resumes_playback(provider, playlist_item_mock):
 
             process_click_mock = mock.PropertyMock()
 
-            provider._double_click_handler.process_click = process_click_mock
-            provider._double_click_handler.set_click_time()
+            provider.process_click = process_click_mock
+            provider.set_click_time()
             provider.active_track_uri = track_0
 
             provider.change_track(models.Track(uri=track_1))
@@ -166,8 +169,8 @@ def test_change_track_does_not_resume_playback_if_not_doubleclick(config, provid
 
             click_interval = float(config['pandora']['double_click_interval']) + 1.0
 
-            provider._double_click_handler.process_click = process_click_mock
-            provider._double_click_handler.set_click_time(time.time() - click_interval)
+            provider.process_click = process_click_mock
+            provider.set_click_time(time.time() - click_interval)
             provider.active_track_uri = track_0
             provider.change_track(models.Track(uri=track_1))
 
@@ -193,10 +196,10 @@ def test_change_track_does_not_resume_playback_if_event_failed(provider, playlis
             track_1 = TrackUri.from_track(playlist_item_mock, 1).uri
 
             e = PandoraException().from_code(0000, "Mock exception")
-            provider._double_click_handler.thumbs_down = mock.Mock()
-            provider._double_click_handler.thumbs_down.side_effect = e
+            provider.thumbs_down = mock.Mock()
+            provider.thumbs_down.side_effect = e
 
-            provider._double_click_handler.set_click_time()
+            provider.set_click_time()
             provider.active_track_uri = track_0
             provider.change_track(models.Track(uri=track_1))
 
