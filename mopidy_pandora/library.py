@@ -1,3 +1,5 @@
+from cachetools import TTLCache
+
 from mopidy import backend, models
 
 from mopidy.internal import encoding
@@ -7,8 +9,6 @@ from pandora.models.pandora import Station
 from pydora.utils import iterate_forever
 
 import requests
-
-from mopidy_pandora import rpc
 
 from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
 
@@ -25,13 +25,14 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self.sort_order = sort_order.upper()
         self._station = None
         self._station_iter = None
-        self._uri_translation_map = {}
+
+        self._pandora_tracks_cache = TTLCache(25, 1800)
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
         if uri == self.root_directory.uri:
             # Prefetch genre category list
-            rpc.run_async(self.backend.api.get_genre_stations)
+            self.backend.api.get_genre_stations()
             return self._browse_stations()
 
         if uri == self.genre_directory.uri:
@@ -116,18 +117,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _browse_genre_stations(self, uri):
         return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
-                for station in self.backend.api.get_genre_stations(refresh_cache=False)
+                for station in self.backend.api.get_genre_stations()
                 [GenreUri.parse(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
         try:
-            return self._uri_translation_map[uri]
+            return self._pandora_tracks_cache[uri]
         except KeyError:
             logger.error("Failed to lookup '%s' in uri translation map.", uri)
             return None
 
     def next_track(self):
-
         try:
             pandora_track = self._station_iter.next()
 
@@ -138,13 +138,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             track_uri = TrackUri.from_track(pandora_track)
             track = models.Ref.track(name=pandora_track.song_name, uri=track_uri.uri)
 
-            if any(self._uri_translation_map) and track_uri.station_id != \
-                    TrackUri.parse(self._uri_translation_map.keys()[0]).station_id:
+            if any(self._pandora_tracks_cache) and track_uri.station_id != \
+                    TrackUri.parse(self._pandora_tracks_cache.keys()[0]).station_id:
 
-                # We've switched stations, clear the translation map.
-                self._uri_translation_map.clear()
+                # We've switched stations, clear the cache.
+                self._pandora_tracks_cache.clear()
 
-            self._uri_translation_map[track.uri] = pandora_track
+            self._pandora_tracks_cache[track.uri] = pandora_track
 
             return track
         except requests.exceptions.RequestException as e:

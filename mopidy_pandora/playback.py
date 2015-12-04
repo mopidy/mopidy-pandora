@@ -109,10 +109,10 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         self._doubleclick_processed_event = threading.Event()
 
         config = self.backend._config
-        self.on_pause_resume_click = config["on_pause_resume_click"]
-        self.on_pause_next_click = config["on_pause_next_click"]
-        self.on_pause_previous_click = config["on_pause_previous_click"]
-        self.double_click_interval = config['double_click_interval']
+        self.on_pause_resume_click = config.get("on_pause_resume_click", "thumbs_up")
+        self.on_pause_next_click = config.get("on_pause_next_click", "thumbs_down")
+        self.on_pause_previous_click = config.get("on_pause_previous_click", "sleep")
+        self.double_click_interval = float(config.get('double_click_interval', 2.00))
 
         self._click_time = 0
 
@@ -126,7 +126,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         return self._click_time
 
     def is_double_click(self):
-        double_clicked = self._click_time > 0 and time.time() - self._click_time < float(self.double_click_interval)
+        double_clicked = self._click_time > 0 and time.time() - self._click_time < self.double_click_interval
 
         if double_clicked:
             self._doubleclick_processed_event.clear()

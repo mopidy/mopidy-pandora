@@ -4,7 +4,6 @@ import logging
 import os
 
 from mopidy import config, ext
-from mopidy.config import Deprecated
 
 from pandora import BaseAPIClient
 
@@ -38,13 +37,13 @@ class Extension(ext.Extension):
                                                                                   BaseAPIClient.MED_AUDIO_QUALITY,
                                                                                   BaseAPIClient.HIGH_AUDIO_QUALITY])
         schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
-        schema['auto_setup'] = config.Boolean()
-        schema['auto_set_repeat'] = Deprecated()
-        schema['event_support_enabled'] = config.Boolean()
-        schema['double_click_interval'] = config.String()
-        schema['on_pause_resume_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['on_pause_next_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['on_pause_previous_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['auto_setup'] = config.Boolean(optional=True)
+        schema['cache_time_to_live'] = config.Integer(optional=True)
+        schema['event_support_enabled'] = config.Boolean(optional=True)
+        schema['double_click_interval'] = config.String(optional=True)
+        schema['on_pause_resume_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['on_pause_next_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['on_pause_previous_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
         return schema
 
     def setup(self, registry):
