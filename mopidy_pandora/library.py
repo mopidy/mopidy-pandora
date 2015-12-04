@@ -1,8 +1,12 @@
 from mopidy import backend, models
 
+from mopidy.internal import encoding
+
 from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
+
+import requests
 
 from mopidy_pandora import rpc
 
@@ -123,21 +127,25 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return None
 
     def next_track(self):
-        pandora_track = self._station_iter.next()
 
-        if pandora_track.track_token is None:
-            # TODO process add tokens properly when pydora 1.6 is available
-            return self.next_track()
+        try:
+            pandora_track = self._station_iter.next()
 
-        track_uri = TrackUri.from_track(pandora_track)
-        track = models.Ref.track(name=pandora_track.song_name, uri=track_uri.uri)
+            if pandora_track.track_token is None:
+                # TODO process add tokens properly when pydora 1.6 is available
+                return self.next_track()
 
-        if any(self._uri_translation_map) and track_uri.station_id != \
-                TrackUri.parse(self._uri_translation_map.keys()[0]).station_id:
+            track_uri = TrackUri.from_track(pandora_track)
+            track = models.Ref.track(name=pandora_track.song_name, uri=track_uri.uri)
 
-            # We've switched stations, clear the translation map.
-            self._uri_translation_map.clear()
+            if any(self._uri_translation_map) and track_uri.station_id != \
+                    TrackUri.parse(self._uri_translation_map.keys()[0]).station_id:
 
-        self._uri_translation_map[track.uri] = pandora_track
+                # We've switched stations, clear the translation map.
+                self._uri_translation_map.clear()
 
-        return track
+            self._uri_translation_map[track.uri] = pandora_track
+
+            return track
+        except requests.exceptions.RequestException as e:
+            logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))

@@ -12,6 +12,7 @@ import rpc
 from mopidy_pandora.client import MopidyPandoraAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybackProvider
+from mopidy_pandora.tracklist import PandoraTracklistProvider
 from mopidy_pandora.uri import logger
 
 
@@ -29,14 +30,15 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener):
             "DEVICE": self._config["partner_device"],
             "AUDIO_QUALITY": self._config.get("preferred_audio_quality", BaseAPIClient.HIGH_AUDIO_QUALITY)
         }
-        self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
 
+        rpc.RPCClient.configure(config['http']['hostname'], config['http']['port'])
+
+        self.api = clientbuilder.SettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
         self.library = PandoraLibraryProvider(backend=self, sort_order=self._config['sort_order'])
+        self.tracklist = PandoraTracklistProvider(self)
 
         self.auto_setup = self._config['auto_setup']
         self.setup_required = self.auto_setup
-
-        rpc.RPCClient.configure(config['http']['hostname'], config['http']['port'])
 
         self.supports_events = False
         if self._config['event_support_enabled']:
