@@ -1,6 +1,5 @@
 import logging
 import urllib
-from pandora.models.pandora import PlaylistItem
 
 from pandora.models.pandora import AdItem, PlaylistItem
 logger = logging.getLogger(__name__)
@@ -98,7 +97,6 @@ class TrackUri(StationUri):
             return TrackUri('', cls.ADVERTISEMENT_TOKEN)
         else:
             raise NotImplementedError("Unsupported playlist item type")
-
 
     @property
     def uri(self):
