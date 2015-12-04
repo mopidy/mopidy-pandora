@@ -25,7 +25,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
-
         if uri == self.root_directory.uri:
             # Prefetch genre category list
             rpc.run_async(self.backend.api.get_genre_stations)
@@ -47,7 +46,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def lookup(self, uri):
 
         if PandoraUri.parse(uri).scheme == TrackUri.scheme:
-
             pandora_track = self.lookup_pandora_track(uri)
 
             if pandora_track:
@@ -74,7 +72,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         stations = self.backend.api.get_station_list()
 
         if any(stations):
-
             if self.sort_order == "A-Z":
                 stations.sort(key=lambda x: x.name, reverse=False)
 
@@ -86,11 +83,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
 
         station_directories.insert(0, self.genre_directory)
-
         return station_directories
 
     def _browse_tracks(self, uri):
-
         pandora_uri = PandoraUri.parse(uri)
 
         # TODO: should be able to perform check on is_ad() once dynamic tracklist support is available
