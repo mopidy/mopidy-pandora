@@ -1,7 +1,8 @@
 import logging
 import urllib
+from pandora.models.pandora import PlaylistItem
 
-
+from pandora.models.pandora import AdItem, PlaylistItem
 logger = logging.getLogger(__name__)
 
 
@@ -84,16 +85,26 @@ class StationUri(PandoraUri):
 
 class TrackUri(StationUri):
     scheme = 'track'
+    ADVERTISEMENT_TOKEN = "advertisement-none"
 
     def __init__(self, station_id, token):
         super(TrackUri, self).__init__(station_id, token)
 
     @classmethod
     def from_track(cls, track):
-        return TrackUri(track.station_id, track.track_token)
+        if isinstance(track, PlaylistItem):
+            return TrackUri(track.station_id, track.track_token)
+        elif isinstance(track, AdItem):
+            return TrackUri('', cls.ADVERTISEMENT_TOKEN)
+        else:
+            raise NotImplementedError("Unsupported playlist item type")
+
 
     @property
     def uri(self):
         return "{}".format(
             super(TrackUri, self).uri,
         )
+
+    def is_ad(self):
+        return self.token == self.ADVERTISEMENT_TOKEN

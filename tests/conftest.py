@@ -4,7 +4,7 @@ import json
 
 from mock import Mock
 
-from pandora.models.pandora import Playlist, PlaylistItem, Station, StationList
+from pandora.models.pandora import AdItem, Playlist, PlaylistItem, Station, StationList
 
 import pytest
 
@@ -24,6 +24,7 @@ MOCK_STATION_LIST_CHECKSUM = "aa00aa00aa00aa00aa00aa00aa00aa00"
 MOCK_TRACK_SCHEME = "track"
 MOCK_TRACK_NAME = "Mock Track"
 MOCK_TRACK_TOKEN = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+MOCK_TRACK_AD_TOKEN = "000000000000000000-none"
 MOCK_TRACK_AUDIO_HIGH = "http://mockup.com/high_quality_audiofile.mp4?..."
 MOCK_TRACK_AUDIO_MED = "http://mockup.com/medium_quality_audiofile.mp4?..."
 MOCK_TRACK_AUDIO_LOW = "http://mockup.com/low_quality_audiofile.mp4?..."
@@ -53,6 +54,7 @@ def config():
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
             'auto_setup': True,
+            'ad_support_enabled': True,
 
             'event_support_enabled': True,
             'double_click_interval': '0.1',
@@ -106,38 +108,101 @@ def get_station_mock(self, station_token):
 
 @pytest.fixture(scope="session")
 def playlist_result_mock():
-    # TODO: Test inclusion of add tokens
     mock_result = {"stat": "ok",
-                   "result": {
-                       "items": [{
-                                 "trackToken": MOCK_TRACK_TOKEN,
-                                 "artistName": "Mock Artist Name",
-                                 "albumName": "Mock Album Name",
-                                 "albumArtUrl": MOCK_TRACK_ART_URL,
-                                 "audioUrlMap": {
-                                     "highQuality": {
-                                         "bitrate": "64",
-                                         "encoding": "aacplus",
-                                         "audioUrl": MOCK_TRACK_AUDIO_HIGH,
-                                         "protocol": "http"
-                                     },
-                                     "mediumQuality": {
-                                         "bitrate": "64",
-                                         "encoding": "aacplus",
-                                         "audioUrl": MOCK_TRACK_AUDIO_MED,
-                                         "protocol": "http"
-                                     },
-                                     "lowQuality": {
-                                         "bitrate": "32",
-                                         "encoding": "aacplus",
-                                         "audioUrl": MOCK_TRACK_AUDIO_LOW,
-                                         "protocol": "http"
-                                     }
-                                 },
-                                 "songName": MOCK_TRACK_NAME,
-                                 "songDetailUrl": MOCK_TRACK_DETAIL_URL,
-                                 "stationId": MOCK_STATION_ID,
-                                 "songRating": 0, }]}}
+                   "result": dict(items=[{
+                       "trackToken": MOCK_TRACK_TOKEN,
+                       "artistName": "Mock Artist Name",
+                       "albumName": "Mock Album Name",
+                       "albumArtUrl": MOCK_TRACK_ART_URL,
+                       "audioUrlMap": {
+                           "highQuality": {
+                               "bitrate": "64",
+                               "encoding": "aacplus",
+                               "audioUrl": MOCK_TRACK_AUDIO_HIGH,
+                               "protocol": "http"
+                           },
+                           "mediumQuality": {
+                               "bitrate": "64",
+                               "encoding": "aacplus",
+                               "audioUrl": MOCK_TRACK_AUDIO_MED,
+                               "protocol": "http"
+                           },
+                           "lowQuality": {
+                               "bitrate": "32",
+                               "encoding": "aacplus",
+                               "audioUrl": MOCK_TRACK_AUDIO_LOW,
+                               "protocol": "http"
+                           }
+                       },
+                       "songName": MOCK_TRACK_NAME,
+                       "songDetailUrl": MOCK_TRACK_DETAIL_URL,
+                       "stationId": MOCK_STATION_ID,
+                       "songRating": 0,
+                       "adToken": None, },
+
+                       # Also add an advertisement to the playlist.
+                       {
+                           'trackToken': None,
+                           'artistName': None,
+                           'albumName': None,
+                           'albumArtUrl': None,
+                           'audioUrlMap': {
+                               "highQuality": {
+                                   "bitrate": "64",
+                                   "encoding": "aacplus",
+                                   "audioUrl": MOCK_TRACK_AUDIO_HIGH,
+                                   "protocol": "http"
+                               },
+                               "mediumQuality": {
+                                   "bitrate": "64",
+                                   "encoding": "aacplus",
+                                   "audioUrl": MOCK_TRACK_AUDIO_MED,
+                                   "protocol": "http"
+                               },
+                               "lowQuality": {
+                                   "bitrate": "32",
+                                   "encoding": "aacplus",
+                                   "audioUrl": MOCK_TRACK_AUDIO_LOW,
+                                   "protocol": "http"
+                               }
+                           },
+                           'songName': None,
+                           'songDetailUrl': None,
+                           'stationId': None,
+                           'songRating': None,
+                           'adToken': MOCK_TRACK_AD_TOKEN}
+                   ])}
+
+    return mock_result
+
+
+@pytest.fixture(scope="session")
+def ad_metadata_result_mock():
+    mock_result = {"stat": "ok",
+                   "result": dict(title=MOCK_TRACK_NAME, companyName="Mock Company Name", audioUrlMap={
+                       "highQuality": {
+                           "bitrate": "64",
+                           "encoding": "aacplus",
+                           "audioUrl": MOCK_TRACK_AUDIO_HIGH,
+                           "protocol": "http"
+                       },
+                       "mediumQuality": {
+                           "bitrate": "64",
+                           "encoding": "aacplus",
+                           "audioUrl": MOCK_TRACK_AUDIO_MED,
+                           "protocol": "http"
+                       },
+                       "lowQuality": {
+                           "bitrate": "32",
+                           "encoding": "aacplus",
+                           "audioUrl": MOCK_TRACK_AUDIO_LOW,
+                           "protocol": "http"
+                       }
+                   }, adTrackingTokens={
+                       MOCK_TRACK_AD_TOKEN,
+                       MOCK_TRACK_AD_TOKEN,
+                       MOCK_TRACK_AD_TOKEN
+                   })}
 
     return mock_result
 
@@ -157,10 +222,21 @@ def get_station_playlist_mock(self):
     return iter(get_playlist_mock(self, MOCK_STATION_TOKEN))
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def playlist_item_mock():
     return PlaylistItem.from_json(get_backend(
         config()).api, playlist_result_mock()["result"]["items"][0])
+
+
+@pytest.fixture(scope="session")
+def ad_item_mock():
+    return AdItem.from_json(get_backend(
+        config()).api, ad_metadata_result_mock()["result"])
+
+
+@pytest.fixture
+def get_ad_item_mock(self, token):
+    return ad_item_mock()
 
 
 @pytest.fixture(scope="session")
