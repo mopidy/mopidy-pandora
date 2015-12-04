@@ -66,6 +66,7 @@ class StationUri(PandoraUri):
         self.station_id = station_id
         self.token = token
 
+    @property
     def is_genre_station_uri(self):
         return self.station_id.startswith('G') and self.station_id == self.token
 
@@ -84,7 +85,7 @@ class StationUri(PandoraUri):
 
 class TrackUri(StationUri):
     scheme = 'track'
-    ADVERTISEMENT_TOKEN = "advertisement-none"
+    ADVERTISEMENT_TOKEN = "advertisement"
 
     def __init__(self, station_id, token):
         super(TrackUri, self).__init__(station_id, token)
@@ -94,7 +95,7 @@ class TrackUri(StationUri):
         if isinstance(track, PlaylistItem):
             return TrackUri(track.station_id, track.track_token)
         elif isinstance(track, AdItem):
-            return TrackUri('', cls.ADVERTISEMENT_TOKEN)
+            return TrackUri(track.station_id, cls.ADVERTISEMENT_TOKEN)
         else:
             raise NotImplementedError("Unsupported playlist item type")
 
@@ -104,5 +105,6 @@ class TrackUri(StationUri):
             super(TrackUri, self).uri,
         )
 
-    def is_ad(self):
+    @property
+    def is_ad_uri(self):
         return self.token == self.ADVERTISEMENT_TOKEN
