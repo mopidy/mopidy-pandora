@@ -18,7 +18,7 @@ Mopidy-Pandora
    :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=develop
    :alt: Test coverage
 
-Mopidy extension for Pandora
+Mopidy extension for Pandora radio (http://www.pandora.com).
 
 
 Installation
@@ -27,9 +27,6 @@ Installation
 Install by running::
 
     pip install Mopidy-Pandora
-
-Or, if available, install the Debian/Ubuntu package from `apt.mopidy.com
-<http://apt.mopidy.com/>`_.
 
 
 Configuration
@@ -50,9 +47,10 @@ Before starting Mopidy, you must add the configuration settings for Mopidy-Pando
     password =
     sort_order = date
     auto_setup = true
+    cache_time_to_live = 1800
 
     ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
-    event_support_enabled = false
+    event_support_enabled = true
     double_click_interval = 2.00
     on_pause_resume_click = thumbs_up
     on_pause_next_click = thumbs_down
@@ -112,6 +110,9 @@ v0.2.0 (UNRELEASED)
 - Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
   your profile. At the moment, there is no way to remove stations from within Mopidy-Pandora.
 - Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
+- Scrobbling tracks to Last.fm should now work
+- Implemented caching to speed up browsing of the list of stations. Configuration parameter 'cache_time_to_live' can be
+  used to specify when cache iterms should expire and be refreshed (in seconds).
 
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------
