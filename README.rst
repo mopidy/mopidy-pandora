@@ -38,9 +38,9 @@ Before starting Mopidy, you must add the configuration settings for Mopidy-Pando
     enabled = true
     api_host = tuner.pandora.com/services/json/
     partner_encryption_key =
-    partner_decryption_key = 
+    partner_decryption_key =
     partner_username = iphone
-    partner_password = 
+    partner_password =
     partner_device = IP01
     preferred_audio_quality = highQuality
     username =
@@ -83,7 +83,7 @@ Usage
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
 Mopidy-Pandora simulates dynamic playlists by adding more tracks to the tracklist as needed. It is recommended that the
-Playlist is played with **consume** turned on in order to simulate the behaviour of the standard Pandora clients. For
+tracklist is played with **consume** turned on in order to simulate the behaviour of the standard Pandora clients. For
 the same reason, **repeat**, **random**, and **single** should be turned off. Mopidy-Pandora will set all of this up
 automatically unless you set the **auto_setup** config parameter to 'false'.
 
@@ -111,8 +111,9 @@ v0.2.0 (UNRELEASED)
   your profile. At the moment, there is no way to remove stations from within Mopidy-Pandora.
 - Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
 - Scrobbling tracks to Last.fm should now work
-- Implemented caching to speed up browsing of the list of stations. Configuration parameter 'cache_time_to_live' can be
-  used to specify when cache iterms should expire and be refreshed (in seconds).
+- Implemented caching to speed up startup and browsing of the list of stations. Configuration parameter
+  'cache_time_to_live' can be used to specify when cache iterms should expire and be refreshed (in seconds).
+- Better support for non-PandoraONE users: now plays advertisements which should prevent free accounts from being locked.
 
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------

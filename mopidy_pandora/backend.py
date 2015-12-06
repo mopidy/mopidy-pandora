@@ -13,7 +13,7 @@ from mopidy_pandora import listener, rpc
 
 from mopidy_pandora.client import MopidyPandoraAPIClient, MopidyPandoraSettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
-from mopidy_pandora.playback import EventSupportPlaybackProvider
+from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybackProvider
 from mopidy_pandora.uri import logger, PandoraUri  # noqa: I101
 
 
@@ -35,14 +35,19 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
 
         self.api = MopidyPandoraSettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
         self.library = PandoraLibraryProvider(backend=self, sort_order=self.config.get('sort_order', 'date'))
-        self.playback = EventSupportPlaybackProvider(audio=audio, backend=self)
+
+        self.supports_events = False
+        if self.config.get('event_support_enabled', True):
+            self.supports_events = True
+            self.playback = EventSupportPlaybackProvider(audio=audio, backend=self)
+        else:
+            self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
 
         self.uri_schemes = ['pandora']
 
     @rpc.run_async
     def on_start(self):
         try:
-            logger.debug('PandoraBackend: doing on_start')
             self.api.login(self.config["username"], self.config["password"])
             # Prefetch list of stations linked to the user's profile
             self.api.get_station_list()
@@ -52,21 +57,17 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
 
     def end_of_tracklist_reached(self):
-        logger.debug('PandoraBackend: Handling end_of_tracklist_reached event')
         next_track = self.library.next_track()
         if next_track:
             self._trigger_add_next_pandora_track(next_track)
 
     def _trigger_add_next_pandora_track(self, track):
-        logger.debug('PandoraBackend: Triggering add_next_pandora_track event')
         listener.PandoraListener.send('add_next_pandora_track', track=track)
 
     def _trigger_event_processed(self, track_uri):
-        logger.debug('PandoraBackend: Triggering event_processed event')
         listener.PandoraListener.send('event_processed', track_uri=track_uri)
 
     def call_event(self, track_uri, pandora_event):
-        logger.debug('PandoraBackend: Handling call_event %s, %s', track_uri, pandora_event)
         func = getattr(self, pandora_event)
         try:
             logger.info("Triggering event '%s' for song: %s", pandora_event,

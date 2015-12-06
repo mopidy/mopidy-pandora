@@ -79,11 +79,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             return is_playable
 
     def _trigger_prepare_change(self):
-        logger.debug('PandoraPlaybackProvider: Triggering prepare_change event')
         listener.PandoraListener.send('prepare_change')
 
     def _trigger_stop(self):
-        logger.debug('PandoraPlaybackProvider: Triggering stop event')
         listener.PandoraListener.send('stop')
 
 
@@ -132,5 +130,4 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         return super(EventSupportPlaybackProvider, self).pause()
 
     def _trigger_doubleclicked(self):
-        logger.debug('EventSupportPlaybackProvider: Triggering doubleclicked event')
         listener.PandoraListener.send('doubleclicked')

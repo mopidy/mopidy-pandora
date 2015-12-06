@@ -39,7 +39,7 @@ class Extension(ext.Extension):
         schema['auto_setup'] = config.Boolean(optional=True)
         schema['auto_set_repeat'] = config.Deprecated()
         schema['cache_time_to_live'] = config.Integer(optional=True)
-        schema['event_support_enabled'] = config.Deprecated()
+        schema['event_support_enabled'] = config.Boolean(optional=True)
         schema['double_click_interval'] = config.String(optional=True)
         schema['on_pause_resume_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
         schema['on_pause_next_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
