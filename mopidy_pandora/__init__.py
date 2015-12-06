@@ -7,7 +7,6 @@ from mopidy import config, ext
 
 from pandora import BaseAPIClient
 
-
 __version__ = '0.2.0'
 
 logger = logging.getLogger(__name__)
@@ -38,8 +37,9 @@ class Extension(ext.Extension):
                                                                                   BaseAPIClient.HIGH_AUDIO_QUALITY])
         schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
         schema['auto_setup'] = config.Boolean(optional=True)
+        schema['auto_set_repeat'] = config.Deprecated()
         schema['cache_time_to_live'] = config.Integer(optional=True)
-        schema['event_support_enabled'] = config.Boolean(optional=True)
+        schema['event_support_enabled'] = config.Deprecated()
         schema['double_click_interval'] = config.String(optional=True)
         schema['on_pause_resume_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
         schema['on_pause_next_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
@@ -48,4 +48,6 @@ class Extension(ext.Extension):
 
     def setup(self, registry):
         from .backend import PandoraBackend
+        from .frontend import EventSupportPandoraFrontend
         registry.add('backend', PandoraBackend)
+        registry.add('frontend', EventSupportPandoraFrontend)

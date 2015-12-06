@@ -10,6 +10,7 @@ from pydora.utils import iterate_forever
 
 import requests
 
+from mopidy_pandora import listener
 from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
 
 
@@ -31,8 +32,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def browse(self, uri):
         if uri == self.root_directory.uri:
-            # Prefetch genre category list
-            self.backend.api.get_genre_stations()
             return self._browse_stations()
 
         if uri == self.genre_directory.uri:
@@ -140,14 +139,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             track = models.Ref.track(name=track_name, uri=track_uri.uri)
 
-            if any(self._pandora_tracks_cache) and track_uri.station_id != \
-                    TrackUri.parse(self._pandora_tracks_cache.keys()[0]).station_id:
-
-                # We've switched stations, clear the cache.
-                self._pandora_tracks_cache.clear()
-
+            self._pandora_tracks_cache.expire()
             self._pandora_tracks_cache[track.uri] = pandora_track
-
             return track
+
         except requests.exceptions.RequestException as e:
-            logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
+            logger.error('Error retrieving next Pandora track: %s', encoding.locale_decode(e))
