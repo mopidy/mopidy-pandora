@@ -72,8 +72,6 @@ class MopidyPandoraAPIClient(pandora.APIClient):
                 (force_refresh is True and self._genre_stations_cache.itervalues().next().has_changed()):
             try:
                 self._genre_stations_cache['key'] = super(MopidyPandoraAPIClient, self).get_genre_stations()
-                # if any(self._genre_stations_cache):
-                #     self._genre_stations_cache.sort(key=lambda x: x[0], reverse=False)
             except requests.exceptions.RequestException as e:
                 logger.error('Error retrieving genre stations: %s', encoding.locale_decode(e))
 

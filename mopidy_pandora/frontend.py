@@ -1,12 +1,11 @@
-import Queue
 import threading
+
 from mopidy import core
 
 import pykka
 
-from mopidy_pandora import logger, listener
+from mopidy_pandora import listener, logger
 from mopidy_pandora.uri import TrackUri
-
 
 
 class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraListener):
@@ -27,10 +26,15 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
-            if self.core.tracklist.get_repeat().get() is True: self.core.tracklist.set_repeat(False)
-            if self.core.tracklist.get_consume().get() is False: self.core.tracklist.set_consume(True)
-            if self.core.tracklist.get_random().get() is True: self.core.tracklist.set_random(False)
-            if self.core.tracklist.get_single().get() is True: self.core.tracklist.set_single(False)
+            assert isinstance(self.core.tracklist, object)
+            if self.core.tracklist.get_repeat().get() is True:
+                self.core.tracklist.set_repeat(False)
+            if self.core.tracklist.get_consume().get() is False:
+                self.core.tracklist.set_consume(True)
+            if self.core.tracklist.get_random().get() is True:
+                self.core.tracklist.set_random(False)
+            if self.core.tracklist.get_single().get() is True:
+                self.core.tracklist.set_single(False)
 
             self.setup_required = False
 
@@ -49,8 +53,6 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
         self.core.playback.stop()
 
     def is_playing_last_track(self):
-        """ Sync the current tracklist information, and add more Pandora tracks to the tracklist as necessary.
-        """
         current_tl_track = self.core.playback.get_current_tl_track().get()
         next_tl_track = self.core.tracklist.next_track(current_tl_track).get()
 
@@ -63,6 +65,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def _trigger_end_of_tracklist_reached(self):
         logger.debug('PandoraFrontend: Triggering end_of_tracklist_reached event')
         listener.PandoraListener.send('end_of_tracklist_reached')
+
 
 class EventSupportPandoraFrontend(PandoraFrontend):
 
@@ -79,7 +82,6 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
         self.event_processed_event = threading.Event()
         self.event_processed_event.set()
-        self.event_target_uri = None
 
         self.tracklist_changed_event = threading.Event()
         self.tracklist_changed_event.set()
@@ -87,31 +89,15 @@ class EventSupportPandoraFrontend(PandoraFrontend):
     def tracklist_changed(self):
         logger.debug('EventSupportPandoraFrontend: Handling tracklist_changed event')
 
-        if self.event_processed_event.isSet():
+        if not self.event_processed_event.isSet():
+            # Delay 'tracklist_changed' events untill all events have been processed.
+            self.tracklist_changed_event.clear()
+        else:
             self.current_tl_track = self.core.playback.get_current_tl_track().get()
             self.previous_tl_track = self.core.tracklist.previous_track(self.current_tl_track).get()
             self.next_tl_track = self.core.tracklist.next_track(self.current_tl_track).get()
+
             self.tracklist_changed_event.set()
-        else:
-            self.tracklist_changed_event.clear()
-
-    # def track_playback_paused(self, tl_track, time_position):
-    #     # TODO: REMOVE WORKAROUND.
-    #     # Mopidy does not add the track to the history if the user skips to the next track
-    #     # while the player is paused (i.e. click pause -> next -> resume). Manually add the track
-    #     # to the history until this is fixed.
-    #
-    #     history = self.core.history.get_history().get()
-    #     for tupple in history:
-    #         if tupple[1].uri == tl_track.track.uri:
-    #             return
-    #
-    #     self.core.history._add_track(tl_track.track)
-
-    # def track_playback_started(self, tl_track):
-    #     logger.debug('EventSupportPandoraFrontend: Handling track_playback_started event')
-    #     track_changed = True
-    #     self._process_events(tl_track.track.uri, track_changed=track_changed)
 
     def track_playback_resumed(self, tl_track, time_position):
         logger.debug('EventSupportPandoraFrontend: Handling track_playback_resumed event')
@@ -128,12 +114,12 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         if track_changed:
             # Trigger the event for the previously played track.
             history = self.core.history.get_history().get()
-            self.event_target_uri = history[1][1].uri
+            event_target_uri = history[1][1].uri
         else:
             # Trigger the event for the track that is playing currently
-            self.event_target_uri = track_uri
+            event_target_uri = track_uri
 
-        if TrackUri.parse(self.event_target_uri).is_ad_uri:
+        if TrackUri.parse(event_target_uri).is_ad_uri:
             logger.info('Ignoring doubleclick event for advertisement')
             self.event_processed_event.set()
             return
@@ -155,21 +141,22 @@ class EventSupportPandoraFrontend(PandoraFrontend):
             self.event_processed_event.set()
             return
 
-        self._trigger_call_event(self.event_target_uri, event)
+        self._trigger_call_event(event_target_uri, event)
 
     def event_processed(self, track_uri):
         logger.debug('EventSupportPandoraFrontend: Handling event_processed event')
-        if self.event_target_uri and self.event_target_uri != track_uri:
-            logger.error("Unexpected event_processed URI '%s',", track_uri)
 
         self.event_processed_event.set()
-        self.event_target_uri = None
+
         if not self.tracklist_changed_event.isSet():
+            # Do any 'tracklist_changed' updates that are pending
             self.tracklist_changed()
 
     def doubleclicked(self):
         logger.debug('EventSupportPandoraFrontend: Handling doubleclicked event')
+
         self.event_processed_event.clear()
+        # Resume playback of the next track so long...
         self.core.playback.resume()
 
     def _trigger_call_event(self, track_uri, event):

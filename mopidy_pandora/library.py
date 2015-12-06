@@ -10,7 +10,7 @@ from pydora.utils import iterate_forever
 
 import requests
 
-from mopidy_pandora import listener
+from mopidy_pandora import rpc
 from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
 
 
@@ -58,11 +58,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
                 else:
                     return[models.Track(name=pandora_track.song_name, uri=uri, length=pandora_track.track_length * 1000,
-                                         bitrate=int(pandora_track.bitrate),
-                                         artists=[models.Artist(name=pandora_track.artist_name)],
-                                         album=models.Album(name=pandora_track.album_name,
-                                                            uri=pandora_track.album_detail_url,
-                                                            images=[pandora_track.album_art_url]))]
+                                        bitrate=int(pandora_track.bitrate),
+                                        artists=[models.Artist(name=pandora_track.artist_name)],
+                                        album=models.Album(name=pandora_track.album_name,
+                                                           uri=pandora_track.album_detail_url,
+                                                           images=[pandora_track.album_art_url]))]
 
         logger.error("Failed to lookup '%s'", uri)
         return []
@@ -90,6 +90,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
 
         station_directories.insert(0, self.genre_directory)
+
+        # Prefetch genre category list
+        rpc.run_async(self.backend.api.get_genre_stations)()
         return station_directories
 
     def _browse_tracks(self, uri):

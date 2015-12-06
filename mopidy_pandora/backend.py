@@ -7,13 +7,14 @@ from pandora.errors import PandoraException
 import pykka
 
 import requests
+
 from mopidy_pandora import listener, rpc
 
 
 from mopidy_pandora.client import MopidyPandoraAPIClient, MopidyPandoraSettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import EventSupportPlaybackProvider
-from mopidy_pandora.uri import logger, PandoraUri
+from mopidy_pandora.uri import logger, PandoraUri  # noqa: I101
 
 
 class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, listener.PandoraListener):
@@ -69,7 +70,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         func = getattr(self, pandora_event)
         try:
             logger.info("Triggering event '%s' for song: %s", pandora_event,
-                    self.library.lookup_pandora_track(track_uri).song_name)
+                        self.library.lookup_pandora_track(track_uri).song_name)
             func(track_uri)
             self._trigger_event_processed(track_uri)
         except PandoraException as e:

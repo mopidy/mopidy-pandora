@@ -1,5 +1,3 @@
-import Queue
-
 import time
 
 from mopidy import backend
@@ -7,7 +5,7 @@ from mopidy.internal import encoding
 
 import requests
 
-from mopidy_pandora import listener, rpc
+from mopidy_pandora import listener
 
 from mopidy_pandora.uri import logger
 
@@ -64,9 +62,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
-    # def get_current_tl_track(self, queue=Queue.Queue(1)):
-    #     return rpc.RPCClient._do_rpc('core.playback.get_current_tl_track', queue=queue)
-
     def is_playable(self, track_uri):
         """ A track is playable if it can be retrieved, has a URL, and the Pandora URL can be accessed.
 
@@ -97,7 +92,6 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         super(EventSupportPlaybackProvider, self).__init__(audio, backend)
 
         self.double_click_interval = float(backend.config.get('double_click_interval', 2.00))
-
         self._click_time = 0
 
     def set_click_time(self, click_time=None):
@@ -140,5 +134,3 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
     def _trigger_doubleclicked(self):
         logger.debug('EventSupportPlaybackProvider: Triggering doubleclicked event')
         listener.PandoraListener.send('doubleclicked')
-
-
