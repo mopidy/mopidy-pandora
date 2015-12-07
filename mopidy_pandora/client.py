@@ -1,5 +1,7 @@
 import logging
 
+import time
+
 from cachetools import TTLCache
 
 from mopidy.internal import encoding
@@ -37,31 +39,28 @@ class MopidyAPIClient(pandora.APIClient):
     This API client implements caching of the station list.
     """
 
-    station_key = "stations"
-    genre_key = "genre_stations"
-
     def __init__(self, cache_ttl, transport, partner_user, partner_password, device,
                  default_audio_quality=pandora.BaseAPIClient.MED_AUDIO_QUALITY):
 
         super(MopidyAPIClient, self).__init__(transport, partner_user, partner_password, device,
                                               default_audio_quality)
 
-        self._pandora_api_cache = TTLCache(1, cache_ttl)
+        self._station_list_cache = TTLCache(1, cache_ttl)
+        self._genre_stations_cache = TTLCache(1, cache_ttl)
 
     def get_station_list(self, force_refresh=False):
 
         try:
-            if MopidyAPIClient.station_key not in self._pandora_api_cache.keys() or \
-                    (force_refresh and self._pandora_api_cache[MopidyAPIClient.station_key].has_changed()):
+            if self._station_list_cache.currsize == 0 or \
+                    (force_refresh and self._station_list_cache.itervalues().next().has_changed()):
 
-                self._pandora_api_cache[MopidyAPIClient.station_key] = \
-                    super(MopidyAPIClient, self).get_station_list()
+                self._station_list_cache[time.time()] = super(MopidyAPIClient, self).get_station_list()
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving station list: %s', encoding.locale_decode(e))
             return []
 
-        return self._pandora_api_cache[MopidyAPIClient.station_key]
+        return self._station_list_cache.itervalues().next()
 
     def get_station(self, station_id):
 
@@ -74,14 +73,13 @@ class MopidyAPIClient(pandora.APIClient):
     def get_genre_stations(self, force_refresh=False):
 
         try:
-            if MopidyAPIClient.genre_key not in self._pandora_api_cache.keys() or \
-                    (force_refresh and self._pandora_api_cache[MopidyAPIClient.genre_key].has_changed()):
+            if self._genre_stations_cache.currsize == 0 or \
+                    (force_refresh and self._genre_stations_cache.itervalues().next().has_changed()):
 
-                self._pandora_api_cache[MopidyAPIClient.genre_key] = \
-                    super(MopidyAPIClient, self).get_genre_stations()
+                self._genre_stations_cache[time.time()] = super(MopidyAPIClient, self).get_genre_stations()
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving genre stations: %s', encoding.locale_decode(e))
             return []
 
-        return self._pandora_api_cache[MopidyAPIClient.genre_key]
+        return self._genre_stations_cache.itervalues().next()

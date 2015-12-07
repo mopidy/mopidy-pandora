@@ -4,10 +4,10 @@ import mock
 
 from mopidy import backend as backend_api
 
-from pandora import BaseAPIClient
+from pandora import APIClient, BaseAPIClient
 
 from mopidy_pandora import client, library, playback
-from tests.conftest import get_backend, request_exception_mock
+from tests.conftest import get_backend, get_station_list_mock, request_exception_mock
 
 
 def test_uri_schemes(config):
@@ -64,6 +64,23 @@ def test_on_start_logs_in(config):
     backend.on_start()
 
     backend.api.login.assert_called_once_with('john', 'doe')
+
+
+def test_on_start_pre_fetches_lists(config):
+    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+        backend = get_backend(config)
+
+        backend.api.login = mock.PropertyMock()
+        backend.api.get_genre_stations = mock.PropertyMock()
+
+        assert backend.api._station_list_cache.currsize == 0
+        assert backend.api._genre_stations_cache.currsize == 0
+
+        t = backend.on_start()
+        t.join()
+
+        assert backend.api._station_list_cache.currsize == 1
+        assert backend.api.get_genre_stations.called
 
 
 def test_on_start_handles_request_exception(config, caplog):

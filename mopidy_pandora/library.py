@@ -112,6 +112,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         json_result = self.backend.api.create_station(search_token=genre_token)
         new_station = Station.from_json(self.backend.api, json_result)
 
+        # Invalidate the cache so that it is refreshed on the next request
+        self.backend.api._station_list_cache.popitem()
+
         return StationUri.from_station(new_station)
 
     def _browse_genre_categories(self):

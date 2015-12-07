@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import time
+
 import conftest
 
 import mock
@@ -9,7 +11,6 @@ from pandora.models.pandora import StationList
 
 import pytest
 
-from mopidy_pandora.client import MopidyAPIClient
 
 from tests.conftest import get_backend
 from tests.conftest import get_station_list_mock
@@ -31,11 +32,10 @@ def test_get_station_list_populates_cache(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
         backend = get_backend(config)
 
-        assert backend.api._pandora_api_cache.currsize == 0
+        assert backend.api._station_list_cache.currsize == 0
 
         backend.api.get_station_list()
-        assert backend.api._pandora_api_cache.currsize == 1
-        assert MopidyAPIClient.station_key in backend.api._pandora_api_cache.keys()
+        assert backend.api._station_list_cache.currsize == 1
 
 
 def test_get_station_list_changed_cached(config):
@@ -55,13 +55,13 @@ def test_get_station_list_changed_cached(config):
                                       "checksum": cached_checksum
                                   }}
 
-            backend.api._pandora_api_cache[MopidyAPIClient.station_key] = StationList.from_json(
+            backend.api._station_list_cache[time.time()] = StationList.from_json(
                 APIClient, mock_cached_result["result"])
 
             backend.api.get_station_list()
             assert backend.api.get_station_list().checksum == cached_checksum
-            assert len(backend.api._pandora_api_cache[MopidyAPIClient.station_key]) == \
-                len(mock_cached_result['result']['stations'])
+            assert len(backend.api._station_list_cache.itervalues().next()) == len(StationList.from_json(
+                APIClient, mock_cached_result["result"]))
 
 
 def test_get_station_list_changed_refreshed(config):
@@ -81,14 +81,14 @@ def test_get_station_list_changed_refreshed(config):
                                       "checksum": cached_checksum
                                   }}
 
-            backend.api._pandora_api_cache[MopidyAPIClient.station_key] = StationList.from_json(
+            backend.api._station_list_cache[time.time()] = StationList.from_json(
                 APIClient, mock_cached_result["result"])
 
             assert backend.api.get_station_list().checksum == cached_checksum
 
             backend.api.get_station_list(force_refresh=True)
             assert backend.api.get_station_list().checksum == conftest.MOCK_STATION_LIST_CHECKSUM
-            assert len(backend.api._pandora_api_cache[MopidyAPIClient.station_key]) == \
+            assert len(backend.api._station_list_cache.itervalues().next()) == \
                 len(conftest.station_list_result_mock()['stations'])
 
 
@@ -125,3 +125,15 @@ def test_get_invalid_station(config):
             backend = get_backend(config)
 
             backend.api.get_station("9999999999999999999")
+
+
+def test_create_genre_station_invalidates_cache(config):
+    backend = get_backend(config)
+
+    backend.api.create_station = mock.PropertyMock(return_value=conftest.station_result_mock())
+    backend.api._station_list_cache[time.time()] = 'test_value'
+    assert backend.api._station_list_cache.currsize == 1
+
+    backend.library._create_station_for_genre('test_token')
+
+    assert backend.api._station_list_cache.currsize == 0
