@@ -7,6 +7,7 @@ import mock
 from mopidy_pandora import Extension
 
 from mopidy_pandora import backend as backend_lib
+from mopidy_pandora import frontend as frontend_lib
 
 
 class ExtensionTest(unittest.TestCase):
@@ -61,5 +62,6 @@ class ExtensionTest(unittest.TestCase):
 
         ext = Extension()
         ext.setup(registry)
-
-        registry.add.assert_called_with('backend', backend_lib.PandoraBackend)
+        calls = [mock.call('frontend', frontend_lib.EventSupportPandoraFrontend),
+                 mock.call('backend',  backend_lib.PandoraBackend)]
+        registry.add.assert_has_calls(calls, any_order=True)

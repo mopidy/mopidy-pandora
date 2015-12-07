@@ -9,7 +9,7 @@ from mopidy import models
 from pandora import APIClient
 from pandora.models.pandora import Station
 
-from mopidy_pandora.client import MopidyPandoraAPIClient
+from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
 from mopidy_pandora.uri import PandoraUri, StationUri, TrackUri
@@ -31,8 +31,7 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
     track_uri = TrackUri.from_track(playlist_item_mock)
-
-    backend.library._uri_translation_map[track_uri.uri] = playlist_item_mock
+    backend.library._pandora_tracks_cache[track_uri.uri] = playlist_item_mock
 
     results = backend.library.lookup(track_uri.uri)
 
@@ -112,7 +111,7 @@ def test_browse_directory_sort_date(config):
 
 
 def test_browse_station_uri(config, station_mock):
-    with mock.patch.object(MopidyPandoraAPIClient, 'get_station', conftest.get_station_mock):
+    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
 
             backend = conftest.get_backend(config)

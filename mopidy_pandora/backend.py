@@ -11,7 +11,7 @@ import requests
 from mopidy_pandora import listener, rpc
 
 
-from mopidy_pandora.client import MopidyPandoraAPIClient, MopidyPandoraSettingsDictBuilder
+from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybackProvider
 from mopidy_pandora.uri import logger, PandoraUri  # noqa: I101
@@ -33,7 +33,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             "AUDIO_QUALITY": self.config.get("preferred_audio_quality", BaseAPIClient.HIGH_AUDIO_QUALITY)
         }
 
-        self.api = MopidyPandoraSettingsDictBuilder(settings, client_class=MopidyPandoraAPIClient).build()
+        self.api = MopidySettingsDictBuilder(settings, client_class=MopidyAPIClient).build()
         self.library = PandoraLibraryProvider(backend=self, sort_order=self.config.get('sort_order', 'date'))
 
         self.supports_events = False

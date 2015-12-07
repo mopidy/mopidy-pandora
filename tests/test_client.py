@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import copy
-
 import conftest
 
 import mock
@@ -11,6 +9,8 @@ from pandora.models.pandora import StationList
 
 import pytest
 
+from mopidy_pandora.client import MopidyAPIClient
+
 from tests.conftest import get_backend
 from tests.conftest import get_station_list_mock
 
@@ -18,8 +18,6 @@ from tests.conftest import get_station_list_mock
 def test_get_station_list(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
         backend = get_backend(config)
-
-        assert not any(backend.api._station_list)
 
         station_list = backend.api.get_station_list()
 
@@ -29,9 +27,20 @@ def test_get_station_list(config):
         assert station_list[2].name == "QuickMix"
 
 
-def test_get_station_list_changed(config):
+def test_get_station_list_populates_cache(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
-        # Ensure that the cache is invalidated between calls
+        backend = get_backend(config)
+
+        assert backend.api._pandora_api_cache.currsize == 0
+
+        backend.api.get_station_list()
+        assert backend.api._pandora_api_cache.currsize == 1
+        assert MopidyAPIClient.station_key in backend.api._pandora_api_cache.keys()
+
+
+def test_get_station_list_changed_cached(config):
+    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+        # Ensure that the cache is re-used between calls
         with mock.patch.object(StationList, 'has_changed', return_value=True):
             backend = get_backend(config)
 
@@ -44,27 +53,51 @@ def test_get_station_list_changed(config):
                                              "stationName": conftest.MOCK_STATION_NAME
                                              }, ],
                                       "checksum": cached_checksum
-                                  }
-                                  }
+                                  }}
 
-            backend.api._station_list = StationList.from_json(
+            backend.api._pandora_api_cache[MopidyAPIClient.station_key] = StationList.from_json(
                 APIClient, mock_cached_result["result"])
 
-            assert backend.api._station_list.checksum == cached_checksum
-            assert len(backend.api._station_list) == 1
-
             backend.api.get_station_list()
-            assert backend.api._station_list.checksum == conftest.MOCK_STATION_LIST_CHECKSUM
-            assert len(backend.api._station_list) == len(conftest.station_list_result_mock()['stations'])
+            assert backend.api.get_station_list().checksum == cached_checksum
+            assert len(backend.api._pandora_api_cache[MopidyAPIClient.station_key]) == \
+                len(mock_cached_result['result']['stations'])
+
+
+def test_get_station_list_changed_refreshed(config):
+    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+        # Ensure that the cache is invalidated if 'force_refresh' is True
+        with mock.patch.object(StationList, 'has_changed', return_value=True):
+            backend = get_backend(config)
+
+            cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
+            mock_cached_result = {"stat": "ok",
+                                  "result": {
+                                      "stations": [
+                                            {"stationId": conftest.MOCK_STATION_ID,
+                                             "stationToken": conftest.MOCK_STATION_TOKEN,
+                                             "stationName": conftest.MOCK_STATION_NAME
+                                             }, ],
+                                      "checksum": cached_checksum
+                                  }}
+
+            backend.api._pandora_api_cache[MopidyAPIClient.station_key] = StationList.from_json(
+                APIClient, mock_cached_result["result"])
+
+            assert backend.api.get_station_list().checksum == cached_checksum
+
+            backend.api.get_station_list(force_refresh=True)
+            assert backend.api.get_station_list().checksum == conftest.MOCK_STATION_LIST_CHECKSUM
+            assert len(backend.api._pandora_api_cache[MopidyAPIClient.station_key]) == \
+                len(conftest.station_list_result_mock()['stations'])
 
 
 def test_get_station_list_handles_request_exception(config, caplog):
     backend = get_backend(config, True)
 
-    station_list = copy.copy(backend.api._station_list)
-    assert backend.api.get_station_list() == station_list
+    assert backend.api.get_station_list() == []
 
-    # Check that request execptions are caught and logged
+    # Check that request exceptions are caught and logged
     assert 'Error retrieving station list' in caplog.text()
 
 
