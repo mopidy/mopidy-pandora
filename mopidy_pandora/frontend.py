@@ -8,6 +8,43 @@ from mopidy_pandora import listener, logger
 from mopidy_pandora.uri import TrackUri
 
 
+def only_execute_for_pandora_uris(func):
+    """ Function decorator intended to ensure that "func" is only executed if a Pandora track
+        is currently playing. Allows CoreListener events to be ignored if they are being raised
+        while playing non-Pandora tracks.
+
+    :param func: the function to be executed
+    :return: the return value of the function if it was run, or 'None' otherwise.
+    """
+    from functools import wraps
+
+    @wraps(func)
+    def check_pandora(self, *args, **kwargs):
+        """ Check if a pandora track is currently being played.
+
+        :param args: all arguments will be passed to the target function
+        :param kwargs: active_uri should contain the uri to be checkrd, all other kwargs
+               will be passed to the target function
+        :return: the return value of the function if it was run or 'None' otherwise.
+        """
+        active_uri = kwargs.pop('active_uri', None)
+        if active_uri is None:
+            active_track = self.core.playback.get_current_tl_track().get()
+            if active_track:
+                active_uri = active_track.track.uri
+
+        if is_pandora_uri(active_uri):
+            return func(self, *args, **kwargs)
+        else:
+            return None
+
+    return check_pandora
+
+
+def is_pandora_uri(active_uri):
+    return active_uri and active_uri.startswith('pandora:')
+
+
 class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraListener):
 
     def __init__(self, config, core):
@@ -19,6 +56,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
         self.setup_required = True
         self.core = core
 
+    @only_execute_for_pandora_uris
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
@@ -44,15 +82,19 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def stop(self):
         self.core.playback.stop()
 
+    @only_execute_for_pandora_uris
     def track_playback_started(self, tl_track):
         self.set_options()
 
+    @only_execute_for_pandora_uris
     def track_playback_ended(self, tl_track, time_position):
         self.set_options()
 
+    @only_execute_for_pandora_uris
     def track_playback_paused(self, tl_track, time_position):
         self.set_options()
 
+    @only_execute_for_pandora_uris
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
 
@@ -88,6 +130,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         self.tracklist_changed_event = threading.Event()
         self.tracklist_changed_event.set()
 
+    @only_execute_for_pandora_uris
     def tracklist_changed(self):
 
         if not self.event_processed_event.isSet():
@@ -100,6 +143,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
             self.tracklist_changed_event.set()
 
+    @only_execute_for_pandora_uris
     def track_playback_resumed(self, tl_track, time_position):
         super(EventSupportPandoraFrontend, self).track_playback_resumed(tl_track, time_position)
 
