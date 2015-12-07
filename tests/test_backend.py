@@ -61,7 +61,8 @@ def test_on_start_logs_in(config):
 
     login_mock = mock.PropertyMock()
     backend.api.login = login_mock
-    backend.on_start()
+    t = backend.on_start()
+    t.join()
 
     backend.api.login.assert_called_once_with('john', 'doe')
 
