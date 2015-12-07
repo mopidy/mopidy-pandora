@@ -52,7 +52,7 @@ setup(
         'cachetools >= 1.0.0',
         'Mopidy >= 1.1.1',
         'Pykka >= 1.1',
-        'pydora >= 1.6.0',
+        'pydora >= 1.6.1',
         'requests >= 2.5.0'
     ],
     tests_require=['tox'],

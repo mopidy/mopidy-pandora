@@ -151,3 +151,4 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving next Pandora track: %s', encoding.locale_decode(e))
+            return None
