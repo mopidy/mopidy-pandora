@@ -24,7 +24,7 @@ Mopidy extension for Pandora Internet Radio (http://www.pandora.com).
 Dependencies
 ============
 
-- A free ad supported Pandora account or a Pandora One subscription (provides ad-free playback and higher quality
+- A free, ad supported, Pandora account or a paid Pandora One subscription (provides ad-free playback and higher quality
   192 Kbps audio stream).
 
 - ``pydora`` >= 1.6. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
@@ -70,7 +70,7 @@ Before starting Mopidy, you must add the configuration settings for Mopidy-Pando
     on_pause_next_click = thumbs_down
     on_pause_previous_click = sleep
 
-The **api_host** and **partner_** keys can be obtained from:
+The ``api_host`` and ``partner_`` keys can be obtained from:
 
  `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
 
