@@ -56,6 +56,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self.consecutive_track_skips = 0
             return super(PandoraPlaybackProvider, self).change_track(track)
         else:
+            logger.warning("Skipping unplayable track '%s'.", track.name)
             self.consecutive_track_skips += 1
             return False
 
