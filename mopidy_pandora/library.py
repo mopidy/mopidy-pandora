@@ -130,7 +130,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         try:
             return self._pandora_history[uri]
         except KeyError:
-            logger.error("Failed to lookup '%s' in uri translation map.", uri)
+            logger.error("Failed to lookup '%s' in Pandora track history.", uri)
             return None
 
     def get_next_pandora_track(self):
