@@ -48,7 +48,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def change_track(self, track):
         if track.uri is None:
-            logger.warning("No URI for track '%s'. Track cannot be played.", track.name)
+            logger.warning("No URI for track '%s'. Track cannot be played.", track)
             self.consecutive_track_skips += 1
             return False
 
@@ -56,7 +56,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self.consecutive_track_skips = 0
             return super(PandoraPlaybackProvider, self).change_track(track)
         else:
-            logger.warning("Skipping unplayable track '%s'.", track.name)
+            logger.warning("Skipping unplayable track with URI '%s'.", track.uri)
             self.consecutive_track_skips += 1
             return False
 
