@@ -50,7 +50,7 @@ Before starting Mopidy, you must add the configuration settings for Mopidy-Pando
     cache_time_to_live = 1800
 
     ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
-    event_support_enabled = true
+    event_support_enabled = false
     double_click_interval = 2.00
     on_pause_resume_click = thumbs_up
     on_pause_next_click = thumbs_down
@@ -114,10 +114,9 @@ v0.2.0 (UNRELEASED)
 - Implemented caching to speed up startup and browsing of the list of stations. Configuration parameter
   'cache_time_to_live' can be used to specify when cache iterms should expire and be refreshed (in seconds).
 - Better support for non-PandoraONE users: now plays advertisements which should prevent free accounts from being locked.
-- There is a bug in Mopidy that prevents the eventing support from working as expected, so it has been disabled by
-  default until https://github.com/mopidy/mopidy/issues/1352 is fixed. This should be fixed when Mopidy 1.1.2 is realeased.
-  Alternatively you can patch Mopidy 1.1.1 with https://github.com/mopidy/mopidy/pull/1356 if you want to keep using
-  events in the interim.
+- **Eventing support does not work at the momentd**, so it has been disabled by default until
+  https://github.com/mopidy/mopidy/issues/1352 is fixed. Alternatively you can patch Mopidy 1.1.1 with
+  https://github.com/mopidy/mopidy/pull/1356 if you want to keep using events in the interim.
 
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------
