@@ -31,7 +31,7 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
     track_uri = TrackUri.from_track(playlist_item_mock)
-    backend.library._pandora_tracks_cache[track_uri.uri] = playlist_item_mock
+    backend.library._pandora_history[track_uri.uri] = playlist_item_mock
 
     results = backend.library.lookup(track_uri.uri)
 

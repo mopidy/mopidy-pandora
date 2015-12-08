@@ -1,4 +1,4 @@
-from cachetools import TTLCache
+from collections import OrderedDict
 
 from mopidy import backend, models
 
@@ -27,7 +27,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self._station = None
         self._station_iter = None
 
-        self._pandora_tracks_cache = TTLCache(25, 1800)
+        self._pandora_history = OrderedDict()
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
@@ -128,7 +128,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup_pandora_track(self, uri):
         try:
-            return self._pandora_tracks_cache[uri]
+            return self._pandora_history[uri]
         except KeyError:
             logger.error("Failed to lookup '%s' in uri translation map.", uri)
             return None
@@ -145,7 +145,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             track = models.Ref.track(name=track_name, uri=track_uri.uri)
 
-            self._pandora_tracks_cache[track.uri] = pandora_track
+            self._pandora_history[track.uri] = pandora_track
             return track
 
         except requests.exceptions.RequestException as e:
