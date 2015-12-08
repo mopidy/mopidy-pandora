@@ -67,8 +67,10 @@ supports for the chosen device will be used.
 **sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
 alphabetical order.
 
-**cache_time_to_live** specifies how long station and genre lists should be cached for between refreshes. Setting this
-to '0' will disable caching entirely and ensure that the latest lists are always retrieved from Pandora.
+**cache_time_to_live** specifies how long station and genre lists should be cached for between refreshes, which greatly
+speeds up browsing the library. Setting this to '0' will disable caching entirely and ensure that the latest lists are
+always retrieved from Pandora. It shouldn't be necessary to fiddle with this unless you want Mopidy-Pandora to immediately
+detect changes to your Pandora user profile that are made in other players.
 
 **EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** use these settings to work around the limitations of the current Mopidy core
 and web extensions:
