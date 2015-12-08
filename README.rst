@@ -67,6 +67,9 @@ supports for the chosen device will be used.
 **sort_order** defaults to the date that the station was added. Use 'A-Z' to display the list of stations in
 alphabetical order.
 
+**cache_time_to_live** specifies how long station and genre lists should be cached for between refreshes. Setting this
+to '0' will disable caching entirely and ensure that the latest lists are always retrieved from Pandora.
+
 **EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** use these settings to work around the limitations of the current Mopidy core
 and web extensions:
 
@@ -114,7 +117,7 @@ v0.2.0 (UNRELEASED)
 - Implemented caching to speed up startup and browsing of the list of stations. Configuration parameter
   'cache_time_to_live' can be used to specify when cache iterms should expire and be refreshed (in seconds).
 - Better support for non-PandoraONE users: now plays advertisements which should prevent free accounts from being locked.
-- **Eventing support does not work at the momentd**, so it has been disabled by default until
+- **Event support does not work at the moment**, so it has been disabled by default until
   https://github.com/mopidy/mopidy/issues/1352 is fixed. Alternatively you can patch Mopidy 1.1.1 with
   https://github.com/mopidy/mopidy/pull/1356 if you want to keep using events in the interim.
 
