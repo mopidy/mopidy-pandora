@@ -117,7 +117,7 @@ v0.2.0 (UNRELEASED)
 - Force Mopidy to stop when skip limit is exceeded (workaround for https://github.com/mopidy/mopidy/issues/1221).
 - Scrobbling tracks to Last.fm should now work
 - Implemented caching to speed up startup and browsing of the list of stations. Configuration parameter
-  'cache_time_to_live' can be used to specify when cache iterms should expire and be refreshed (in seconds).
+  'cache_time_to_live' can be used to specify when cache items should expire and be refreshed (in seconds).
 - Better support for non-PandoraONE users: now plays advertisements which should prevent free accounts from being locked.
 - **Event support does not work at the moment**, so it has been disabled by default until
   https://github.com/mopidy/mopidy/issues/1352 is fixed. Alternatively you can patch Mopidy 1.1.1 with
