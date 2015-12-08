@@ -29,7 +29,7 @@ Dependencies
 
 - ``pydora`` >= 1.6. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
-- ``cachetools >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
+- ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
 
 - ``Mopidy`` >= 1.1. The music server that Mopidy-Pandora extends.
