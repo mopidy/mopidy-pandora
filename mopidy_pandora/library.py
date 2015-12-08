@@ -106,7 +106,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             self._station = self.backend.api.get_station(pandora_uri.station_id)
             self._station_iter = iterate_forever(self._station.get_playlist)
 
-        return [self.next_track()]
+        return [self.get_next_pandora_track()]
 
     def _create_station_for_genre(self, genre_token):
         json_result = self.backend.api.create_station(search_token=genre_token)
@@ -133,7 +133,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             logger.error("Failed to lookup '%s' in uri translation map.", uri)
             return None
 
-    def next_track(self):
+    def get_next_pandora_track(self):
         try:
             pandora_track = self._station_iter.next()
             track_uri = TrackUri.from_track(pandora_track)
@@ -145,7 +145,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             track = models.Ref.track(name=track_name, uri=track_uri.uri)
 
-            self._pandora_tracks_cache.expire()
             self._pandora_tracks_cache[track.uri] = pandora_track
             return track
 
