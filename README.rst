@@ -77,16 +77,16 @@ The **api_host** and **partner_** keys can be obtained from:
 The following configuration values are available:
 
 - ``preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default). If the
- preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream that
- Pandora supports for the chosen device will be used.
+  preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream that
+  Pandora supports for the chosen device will be used.
 
 - ``sort_order``: defaults to the ``date`` that the station was added. Use ``A-Z`` to display the list of stations in
- alphabetical order.
+  alphabetical order.
 
 - ``cache_time_to_live``: specifies how long station and genre lists should be cached for between refreshes,
-which greatly speeds up browsing the library. Setting this to ``0`` will disable caching entirely and ensure that the
-latest lists are always retrieved from Pandora. It shouldn't be necessary to fiddle with this unless you want
-Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other players.
+  which greatly speeds up browsing the library. Setting this to ``0`` will disable caching entirely and ensure that the
+  latest lists are always retrieved from Pandora. It shouldn't be necessary to fiddle with this unless you want
+  Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other players.
 
 **EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** use these settings to apply Pandora ratings to the track that is
 playing currently using the standard pause/play/previous/next buttons:
