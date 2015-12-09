@@ -27,37 +27,29 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
-    @property
-    def consecutive_track_skips(self):
-        return self._consecutive_track_skips
-
-    @consecutive_track_skips.setter
-    def consecutive_track_skips(self, value=1):
-        if value > 0:
-            self._consecutive_track_skips = value
-
-            if self.consecutive_track_skips >= self.SKIP_LIMIT:
-                logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
-                self._trigger_stop()
+    def skip_track(self, track):
+        logger.warning("Skipping unplayable track with URI '%s'.", track.uri)
+        self._consecutive_track_skips += 1
+        if self._consecutive_track_skips >= self.SKIP_LIMIT:
+            logger.error('Maximum track skip limit (%s) exceeded.', self.SKIP_LIMIT)
         else:
-            self._consecutive_track_skips = 0
+            self.backend.prepare_next_track(True)
 
     def prepare_change(self):
-        self._trigger_prepare_change()
+        self.backend.prepare_next_track(False)
         super(PandoraPlaybackProvider, self).prepare_change()
 
     def change_track(self, track):
         if track.uri is None:
             logger.warning("No URI for track '%s'. Track cannot be played.", track)
-            self.consecutive_track_skips += 1
+            self.skip_track(track)
             return False
 
         if self.is_playable(track.uri):
-            self.consecutive_track_skips = 0
+            self._consecutive_track_skips = 0
             return super(PandoraPlaybackProvider, self).change_track(track)
         else:
-            logger.warning("Skipping unplayable track with URI '%s'.", track.uri)
-            self.consecutive_track_skips += 1
+            self.skip_track(track)
             return False
 
     def translate_uri(self, uri):
@@ -78,12 +70,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
         finally:
             return is_playable
-
-    def _trigger_prepare_change(self):
-        listener.PandoraListener.send('prepare_change')
-
-    def _trigger_stop(self):
-        listener.PandoraListener.send('stop')
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):

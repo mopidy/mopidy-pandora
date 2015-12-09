@@ -75,13 +75,6 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def options_changed(self):
         self.setup_required = True
 
-    def prepare_change(self):
-        if self.is_playing_last_track():
-            self._trigger_end_of_tracklist_reached()
-
-    def stop(self):
-        self.core.playback.stop()
-
     @only_execute_for_pandora_uris
     def track_playback_started(self, tl_track):
         self.set_options()
@@ -98,17 +91,13 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
 
-    def is_playing_last_track(self):
-        current_tl_track = self.core.playback.get_current_tl_track().get()
-        next_tl_track = self.core.tracklist.next_track(current_tl_track).get()
+    def expand_tracklist(self, track, auto_play):
+        tl_tracks = self.core.tracklist.add(uris=[track.uri])
+        if auto_play:
+            self.core.playback.play(tl_tracks.get()[0])
 
-        return next_tl_track is None
-
-    def add_next_pandora_track(self, track):
-        self.core.tracklist.add(uris=[track.uri])
-
-    def _trigger_end_of_tracklist_reached(self):
-        listener.PandoraListener.send('end_of_tracklist_reached')
+    def _trigger_prepare_next_track(self, auto_play):
+        listener.PandoraListener.send('prepare_next_track', auto_play=auto_play)
 
 
 class EventSupportPandoraFrontend(PandoraFrontend):

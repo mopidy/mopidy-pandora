@@ -9,13 +9,10 @@ class PandoraListener(listener.Listener):
     def send(event, **kwargs):
         listener.send_async(PandoraListener, event, **kwargs)
 
-    def end_of_tracklist_reached(self):
+    def prepare_next_track(self, auto_play):
         pass
 
-    def add_next_pandora_track(self, track):
-        pass
-
-    def prepare_change(self):
+    def expand_tracklist(self, track, auto_play):
         pass
 
     def doubleclicked(self):
@@ -25,7 +22,4 @@ class PandoraListener(listener.Listener):
         pass
 
     def event_processed(self, track_uri):
-        pass
-
-    def stop(self):
         pass
