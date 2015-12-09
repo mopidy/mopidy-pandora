@@ -46,7 +46,8 @@ Install by running::
 Configuration
 =============
 
-Before starting Mopidy, you must add the configuration settings for Mopidy-Pandora to your Mopidy configuration file::
+Before starting Mopidy, you must add your Pandora username and password to your Mopidy configuration file, and provide
+the details of the JSON API endpoint that you would like to use::
 
     [pandora]
     enabled = true
@@ -56,49 +57,47 @@ Before starting Mopidy, you must add the configuration settings for Mopidy-Pando
     partner_username = iphone
     partner_password =
     partner_device = IP01
-    preferred_audio_quality = highQuality
     username =
     password =
-    sort_order = date
-    auto_setup = true
-    cache_time_to_live = 1800
+The following optional configuration values are also available:
 
-    ### EXPERIMENTAL EVENT HANDLING IMPLEMENTATION ###
-    event_support_enabled = false
-    double_click_interval = 2.00
-    on_pause_resume_click = thumbs_up
-    on_pause_next_click = thumbs_down
-    on_pause_previous_click = sleep
+- ``pandora/enabled``: If the Pandora extension should be enabled or not. Defaults to ``true``.
 
-The ``api_host`` and ``partner_`` keys can be obtained from:
+- ``pandora/api_host``: Which of the JSON API `endpoints <http://6xq.net/pandora-apidoc/json/>`_ to use.
 
- `pandora-apidoc <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+- ``pandora/partner_`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_ to use for the Pandora API entry point.
 
-The following configuration values are available:
+- ``pandora/username``: Your Pandora username. You *must* provide this.
 
-- ``preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default). If the
+- ``pandora/password``: Your Pandora password. You *must* provide this.
+
+- ``pandora/preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default). If the
   preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream that
   Pandora supports for the chosen device will be used.
 
-- ``sort_order``: defaults to the ``date`` that the station was added. Use ``A-Z`` to display the list of stations in
+- ``pandora/sort_order``: defaults to the ``date`` that the station was added. Use ``A-Z`` to display the list of stations in
   alphabetical order.
 
-- ``cache_time_to_live``: specifies how long station and genre lists should be cached for between refreshes,
+- ``pandora/auto_setup``: If Mopidy-Pandora should automatically configure the Mopidy player for best compatibility
+  with the Pandora radio stream. Defaults to ``true`` and turns on ``consume`` mode and ``repeat``, ``random``, and
+  ``single`` off.
+
+- ``pandora/cache_time_to_live``: specifies how long station and genre lists should be cached for between refreshes,
   which greatly speeds up browsing the library. Setting this to ``0`` will disable caching entirely and ensure that the
-  latest lists are always retrieved from Pandora. It shouldn't be necessary to fiddle with this unless you want
+  latest lists are always retrieved from Pandora. It should not be necessary to fiddle with this unless you want
   Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other players.
 
-**EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** use these settings to apply Pandora ratings to the track that is
-playing currently using the standard pause/play/previous/next buttons:
+**EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** apply Pandora ratings or perform other actions on the track that is
+currently playing using the standard pause/play/previous/next buttons.
 
-- ``event_support_enabled``: setting this to ``false`` will disable all event triggers entirely.
-- ``double_click_interval``: successive button clicks that occur within this interval (in seconds) will trigger an
-  event.
-- ``on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults to
+- ``pandora/event_support_enabled``: setting this to ``false`` will disable all event triggers entirely.
+- ``pandora/double_click_interval``: successive button clicks that occur within this interval (in seconds) will
+trigger an event. Defaults to ``2.00`` seconds.
+- ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults to
   ``thumbs_up``.
-- ``on_pause_next_click``: click pause and then next in quick succession. Calls event and skips to next song. Defaults
-  to ``thumbs_down``.
-- ``on_pause_previous_click``: click pause and then previous in quick succession. Calls event and restarts the
+- ``pandora/on_pause_next_click``: click pause and then next in quick succession. Calls event and skips to next song.
+  Defaults to ``thumbs_down``.
+- ``pandora/on_pause_previous_click``: click pause and then previous in quick succession. Calls event and restarts the
   current song. Defaults to ``sleep``.
 
 The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``, and
@@ -109,12 +108,8 @@ Usage
 
 Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
-Mopidy-Pandora simulates dynamic playlists by adding more tracks to the tracklist as needed. It is recommended that the
-tracklist is played with ``consume`` turned on in order to simulate the behaviour of the standard Pandora clients. For
-the same reason, ``repeat``, ``random``, and ``single`` should be turned off. Mopidy-Pandora will set all of this up
-automatically unless you set the ``auto_setup`` config parameter to ``false``.
-
-Mopidy-Pandora will ensure that there are always at least two tracks in the playlist to avoid playback gaps when switching tracks.
+Mopidy-Pandora simulates dynamic playlists by adding more tracks to the tracklist as needed.  Mopidy-Pandora will
+ensure that there are always at least two tracks in the playlist to avoid playback gaps when switching tracks.
 
 
 Project resources
