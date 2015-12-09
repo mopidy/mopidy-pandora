@@ -10,7 +10,7 @@ from mopidy import audio, backend as backend_api, models
 
 import pytest
 
-from mopidy_pandora import listener, playback
+from mopidy_pandora import playback
 
 from mopidy_pandora.backend import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
@@ -55,10 +55,12 @@ def test_is_a_playback_provider(provider):
     assert isinstance(provider, backend_api.PlaybackProvider)
 
 
-def test_change_track_aborts_if_no_track_uri(provider):
+def test_change_track_skips_if_no_track_uri(provider):
     track = models.Track(uri=None)
 
+    provider.skip_track = mock.PropertyMock()
     assert provider.change_track(track) is False
+    assert provider.skip_track.called
 
 
 def test_pause_starts_double_click_timer(provider):
@@ -100,14 +102,16 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
             provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
             provider.next_tl_track = {'track': {'uri': track.uri}}
 
-            listener.PandoraListener.send = mock.PropertyMock()
+            provider.backend.prepare_next_track = mock.PropertyMock()
 
             for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
                 assert provider.change_track(track) is False
                 if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
-                    assert not listener.PandoraListener.send.called
+                    assert provider.backend.prepare_next_track.called
+                    provider.backend.prepare_next_track.reset_mock()
+                else:
+                    assert not provider.backend.prepare_next_track.called
 
-            listener.PandoraListener.send.assert_called_with('stop')
             assert "Maximum track skip limit (%s) exceeded, stopping...", \
                 PandoraPlaybackProvider.SKIP_LIMIT in caplog.text()
 
