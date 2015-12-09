@@ -92,9 +92,9 @@ currently playing using the standard pause/play/previous/next buttons.
 
 - ``pandora/event_support_enabled``: setting this to ``false`` will disable all event triggers entirely.
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval (in seconds) will
-trigger an event. Defaults to ``2.00`` seconds.
-- ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults to
-  ``thumbs_up``.
+  trigger an event. Defaults to ``2.00`` seconds.
+- ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults
+  to ``thumbs_up``.
 - ``pandora/on_pause_next_click``: click pause and then next in quick succession. Calls event and skips to next song.
   Defaults to ``thumbs_down``.
 - ``pandora/on_pause_previous_click``: click pause and then previous in quick succession. Calls event and restarts the
@@ -110,6 +110,10 @@ Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ a
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
 Mopidy-Pandora simulates dynamic playlists by adding more tracks to the tracklist as needed.  Mopidy-Pandora will
 ensure that there are always at least two tracks in the playlist to avoid playback gaps when switching tracks.
+
+Pandora radio expects the user to interact with tracks at the time and in the order that it serves them up. For this
+reason, trying to create playlist or manually interact with the tracklist queque is probably not a good idea. And not
+supported.
 
 
 Project resources
