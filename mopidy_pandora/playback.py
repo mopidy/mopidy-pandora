@@ -34,9 +34,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     @consecutive_track_skips.setter
     def consecutive_track_skips(self, value=1):
         if value > 0:
-            self._consecutive_track_skips += value
+            self._consecutive_track_skips = value
 
-            if self.consecutive_track_skips >= self.SKIP_LIMIT-1:
+            if self.consecutive_track_skips >= self.SKIP_LIMIT:
                 logger.error('Maximum track skip limit (%s) exceeded, stopping...', self.SKIP_LIMIT)
                 self._trigger_stop()
         else:

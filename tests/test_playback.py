@@ -103,7 +103,9 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
             listener.PandoraListener.send = mock.PropertyMock()
 
             for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
-                provider.change_track(track) is False
+                assert provider.change_track(track) is False
+                if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
+                    assert not listener.PandoraListener.send.called
 
             listener.PandoraListener.send.assert_called_with('stop')
             assert "Maximum track skip limit (%s) exceeded, stopping...", \
