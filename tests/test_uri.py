@@ -69,7 +69,7 @@ def test_station_uri_parse(station_mock):
 
     assert isinstance(obj, StationUri)
 
-    assert obj.scheme == conftest.MOCK_STATION_SCHEME
+    assert obj.type == conftest.MOCK_STATION_SCHEME
     assert obj.station_id == conftest.MOCK_STATION_ID
     assert obj.token == conftest.MOCK_STATION_TOKEN
 
@@ -103,7 +103,7 @@ def test_track_uri_parse(playlist_item_mock):
 
     assert isinstance(obj, TrackUri)
 
-    assert obj.scheme == conftest.MOCK_TRACK_SCHEME
+    assert obj.type == conftest.MOCK_TRACK_SCHEME
     assert obj.station_id == conftest.MOCK_STATION_ID
     assert obj.token == conftest.MOCK_TRACK_TOKEN
 

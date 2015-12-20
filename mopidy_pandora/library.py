@@ -39,17 +39,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         pandora_uri = PandoraUri.parse(uri)
 
-        if pandora_uri.scheme == GenreUri.scheme:
+        if pandora_uri.type == GenreUri.type:
             return self._browse_genre_stations(uri)
 
-        if pandora_uri.scheme == StationUri.scheme:
+        if pandora_uri.type == StationUri.type:
             return self._browse_tracks(uri)
 
         raise Exception("Unknown or unsupported URI type '%s'", uri)
 
     def lookup(self, uri):
 
-        if PandoraUri.parse(uri).scheme == TrackUri.scheme:
+        if PandoraUri.parse(uri).type == TrackUri.type:
             pandora_track = self.lookup_pandora_track(uri)
 
             if pandora_track is not None:

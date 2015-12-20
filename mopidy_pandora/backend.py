@@ -43,7 +43,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         else:
             self.playback = PandoraPlaybackProvider(audio, self)
 
-        self.uri_schemes = ['pandora']
+        self.uri_schemes = [PandoraUri.SCHEME]
 
     @rpc.run_async
     def on_start(self):

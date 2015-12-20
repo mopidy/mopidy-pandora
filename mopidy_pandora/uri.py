@@ -8,17 +8,18 @@ logger = logging.getLogger(__name__)
 class _PandoraUriMeta(type):
     def __init__(cls, name, bases, clsdict):  # noqa N805
         super(_PandoraUriMeta, cls).__init__(name, bases, clsdict)
-        if hasattr(cls, 'scheme'):
-            cls.SCHEMES[cls.scheme] = cls
+        if hasattr(cls, 'type'):
+            cls.TYPES[cls.type] = cls
 
 
 class PandoraUri(object):
     __metaclass__ = _PandoraUriMeta
-    SCHEMES = {}
+    TYPES = {}
+    SCHEME = 'pandora'
 
-    def __init__(self, scheme=None):
-        if scheme is not None:
-            self.scheme = scheme
+    def __init__(self, type=None):
+        if type is not None:
+            self.type = type
 
     def quote(self, value):
 
@@ -31,12 +32,12 @@ class PandoraUri(object):
 
     @property
     def uri(self):
-        return "pandora:{}".format(self.quote(self.scheme))
+        return "{}:{}".format(self.SCHEME, self.quote(self.type))
 
     @classmethod
     def parse(cls, uri):
         parts = [urllib.unquote(p).decode('utf8') for p in uri.split(':')]
-        uri_cls = cls.SCHEMES.get(parts[1])
+        uri_cls = cls.TYPES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])
         else:
@@ -44,7 +45,7 @@ class PandoraUri(object):
 
 
 class GenreUri(PandoraUri):
-    scheme = 'genre'
+    type = 'genre'
 
     def __init__(self, category_name):
         super(GenreUri, self).__init__()
@@ -59,7 +60,7 @@ class GenreUri(PandoraUri):
 
 
 class StationUri(PandoraUri):
-    scheme = 'station'
+    type = 'station'
 
     def __init__(self, station_id, token):
         super(StationUri, self).__init__()
@@ -84,7 +85,7 @@ class StationUri(PandoraUri):
 
 
 class TrackUri(StationUri):
-    scheme = 'track'
+    type = 'track'
     ADVERTISEMENT_TOKEN = "advertisement"
 
     def __init__(self, station_id, token):
