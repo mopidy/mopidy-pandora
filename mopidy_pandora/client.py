@@ -17,20 +17,20 @@ logger = logging.getLogger(__name__)
 class MopidySettingsDictBuilder(SettingsDictBuilder):
 
     def build_from_settings_dict(self, settings):
-        enc = Encryptor(settings["DECRYPTION_KEY"],
-                        settings["ENCRYPTION_KEY"])
+        enc = Encryptor(settings['DECRYPTION_KEY'],
+                        settings['ENCRYPTION_KEY'])
 
         trans = APITransport(enc,
-                             settings.get("API_HOST", DEFAULT_API_HOST),
-                             settings.get("PROXY", None))
+                             settings.get('API_HOST', DEFAULT_API_HOST),
+                             settings.get('PROXY', None))
 
-        quality = settings.get("AUDIO_QUALITY",
+        quality = settings.get('AUDIO_QUALITY',
                                self.client_class.MED_AUDIO_QUALITY)
 
-        return self.client_class(settings["CACHE_TTL"], trans,
-                                 settings["PARTNER_USER"],
-                                 settings["PARTNER_PASSWORD"],
-                                 settings["DEVICE"], quality)
+        return self.client_class(settings['CACHE_TTL'], trans,
+                                 settings['PARTNER_USER'],
+                                 settings['PARTNER_PASSWORD'],
+                                 settings['DEVICE'], quality)
 
 
 class MopidyAPIClient(pandora.APIClient):
@@ -57,7 +57,7 @@ class MopidyAPIClient(pandora.APIClient):
                 self._station_list_cache[time.time()] = super(MopidyAPIClient, self).get_station_list()
 
         except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving station list: %s', encoding.locale_decode(e))
+            logger.error('Error retrieving station list: {}'.format(encoding.locale_decode(e)))
             return []
 
         return self._station_list_cache.itervalues().next()
@@ -79,7 +79,7 @@ class MopidyAPIClient(pandora.APIClient):
                 self._genre_stations_cache[time.time()] = super(MopidyAPIClient, self).get_genre_stations()
 
         except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving genre stations: %s', encoding.locale_decode(e))
+            logger.error('Error retrieving genre stations: {}'.format(encoding.locale_decode(e)))
             return []
 
         return self._genre_stations_cache.itervalues().next()

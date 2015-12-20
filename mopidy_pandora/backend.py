@@ -23,14 +23,14 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         super(PandoraBackend, self).__init__()
         self.config = config['pandora']
         settings = {
-            "CACHE_TTL": self.config.get("cache_time_to_live", 1800),
-            "API_HOST": self.config.get("api_host", 'tuner.pandora.com/services/json/'),
-            "DECRYPTION_KEY": self.config["partner_decryption_key"],
-            "ENCRYPTION_KEY": self.config["partner_encryption_key"],
-            "PARTNER_USER": self.config["partner_username"],
-            "PARTNER_PASSWORD": self.config["partner_password"],
-            "DEVICE": self.config["partner_device"],
-            "AUDIO_QUALITY": self.config.get("preferred_audio_quality", BaseAPIClient.HIGH_AUDIO_QUALITY)
+            'CACHE_TTL': self.config.get('cache_time_to_live', 1800),
+            'API_HOST': self.config.get('api_host', 'tuner.pandora.com/services/json/'),
+            'DECRYPTION_KEY': self.config['partner_decryption_key'],
+            'ENCRYPTION_KEY': self.config['partner_encryption_key'],
+            'PARTNER_USER': self.config['partner_username'],
+            'PARTNER_PASSWORD': self.config['partner_password'],
+            'DEVICE': self.config['partner_device'],
+            'AUDIO_QUALITY': self.config.get('preferred_audio_quality', BaseAPIClient.HIGH_AUDIO_QUALITY)
         }
 
         self.api = MopidySettingsDictBuilder(settings, client_class=MopidyAPIClient).build()
@@ -48,13 +48,13 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     @rpc.run_async
     def on_start(self):
         try:
-            self.api.login(self.config["username"], self.config["password"])
+            self.api.login(self.config['username'], self.config['password'])
             # Prefetch list of stations linked to the user's profile
             self.api.get_station_list()
             # Prefetch genre category list
             self.api.get_genre_stations()
         except requests.exceptions.RequestException as e:
-            logger.error('Error logging in to Pandora: %s', encoding.locale_decode(e))
+            logger.error('Error logging in to Pandora: {}'.format(encoding.locale_decode(e)))
 
     def prepare_next_track(self, auto_play=False):
         next_track = self.library.get_next_pandora_track()
@@ -70,12 +70,12 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def call_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)
         try:
-            logger.info("Triggering event '%s' for song: %s", pandora_event,
-                        self.library.lookup_pandora_track(track_uri).song_name)
+            logger.info('Triggering event \'{}\' for song: \'{}\''.format(pandora_event,
+                        self.library.lookup_pandora_track(track_uri).song_name))
             func(track_uri)
             self._trigger_event_processed(track_uri)
         except PandoraException as e:
-            logger.error('Error calling event: %s', encoding.locale_decode(e))
+            logger.error('Error calling event: {}'.format(encoding.locale_decode(e)))
             return False
 
     def thumbs_up(self, track_uri):

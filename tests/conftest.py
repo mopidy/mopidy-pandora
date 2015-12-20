@@ -12,30 +12,30 @@ import requests
 
 from mopidy_pandora import backend
 
-MOCK_STATION_SCHEME = "station"
-MOCK_STATION_NAME = "Mock Station"
-MOCK_STATION_ID = "0000000000000000001"
-MOCK_STATION_TOKEN = "0000000000000000010"
-MOCK_STATION_DETAIL_URL = " http://mockup.com/station/detail_url?..."
-MOCK_STATION_ART_URL = " http://mockup.com/station/art_url?..."
+MOCK_STATION_SCHEME = 'station'
+MOCK_STATION_NAME = 'Mock Station'
+MOCK_STATION_ID = '0000000000000000001'
+MOCK_STATION_TOKEN = '0000000000000000010'
+MOCK_STATION_DETAIL_URL = ' http://mockup.com/station/detail_url?...'
+MOCK_STATION_ART_URL = ' http://mockup.com/station/art_url?...'
 
-MOCK_STATION_LIST_CHECKSUM = "aa00aa00aa00aa00aa00aa00aa00aa00"
+MOCK_STATION_LIST_CHECKSUM = 'aa00aa00aa00aa00aa00aa00aa00aa00'
 
-MOCK_TRACK_SCHEME = "track"
-MOCK_TRACK_NAME = "Mock Track"
-MOCK_TRACK_TOKEN = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
-MOCK_TRACK_AD_TOKEN = "000000000000000000-none"
-MOCK_TRACK_AUDIO_HIGH = "http://mockup.com/high_quality_audiofile.mp4?..."
-MOCK_TRACK_AUDIO_MED = "http://mockup.com/medium_quality_audiofile.mp4?..."
-MOCK_TRACK_AUDIO_LOW = "http://mockup.com/low_quality_audiofile.mp4?..."
-MOCK_TRACK_DETAIL_URL = " http://mockup.com/track/detail_url?..."
-MOCK_TRACK_ART_URL = " http://mockup.com/track/art_url?..."
-MOCK_TRACK_INDEX = "1"
+MOCK_TRACK_SCHEME = 'track'
+MOCK_TRACK_NAME = 'Mock Track'
+MOCK_TRACK_TOKEN = '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001'
+MOCK_TRACK_AD_TOKEN = '000000000000000000-none'
+MOCK_TRACK_AUDIO_HIGH = 'http://mockup.com/high_quality_audiofile.mp4?...'
+MOCK_TRACK_AUDIO_MED = 'http://mockup.com/medium_quality_audiofile.mp4?...'
+MOCK_TRACK_AUDIO_LOW = 'http://mockup.com/low_quality_audiofile.mp4?...'
+MOCK_TRACK_DETAIL_URL = ' http://mockup.com/track/detail_url?...'
+MOCK_TRACK_ART_URL = ' http://mockup.com/track/art_url?...'
+MOCK_TRACK_INDEX = '1'
 
-MOCK_DEFAULT_AUDIO_QUALITY = "highQuality"
+MOCK_DEFAULT_AUDIO_QUALITY = 'highQuality'
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def config():
     return {
         'http': {
@@ -78,64 +78,64 @@ def get_backend(config, simulate_request_exceptions=False):
     return obj
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def station_result_mock():
-    mock_result = {"stat": "ok",
-                   "result":
-                       {"stationId": MOCK_STATION_ID,
-                        "stationDetailUrl": MOCK_STATION_DETAIL_URL,
-                        "artUrl": MOCK_STATION_ART_URL,
-                        "stationToken": MOCK_STATION_TOKEN,
-                        "stationName": MOCK_STATION_NAME},
+    mock_result = {'stat': 'ok',
+                   'result':
+                       {'stationId': MOCK_STATION_ID,
+                        'stationDetailUrl': MOCK_STATION_DETAIL_URL,
+                        'artUrl': MOCK_STATION_ART_URL,
+                        'stationToken': MOCK_STATION_TOKEN,
+                        'stationName': MOCK_STATION_NAME},
                    }
 
     return mock_result
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def station_mock(simulate_request_exceptions=False):
     return Station.from_json(get_backend(config(), simulate_request_exceptions).api,
-                             station_result_mock()["result"])
+                             station_result_mock()['result'])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def get_station_mock(self, station_token):
     return station_mock()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def playlist_result_mock():
-    mock_result = {"stat": "ok",
-                   "result": dict(items=[{
-                       "trackToken": MOCK_TRACK_TOKEN,
-                       "artistName": "Mock Artist Name",
-                       "albumName": "Mock Album Name",
-                       "albumArtUrl": MOCK_TRACK_ART_URL,
-                       "audioUrlMap": {
-                           "highQuality": {
-                               "bitrate": "64",
-                               "encoding": "aacplus",
-                               "audioUrl": MOCK_TRACK_AUDIO_HIGH,
-                               "protocol": "http"
+    mock_result = {'stat': 'ok',
+                   'result': dict(items=[{
+                       'trackToken': MOCK_TRACK_TOKEN,
+                       'artistName': 'Mock Artist Name',
+                       'albumName': 'Mock Album Name',
+                       'albumArtUrl': MOCK_TRACK_ART_URL,
+                       'audioUrlMap': {
+                           'highQuality': {
+                               'bitrate': '64',
+                               'encoding': 'aacplus',
+                               'audioUrl': MOCK_TRACK_AUDIO_HIGH,
+                               'protocol': 'http'
                            },
-                           "mediumQuality": {
-                               "bitrate": "64",
-                               "encoding": "aacplus",
-                               "audioUrl": MOCK_TRACK_AUDIO_MED,
-                               "protocol": "http"
+                           'mediumQuality': {
+                               'bitrate': '64',
+                               'encoding': 'aacplus',
+                               'audioUrl': MOCK_TRACK_AUDIO_MED,
+                               'protocol': 'http'
                            },
-                           "lowQuality": {
-                               "bitrate": "32",
-                               "encoding": "aacplus",
-                               "audioUrl": MOCK_TRACK_AUDIO_LOW,
-                               "protocol": "http"
+                           'lowQuality': {
+                               'bitrate': '32',
+                               'encoding': 'aacplus',
+                               'audioUrl': MOCK_TRACK_AUDIO_LOW,
+                               'protocol': 'http'
                            }
                        },
-                       "songName": MOCK_TRACK_NAME,
-                       "songDetailUrl": MOCK_TRACK_DETAIL_URL,
-                       "stationId": MOCK_STATION_ID,
-                       "songRating": 0,
-                       "adToken": None, },
+                       'songName': MOCK_TRACK_NAME,
+                       'songDetailUrl': MOCK_TRACK_DETAIL_URL,
+                       'stationId': MOCK_STATION_ID,
+                       'songRating': 0,
+                       'adToken': None, },
 
                        # Also add an advertisement to the playlist.
                        {
@@ -144,23 +144,23 @@ def playlist_result_mock():
                            'albumName': None,
                            'albumArtUrl': None,
                            'audioUrlMap': {
-                               "highQuality": {
-                                   "bitrate": "64",
-                                   "encoding": "aacplus",
-                                   "audioUrl": MOCK_TRACK_AUDIO_HIGH,
-                                   "protocol": "http"
+                               'highQuality': {
+                                   'bitrate': '64',
+                                   'encoding': 'aacplus',
+                                   'audioUrl': MOCK_TRACK_AUDIO_HIGH,
+                                   'protocol': 'http'
                                },
-                               "mediumQuality": {
-                                   "bitrate": "64",
-                                   "encoding": "aacplus",
-                                   "audioUrl": MOCK_TRACK_AUDIO_MED,
-                                   "protocol": "http"
+                               'mediumQuality': {
+                                   'bitrate': '64',
+                                   'encoding': 'aacplus',
+                                   'audioUrl': MOCK_TRACK_AUDIO_MED,
+                                   'protocol': 'http'
                                },
-                               "lowQuality": {
-                                   "bitrate": "32",
-                                   "encoding": "aacplus",
-                                   "audioUrl": MOCK_TRACK_AUDIO_LOW,
-                                   "protocol": "http"
+                               'lowQuality': {
+                                   'bitrate': '32',
+                                   'encoding': 'aacplus',
+                                   'audioUrl': MOCK_TRACK_AUDIO_LOW,
+                                   'protocol': 'http'
                                }
                            },
                            'songName': None,
@@ -173,27 +173,27 @@ def playlist_result_mock():
     return mock_result
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def ad_metadata_result_mock():
-    mock_result = {"stat": "ok",
-                   "result": dict(title=MOCK_TRACK_NAME, companyName="Mock Company Name", audioUrlMap={
-                       "highQuality": {
-                           "bitrate": "64",
-                           "encoding": "aacplus",
-                           "audioUrl": MOCK_TRACK_AUDIO_HIGH,
-                           "protocol": "http"
+    mock_result = {'stat': 'ok',
+                   'result': dict(title=MOCK_TRACK_NAME, companyName='Mock Company Name', audioUrlMap={
+                       'highQuality': {
+                           'bitrate': '64',
+                           'encoding': 'aacplus',
+                           'audioUrl': MOCK_TRACK_AUDIO_HIGH,
+                           'protocol': 'http'
                        },
-                       "mediumQuality": {
-                           "bitrate": "64",
-                           "encoding": "aacplus",
-                           "audioUrl": MOCK_TRACK_AUDIO_MED,
-                           "protocol": "http"
+                       'mediumQuality': {
+                           'bitrate': '64',
+                           'encoding': 'aacplus',
+                           'audioUrl': MOCK_TRACK_AUDIO_MED,
+                           'protocol': 'http'
                        },
-                       "lowQuality": {
-                           "bitrate": "32",
-                           "encoding": "aacplus",
-                           "audioUrl": MOCK_TRACK_AUDIO_LOW,
-                           "protocol": "http"
+                       'lowQuality': {
+                           'bitrate': '32',
+                           'encoding': 'aacplus',
+                           'audioUrl': MOCK_TRACK_AUDIO_LOW,
+                           'protocol': 'http'
                        }
                    }, adTrackingTokens={
                        MOCK_TRACK_AD_TOKEN,
@@ -204,17 +204,17 @@ def ad_metadata_result_mock():
     return mock_result
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def playlist_mock(simulate_request_exceptions=False):
-    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock()["result"])
+    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock()['result'])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def get_playlist_mock(self, station_token):
     return playlist_mock()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def get_station_playlist_mock(self):
     return iter(get_playlist_mock(self, MOCK_STATION_TOKEN))
 
@@ -222,13 +222,13 @@ def get_station_playlist_mock(self):
 @pytest.fixture
 def playlist_item_mock():
     return PlaylistItem.from_json(get_backend(
-        config()).api, playlist_result_mock()["result"]["items"][0])
+        config()).api, playlist_result_mock()['result']['items'][0])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def ad_item_mock():
     return AdItem.from_json(get_backend(
-        config()).api, ad_metadata_result_mock()["result"])
+        config()).api, ad_metadata_result_mock()['result'])
 
 
 @pytest.fixture
@@ -236,23 +236,23 @@ def get_ad_item_mock(self, token):
     return ad_item_mock()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def station_list_result_mock():
-    mock_result = {"stat": "ok",
-                   "result": {"stations": [
-                       {"stationId": MOCK_STATION_ID.replace("1", "2"),
-                        "stationToken": MOCK_STATION_TOKEN.replace("010", "100"),
-                        "stationName": MOCK_STATION_NAME + " 2"},
-                       {"stationId": MOCK_STATION_ID,
-                        "stationToken": MOCK_STATION_TOKEN,
-                        "stationName": MOCK_STATION_NAME + " 1"},
-                       {"stationId": MOCK_STATION_ID.replace("1", "3"),
-                        "stationToken": MOCK_STATION_TOKEN.replace("0010", "1000"),
-                        "stationName": "QuickMix"},
-                   ], "checksum": MOCK_STATION_LIST_CHECKSUM},
+    mock_result = {'stat': 'ok',
+                   'result': {'stations': [
+                       {'stationId': MOCK_STATION_ID.replace('1', '2'),
+                        'stationToken': MOCK_STATION_TOKEN.replace('010', '100'),
+                        'stationName': MOCK_STATION_NAME + ' 2'},
+                       {'stationId': MOCK_STATION_ID,
+                        'stationToken': MOCK_STATION_TOKEN,
+                        'stationName': MOCK_STATION_NAME + ' 1'},
+                       {'stationId': MOCK_STATION_ID.replace('1', '3'),
+                        'stationToken': MOCK_STATION_TOKEN.replace('0010', '1000'),
+                        'stationName': 'QuickMix'},
+                   ], 'checksum': MOCK_STATION_LIST_CHECKSUM},
                    }
 
-    return mock_result["result"]
+    return mock_result['result']
 
 
 @pytest.fixture
@@ -260,14 +260,14 @@ def get_station_list_mock(self):
     return StationList.from_json(get_backend(config()).api, station_list_result_mock())
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def request_exception_mock(self, *args, **kwargs):
     raise requests.exceptions.RequestException
 
 
 @pytest.fixture
 def transport_call_not_implemented_mock(self, method, **data):
-    raise TransportCallTestNotImplemented(method + "(" + json.dumps(self.remove_empty_values(data)) + ")")
+    raise TransportCallTestNotImplemented(method + '(' + json.dumps(self.remove_empty_values(data)) + ')')
 
 
 class TransportCallTestNotImplemented(Exception):

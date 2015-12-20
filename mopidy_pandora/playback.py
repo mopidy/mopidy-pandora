@@ -28,10 +28,10 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
     def skip_track(self, track):
-        logger.warning("Skipping unplayable track with URI '%s'.", track.uri)
+        logger.warning('Skipping unplayable track with URI \'{}\'.'.format(track.uri))
         self._consecutive_track_skips += 1
         if self._consecutive_track_skips >= self.SKIP_LIMIT:
-            logger.error('Maximum track skip limit (%s) exceeded.', self.SKIP_LIMIT)
+            logger.error('Maximum track skip limit ({}) exceeded.'.format(self.SKIP_LIMIT))
         else:
             self.backend.prepare_next_track(True)
 
@@ -41,7 +41,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def change_track(self, track):
         if track.uri is None:
-            logger.warning("No URI for track '%s'. Track cannot be played.", track)
+            logger.warning('No URI for track \'{}\'. Track cannot be played.'.format(track))
             self.skip_track(track)
             return False
 
@@ -67,7 +67,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             is_playable = pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()
 
         except requests.exceptions.RequestException as e:
-            logger.error('Error checking if track is playable: %s', encoding.locale_decode(e))
+            logger.error('Error checking if track is playable: {}'.format(encoding.locale_decode(e)))
         finally:
             return is_playable
 

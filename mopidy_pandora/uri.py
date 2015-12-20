@@ -32,7 +32,7 @@ class PandoraUri(object):
 
     @property
     def uri(self):
-        return "{}:{}".format(self.SCHEME, self.quote(self.type))
+        return '{}:{}'.format(self.SCHEME, self.quote(self.type))
 
     @classmethod
     def parse(cls, uri):
@@ -53,7 +53,7 @@ class GenreUri(PandoraUri):
 
     @property
     def uri(self):
-        return "{}:{}".format(
+        return '{}:{}'.format(
             super(GenreUri, self).uri,
             self.quote(self.category_name),
         )
@@ -77,7 +77,7 @@ class StationUri(PandoraUri):
 
     @property
     def uri(self):
-        return "{}:{}:{}".format(
+        return '{}:{}:{}'.format(
             super(StationUri, self).uri,
             self.quote(self.station_id),
             self.quote(self.token),
@@ -86,7 +86,7 @@ class StationUri(PandoraUri):
 
 class TrackUri(StationUri):
     type = 'track'
-    ADVERTISEMENT_TOKEN = "advertisement"
+    ADVERTISEMENT_TOKEN = 'advertisement'
 
     def __init__(self, station_id, token):
         super(TrackUri, self).__init__(station_id, token)
@@ -98,11 +98,11 @@ class TrackUri(StationUri):
         elif isinstance(track, AdItem):
             return TrackUri(track.station_id, cls.ADVERTISEMENT_TOKEN)
         else:
-            raise NotImplementedError("Unsupported playlist item type")
+            raise NotImplementedError('Unsupported playlist item type')
 
     @property
     def uri(self):
-        return "{}".format(
+        return '{}'.format(
             super(TrackUri, self).uri,
         )
 

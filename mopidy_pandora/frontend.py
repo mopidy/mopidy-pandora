@@ -105,9 +105,9 @@ class EventSupportPandoraFrontend(PandoraFrontend):
     def __init__(self, config, core):
         super(EventSupportPandoraFrontend, self).__init__(config, core)
 
-        self.on_pause_resume_click = config.get("on_pause_resume_click", "thumbs_up")
-        self.on_pause_next_click = config.get("on_pause_next_click", "thumbs_down")
-        self.on_pause_previous_click = config.get("on_pause_previous_click", "sleep")
+        self.on_pause_resume_click = config.get('on_pause_resume_click', 'thumbs_up')
+        self.on_pause_next_click = config.get('on_pause_next_click', 'thumbs_down')
+        self.on_pause_previous_click = config.get('on_pause_previous_click', 'sleep')
 
         self.previous_tl_track = None
         self.current_tl_track = None
@@ -156,7 +156,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         if event_target_uri and event:
             self._trigger_call_event(event_target_uri, event)
         else:
-            logger.error("Unexpected doubleclick event URI '%s'", track_uri)
+            logger.error('Unexpected doubleclick event URI \'{}\''.format(track_uri))
             self.event_processed_event.set()
 
     def _get_event_target_uri(self, track_uri, time_position):

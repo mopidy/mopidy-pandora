@@ -23,9 +23,9 @@ def test_get_station_list(config):
         station_list = backend.api.get_station_list()
 
         assert len(station_list) == len(conftest.station_list_result_mock()['stations'])
-        assert station_list[0].name == conftest.MOCK_STATION_NAME + " 2"
-        assert station_list[1].name == conftest.MOCK_STATION_NAME + " 1"
-        assert station_list[2].name == "QuickMix"
+        assert station_list[0].name == conftest.MOCK_STATION_NAME + ' 2'
+        assert station_list[1].name == conftest.MOCK_STATION_NAME + ' 1'
+        assert station_list[2].name == 'QuickMix'
 
 
 def test_get_station_list_populates_cache(config):
@@ -44,24 +44,24 @@ def test_get_station_list_changed_cached(config):
         with mock.patch.object(StationList, 'has_changed', return_value=True):
             backend = get_backend(config)
 
-            cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
-            mock_cached_result = {"stat": "ok",
-                                  "result": {
-                                      "stations": [
-                                            {"stationId": conftest.MOCK_STATION_ID,
-                                             "stationToken": conftest.MOCK_STATION_TOKEN,
-                                             "stationName": conftest.MOCK_STATION_NAME
+            cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
+            mock_cached_result = {'stat': 'ok',
+                                  'result': {
+                                      'stations': [
+                                            {'stationId': conftest.MOCK_STATION_ID,
+                                             'stationToken': conftest.MOCK_STATION_TOKEN,
+                                             'stationName': conftest.MOCK_STATION_NAME
                                              }, ],
-                                      "checksum": cached_checksum
+                                      'checksum': cached_checksum
                                   }}
 
             backend.api._station_list_cache[time.time()] = StationList.from_json(
-                APIClient, mock_cached_result["result"])
+                APIClient, mock_cached_result['result'])
 
             backend.api.get_station_list()
             assert backend.api.get_station_list().checksum == cached_checksum
             assert len(backend.api._station_list_cache.itervalues().next()) == len(StationList.from_json(
-                APIClient, mock_cached_result["result"]))
+                APIClient, mock_cached_result['result']))
 
 
 def test_get_station_list_changed_refreshed(config):
@@ -70,19 +70,19 @@ def test_get_station_list_changed_refreshed(config):
         with mock.patch.object(StationList, 'has_changed', return_value=True):
             backend = get_backend(config)
 
-            cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
-            mock_cached_result = {"stat": "ok",
-                                  "result": {
-                                      "stations": [
-                                            {"stationId": conftest.MOCK_STATION_ID,
-                                             "stationToken": conftest.MOCK_STATION_TOKEN,
-                                             "stationName": conftest.MOCK_STATION_NAME
+            cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
+            mock_cached_result = {'stat': 'ok',
+                                  'result': {
+                                      'stations': [
+                                            {'stationId': conftest.MOCK_STATION_ID,
+                                             'stationToken': conftest.MOCK_STATION_TOKEN,
+                                             'stationName': conftest.MOCK_STATION_NAME
                                              }, ],
-                                      "checksum": cached_checksum
+                                      'checksum': cached_checksum
                                   }}
 
             backend.api._station_list_cache[time.time()] = StationList.from_json(
-                APIClient, mock_cached_result["result"])
+                APIClient, mock_cached_result['result'])
 
             assert backend.api.get_station_list().checksum == cached_checksum
 
@@ -110,10 +110,10 @@ def test_get_station(config):
             backend.api.get_station_list()
 
             assert backend.api.get_station(
-                conftest.MOCK_STATION_ID).name == conftest.MOCK_STATION_NAME + " 1"
+                conftest.MOCK_STATION_ID).name == conftest.MOCK_STATION_NAME + ' 1'
 
             assert backend.api.get_station(
-                conftest.MOCK_STATION_ID.replace("1", "2")).name == conftest.MOCK_STATION_NAME + " 2"
+                conftest.MOCK_STATION_ID.replace('1', '2')).name == conftest.MOCK_STATION_NAME + ' 2'
 
 
 def test_get_invalid_station(config):
@@ -124,7 +124,7 @@ def test_get_invalid_station(config):
 
             backend = get_backend(config)
 
-            backend.api.get_station("9999999999999999999")
+            backend.api.get_station('9999999999999999999')
 
 
 def test_create_genre_station_invalidates_cache(config):

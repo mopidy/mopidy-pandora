@@ -45,7 +45,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if pandora_uri.type == StationUri.type:
             return self._browse_tracks(uri)
 
-        raise Exception("Unknown or unsupported URI type '%s'", uri)
+        raise Exception('Unknown or unsupported URI type \'{}\''.format(uri))
 
     def lookup(self, uri):
 
@@ -64,7 +64,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                                                            uri=pandora_track.album_detail_url,
                                                            images=[pandora_track.album_art_url]))]
 
-        logger.error("Failed to lookup '%s'", uri)
+        logger.error('Failed to lookup \'{}\''.format(uri))
         return []
 
     def _move_shuffle_to_top(self, list):
@@ -79,7 +79,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         stations = self.backend.api.get_station_list()
 
         if any(stations):
-            if self.sort_order == "a-z":
+            if self.sort_order == 'a-z':
                 stations.sort(key=lambda x: x.name, reverse=False)
 
             self._move_shuffle_to_top(stations)
@@ -130,7 +130,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         try:
             return self._pandora_history[uri]
         except KeyError:
-            logger.error("Failed to lookup '%s' in Pandora track history.", uri)
+            logger.error('Failed to lookup \'{}\' in Pandora track history.'.format(uri))
             return None
 
     def get_next_pandora_track(self):
@@ -149,5 +149,5 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return track
 
         except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving next Pandora track: %s', encoding.locale_decode(e))
+            logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
             return None

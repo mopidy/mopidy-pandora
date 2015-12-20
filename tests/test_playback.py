@@ -45,7 +45,7 @@ def provider(audio_mock, config):
     return provider
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def client_mock():
     client_mock = mock.Mock(spec=MopidyAPIClient)
     return client_mock
@@ -112,13 +112,13 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
                 else:
                     assert not provider.backend.prepare_next_track.called
 
-            assert "Maximum track skip limit (%s) exceeded, stopping...", \
+            assert 'Maximum track skip limit (%s) exceeded, stopping...', \
                 PandoraPlaybackProvider.SKIP_LIMIT in caplog.text()
 
 
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
 
-    test_uri = "pandora:track:test_station_id:test_token"
+    test_uri = 'pandora:track:test_station_id:test_token'
     provider.backend.library._pandora_history[test_uri] = playlist_item_mock
 
     assert provider.translate_uri(test_uri) == conftest.MOCK_TRACK_AUDIO_HIGH

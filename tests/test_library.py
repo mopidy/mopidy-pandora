@@ -23,7 +23,7 @@ def test_lookup_of_invalid_uri(config, caplog):
     results = backend.library.lookup('pandora:invalid')
 
     assert len(results) == 0
-    assert "Failed to lookup 'pandora:invalid'" in caplog.text()
+    assert 'Failed to lookup \'pandora:invalid\'' in caplog.text()
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):
@@ -51,7 +51,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
 
     assert len(results) == 0
 
-    assert "Failed to lookup '%s' in uri translation map: %s", track_uri.uri in caplog.text()
+    assert 'Failed to lookup \'%s\' in uri translation map: %s', track_uri.uri in caplog.text()
 
 
 def test_browse_directory_uri(config):
@@ -69,17 +69,17 @@ def test_browse_directory_uri(config):
         assert results[1].type == models.Ref.DIRECTORY
         assert results[1].name == 'Shuffle'
         assert results[1].uri == StationUri.from_station(
-            Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][2])).uri
+            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][2])).uri
 
         assert results[2].type == models.Ref.DIRECTORY
-        assert results[2].name == conftest.MOCK_STATION_NAME + " 2"
+        assert results[2].name == conftest.MOCK_STATION_NAME + ' 2'
         assert results[2].uri == StationUri.from_station(
-            Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][0])).uri
+            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][0])).uri
 
         assert results[3].type == models.Ref.DIRECTORY
-        assert results[3].name == conftest.MOCK_STATION_NAME + " 1"
+        assert results[3].name == conftest.MOCK_STATION_NAME + ' 1'
         assert results[3].uri == StationUri.from_station(
-            Station.from_json(backend.api, conftest.station_list_result_mock()["stations"][1])).uri
+            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][1])).uri
 
 
 def test_browse_directory_sort_za(config):
@@ -92,8 +92,8 @@ def test_browse_directory_sort_za(config):
 
         assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
         assert results[1].name == 'Shuffle'
-        assert results[2].name == conftest.MOCK_STATION_NAME + " 1"
-        assert results[3].name == conftest.MOCK_STATION_NAME + " 2"
+        assert results[2].name == conftest.MOCK_STATION_NAME + ' 1'
+        assert results[3].name == conftest.MOCK_STATION_NAME + ' 2'
 
 
 def test_browse_directory_sort_date(config):
@@ -106,8 +106,8 @@ def test_browse_directory_sort_date(config):
 
         assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
         assert results[1].name == 'Shuffle'
-        assert results[2].name == conftest.MOCK_STATION_NAME + " 2"
-        assert results[3].name == conftest.MOCK_STATION_NAME + " 1"
+        assert results[2].name == conftest.MOCK_STATION_NAME + ' 2'
+        assert results[3].name == conftest.MOCK_STATION_NAME + ' 1'
 
 
 def test_browse_station_uri(config, station_mock):
