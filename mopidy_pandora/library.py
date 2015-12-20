@@ -11,7 +11,7 @@ from pydora.utils import iterate_forever
 import requests
 
 from mopidy_pandora import rpc
-from mopidy_pandora.uri import GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
+from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):
@@ -27,8 +27,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self._station = None
         self._station_iter = None
 
-        # TODO: rename, set max size
-        self._pandora_history = OrderedDict()
+        self._pandora_track_buffer = OrderedDict()
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
@@ -40,24 +39,24 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         pandora_uri = PandoraUri.parse(uri)
 
-        # TODO: perform check on instance type instead of scheme.
-        if pandora_uri.uri_type == GenreUri.uri_type:
+        if type(pandora_uri) is GenreUri:
             return self._browse_genre_stations(uri)
 
-        if pandora_uri.uri_type == StationUri.uri_type:
+        if type(pandora_uri) is StationUri:
             return self._browse_tracks(uri)
 
         raise Exception('Unknown or unsupported URI type \'{}\''.format(uri))
 
     def lookup(self, uri):
 
-        # TODO: perform check on instance type instead of scheme
-        if PandoraUri.parse(uri).uri_type == TrackUri.uri_type:
-            pandora_track = self.lookup_pandora_track(uri)
-            # TODO: EAFP, replace with try-except block
-            if pandora_track is not None:
-                # TODO: perform check on instance type instead of scheme
-                if pandora_track.is_ad:
+        if isinstance(PandoraUri.parse(uri), TrackUri):
+            try:
+                pandora_track = self.lookup_pandora_track(uri)
+            except KeyError:
+                logger.error('Failed to lookup \'{}\''.format(uri))
+                return []
+            else:
+                if type(pandora_track) is AdItemUri:
                     return[models.Track(name='Advertisement', uri=uri)]
 
                 else:
@@ -68,8 +67,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                                                            uri=pandora_track.album_detail_url,
                                                            images=[pandora_track.album_art_url]))]
 
-        logger.error('Failed to lookup \'{}\''.format(uri))
-        return []
+        else:
+            raise ValueError('Unexpected URI type: {}'.format(uri))
 
     def _move_shuffle_to_top(self, list):
         # TODO: investigate effect of 'includeShuffleInsteadOfQuickMix' rpc parameter
@@ -106,8 +105,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if self._station is None or (pandora_uri.station_id != self._station.id):
 
-            # TODO: perform check on instance type instead of scheme
-            if pandora_uri.is_genre_station_uri:
+            if type(pandora_uri) is GenreStationUri:
                 pandora_uri = self._create_station_for_genre(pandora_uri.token)
 
             self._station = self.backend.api.get_station(pandora_uri.station_id)
@@ -116,7 +114,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return [self.get_next_pandora_track()]
 
     def _create_station_for_genre(self, genre_token):
-        json_result = self.backend.api.create_station(search_token=genre_token)
+        json_result = self.backend.api.create_station(search_token=genre_token)['result']
         new_station = Station.from_json(self.backend.api, json_result)
 
         # Invalidate the cache so that it is refreshed on the next request
@@ -129,36 +127,33 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 for category in sorted(self.backend.api.get_genre_stations().keys())]
 
     def _browse_genre_stations(self, uri):
-        return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
+        return [models.Ref.directory(name=station.name, uri=GenreStationUri.from_station(station).uri)
                 for station in self.backend.api.get_genre_stations()
                 [PandoraUri.parse(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
-        try:
-            return self._pandora_history[uri]
-        except KeyError:
-            logger.error('Failed to lookup \'{}\' in Pandora track history.'.format(uri))
-            # TODO Raise exception, don't return none
-            return None
+        return self._pandora_track_buffer[uri]
 
     def get_next_pandora_track(self):
         try:
             pandora_track = self._station_iter.next()
         # TODO: catch StopIteration exception as well.
         except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving next Pandora track: %s', encoding.locale_decode(e))
+            logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
             # TODO: Rather raise exception than returning None
+            return None
+        except StopIteration:
+            logger.error('Pandora does not have any more tracks for station: {}'.format(self._station))
             return None
 
         track_uri = TrackUri.from_track(pandora_track)
 
-        # TODO: perform check on instance type instead of scheme
-        if track_uri.is_ad_uri:
+        if type(track_uri) is AdItemUri:
             track_name = 'Advertisement'
         else:
             track_name = pandora_track.song_name
 
         track = models.Ref.track(name=track_name, uri=track_uri.uri)
 
-        self._pandora_history[track.uri] = pandora_track
+        self._pandora_track_buffer[track.uri] = pandora_track
         return track

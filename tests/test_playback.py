@@ -119,7 +119,7 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
 
     test_uri = 'pandora:track:test_station_id:test_token'
-    provider.backend.library._pandora_history[test_uri] = playlist_item_mock
+    provider.backend.library._pandora_track_buffer[test_uri] = playlist_item_mock
 
     assert provider.translate_uri(test_uri) == conftest.MOCK_TRACK_AUDIO_HIGH
 

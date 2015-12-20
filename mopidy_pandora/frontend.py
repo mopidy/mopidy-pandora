@@ -5,7 +5,7 @@ from mopidy import core
 import pykka
 
 from mopidy_pandora import listener, logger
-from mopidy_pandora.uri import PandoraUri
+from mopidy_pandora.uri import AdItemUri, PandoraUri
 
 
 def only_execute_for_pandora_uris(func):
@@ -98,7 +98,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
             self.core.playback.play(tl_tracks.get()[0])
 
     def _trigger_prepare_next_track(self, auto_play):
-        listener.PandoraListener.send('prepare_next_track', auto_play)
+        listener.PandoraListener.send('prepare_next_track', auto_play=auto_play)
 
 
 class EventSupportPandoraFrontend(PandoraFrontend):
@@ -106,10 +106,11 @@ class EventSupportPandoraFrontend(PandoraFrontend):
     def __init__(self, config, core):
         super(EventSupportPandoraFrontend, self).__init__(config, core)
 
-        # TODO: convert these to a settings dict.
-        self.on_pause_resume_click = config.get('on_pause_resume_click', 'thumbs_up')
-        self.on_pause_next_click = config.get('on_pause_next_click', 'thumbs_down')
-        self.on_pause_previous_click = config.get('on_pause_previous_click', 'sleep')
+        self.settings = {
+            'OPR_EVENT': config.get('on_pause_resume_click', 'thumbs_up'),
+            'OPN_EVENT': config.get('on_pause_next_click', 'thumbs_down'),
+            'OPP_EVENT': config.get('on_pause_previous_click', 'sleep')
+        }
 
         self.previous_tl_track = None
         self.current_tl_track = None
@@ -149,19 +150,15 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
 
-        # TODO: rather check for ad on type.
-        if PandoraUri.parse(event_target_uri).is_ad_uri:
+        if type(PandoraUri.parse(event_target_uri)) is AdItemUri:
             logger.info('Ignoring doubleclick event for advertisement')
             self.event_processed_event.set()
             return
 
         event = self._get_event(track_uri, time_position)
-        if event_target_uri and event:
-            self._trigger_call_event(event_target_uri, event)
-        else:
-            logger.error('Unexpected doubleclick event URI \'{}\''.format(track_uri))
-            # TODO: raise exception?
-            self.event_processed_event.set()
+
+        assert event_target_uri and event
+        self._trigger_call_event(event_target_uri, event)
 
     def _get_event_target_uri(self, track_uri, time_position):
         if time_position == 0:
@@ -176,18 +173,15 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         if track_uri == self.previous_tl_track.track.uri:
             if time_position > 0:
                 # Resuming playback on the first track in the tracklist.
-                return self.on_pause_resume_click
+                return self.settings['OPR_EVENT']
             else:
-                return self.on_pause_previous_click
+                return self.settings['OPP_EVENT']
 
         elif track_uri == self.current_tl_track.track.uri:
-            return self.on_pause_resume_click
+            return self.settings['OPR_EVENT']
 
         elif track_uri == self.next_tl_track.track.uri:
-            return self.on_pause_next_click
-        else:
-            # TODO: rather raise exception?
-            return None
+            return self.settings['OPN_EVENT']
 
     def event_processed(self, track_uri):
         self.event_processed_event.set()
@@ -202,4 +196,4 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         self.core.playback.resume()
 
     def _trigger_call_event(self, track_uri, event):
-        listener.PandoraListener.send('call_event', track_uri, event)
+        listener.PandoraListener.send('call_event', track_uri=track_uri, pandora_event=event)

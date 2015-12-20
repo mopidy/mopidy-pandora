@@ -9,29 +9,29 @@ from mopidy import models
 from pandora import APIClient
 from pandora.models.pandora import Station
 
+import pytest
+
 from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
-from mopidy_pandora.uri import PandoraUri, StationUri, TrackUri
+from mopidy_pandora.uri import PandoraUri, PlaylistItemUri, StationUri, TrackUri
 
 from tests.conftest import get_station_list_mock
 
 
 def test_lookup_of_invalid_uri(config, caplog):
-    backend = conftest.get_backend(config)
+    with pytest.raises(ValueError):
+        backend = conftest.get_backend(config)
 
-    results = backend.library.lookup('pandora:invalid')
-
-    assert len(results) == 0
-    assert 'Failed to lookup \'pandora:invalid\'' in caplog.text()
+        backend.library.lookup('pandora:invalid')
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):
 
     backend = conftest.get_backend(config)
 
-    track_uri = TrackUri.from_track(playlist_item_mock)
-    backend.library._pandora_history[track_uri.uri] = playlist_item_mock
+    track_uri = PlaylistItemUri.from_track(playlist_item_mock)
+    backend.library._pandora_track_buffer[track_uri.uri] = playlist_item_mock
 
     results = backend.library.lookup(track_uri.uri)
 

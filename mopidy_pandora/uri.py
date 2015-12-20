@@ -80,12 +80,9 @@ class GenreUri(PandoraUri):
         self.category_name = PandoraUri.encode(value)
 
 
-# TODO: refactor genres and ads into their own types, then check for those types
-#       in the code rather than using is_* methods.
 class StationUri(PandoraUri):
     uri_type = 'station'
 
-    # TODO: remove station token if it is not used anywhere?
     def __init__(self, station_id, token):
         super(StationUri, self).__init__(self.uri_type)
         self.station_id = station_id
@@ -97,40 +94,63 @@ class StationUri(PandoraUri):
             **self.encoded_attributes
         )
 
-    @property
-    def is_genre_station_uri(self):
-        return self.station_id.startswith('G') and self.station_id == self.token
-
     @classmethod
     def from_station(cls, station):
+        if station.id.startswith('G') and station.id == station.token:
+            raise TypeError('Cannot instantiate StationUri from genre station: {}'.format(station))
         return StationUri(station.id, station.token)
 
 
-# TODO: switch parent to PandoraUri
+class GenreStationUri(PandoraUri):
+    uri_type = 'genre_station'
+
+    def __init__(self, station_id):
+        super(GenreStationUri, self).__init__(self.uri_type)
+        self.station_id = station_id
+
+    @classmethod
+    def from_station(cls, station):
+        if not (station.id.startswith('G') and station.id == station.token):
+            raise TypeError('Not a genre station: {}'.format(station))
+        return GenreStationUri(station.id)
+
+
 class TrackUri(PandoraUri):
     uri_type = 'track'
-    ADVERTISEMENT_TOKEN = 'advertisement'
-
-    def __init__(self, station_id, token):
-        super(TrackUri, self).__init__(self.uri_type)
-        self.station_id = station_id
-        self.token = token
 
     @classmethod
     def from_track(cls, track):
         if isinstance(track, PlaylistItem):
-            return TrackUri(track.station_id, track.track_token)
+            return PlaylistItemUri(track.station_id, track.track_token)
         elif isinstance(track, AdItem):
-            return TrackUri(track.station_id, cls.ADVERTISEMENT_TOKEN)
+            return AdItemUri(track.station_id)
         else:
             raise NotImplementedError('Unsupported playlist item type')
 
+
+class PlaylistItemUri(TrackUri):
+
+    def __init__(self, station_id, token):
+        super(PlaylistItemUri, self).__init__(self.uri_type)
+        self.station_id = station_id
+        self.token = token
+
     def __repr__(self):
         return '{}:{station_id}:{token}'.format(
-            super(TrackUri, self).__repr__(),
+            super(PlaylistItemUri, self).__repr__(),
             **self.encoded_attributes
         )
 
-    @property
-    def is_ad_uri(self):
-        return self.token == self.ADVERTISEMENT_TOKEN
+
+class AdItemUri(TrackUri):
+    uri_type = 'ad'
+
+    def __init__(self, station_id):
+        super(AdItemUri, self).__init__(self.uri_type)
+        self.station_id = station_id
+
+    def __repr__(self):
+        return '{}:{station_id}'.format(
+            super(AdItemUri, self).__repr__(),
+            **self.encoded_attributes
+        )

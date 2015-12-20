@@ -34,6 +34,8 @@ MOCK_TRACK_INDEX = '1'
 
 MOCK_DEFAULT_AUDIO_QUALITY = 'highQuality'
 
+MOCK_AD_TYPE = 'ad'
+
 
 @pytest.fixture(scope='session')
 def config():

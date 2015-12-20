@@ -58,7 +58,6 @@ class MopidyAPIClient(pandora.APIClient):
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving station list: {}'.format(encoding.locale_decode(e)))
-            # TODO: Rather raise exception than returning None
             return []
 
         return self._station_list_cache.itervalues().next()
@@ -81,7 +80,6 @@ class MopidyAPIClient(pandora.APIClient):
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving genre stations: {}'.format(encoding.locale_decode(e)))
-            # TODO: Rather raise exception than returning None
             return []
 
         return self._genre_stations_cache.itervalues().next()
