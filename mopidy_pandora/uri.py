@@ -93,24 +93,14 @@ class StationUri(PandoraUri):
         return StationUri(station.id, station.token)
 
 
-class GenreStationUri(PandoraUri):
+class GenreStationUri(StationUri):
     uri_type = 'genre_station'
-
-    def __init__(self, token):
-        super(GenreStationUri, self).__init__(self.uri_type)
-        self.token = token
-
-    def __repr__(self):
-        return '{}:{token}'.format(
-            super(GenreStationUri, self).__repr__(),
-            **self.encoded_attributes
-        )
 
     @classmethod
     def from_station(cls, station):
         if not (station.id.startswith('G') and station.id == station.token):
             raise TypeError('Not a genre station: {}'.format(station))
-        return GenreStationUri(station.token)
+        return GenreStationUri(station.id, station.token)
 
 
 class TrackUri(PandoraUri):
