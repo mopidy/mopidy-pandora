@@ -5,7 +5,7 @@ from mopidy import core
 import pykka
 
 from mopidy_pandora import listener, logger
-from mopidy_pandora.uri import TrackUri
+from mopidy_pandora.uri import PandoraUri
 
 
 def only_execute_for_pandora_uris(func):
@@ -36,7 +36,8 @@ def only_execute_for_pandora_uris(func):
         if is_pandora_uri(active_uri):
             return func(self, *args, **kwargs)
         else:
-            return None
+            # Not playing a Pandora track. Don't do anything.
+            pass
 
     return check_pandora
 
@@ -105,6 +106,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
     def __init__(self, config, core):
         super(EventSupportPandoraFrontend, self).__init__(config, core)
 
+        # TODO: convert these to a settings dict.
         self.on_pause_resume_click = config.get('on_pause_resume_click', 'thumbs_up')
         self.on_pause_next_click = config.get('on_pause_next_click', 'thumbs_down')
         self.on_pause_previous_click = config.get('on_pause_previous_click', 'sleep')
@@ -147,7 +149,8 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
 
-        if TrackUri.parse(event_target_uri).is_ad_uri:
+        # TODO: rather check for ad on type.
+        if PandoraUri.parse(event_target_uri).is_ad_uri:
             logger.info('Ignoring doubleclick event for advertisement')
             self.event_processed_event.set()
             return
@@ -157,6 +160,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
             self._trigger_call_event(event_target_uri, event)
         else:
             logger.error('Unexpected doubleclick event URI \'{}\''.format(track_uri))
+            # TODO: raise exception?
             self.event_processed_event.set()
 
     def _get_event_target_uri(self, track_uri, time_position):
@@ -182,6 +186,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         elif track_uri == self.next_tl_track.track.uri:
             return self.on_pause_next_click
         else:
+            # TODO: rather raise exception?
             return None
 
     def event_processed(self, track_uri):

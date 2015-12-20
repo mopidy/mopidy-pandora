@@ -27,6 +27,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self._station = None
         self._station_iter = None
 
+        # TODO: rename, set max size
         self._pandora_history = OrderedDict()
         super(PandoraLibraryProvider, self).__init__(backend)
 
@@ -39,6 +40,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         pandora_uri = PandoraUri.parse(uri)
 
+        # TODO: perform check on instance type instead of scheme.
         if pandora_uri.type == GenreUri.type:
             return self._browse_genre_stations(uri)
 
@@ -49,10 +51,12 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup(self, uri):
 
+        # TODO: perform check on instance type instead of scheme
         if PandoraUri.parse(uri).type == TrackUri.type:
             pandora_track = self.lookup_pandora_track(uri)
-
+            # TODO: EAFP, replace with try-except block
             if pandora_track is not None:
+                # TODO: perform check on instance type instead of scheme
                 if pandora_track.is_ad:
                     return[models.Track(name='Advertisement', uri=uri)]
 
@@ -68,31 +72,33 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return []
 
     def _move_shuffle_to_top(self, list):
-
-        for station in list:
+        # TODO: investigate effect of 'includeShuffleInsteadOfQuickMix' rpc parameter
+        for i, station in enumerate(list[:]):
             if station.name == PandoraLibraryProvider.SHUFFLE_STATION_NAME:
                 # Align with 'QuickMix' being renamed to 'Shuffle' in most other Pandora front-ends.
                 station.name = 'Shuffle'
-                return list.insert(0, list.pop(list.index(station)))
+                list.insert(0, list.pop(i))
+                break
+
+        return list
 
     def _browse_stations(self):
-        stations = self.backend.api.get_station_list()
+        # Prefetch genre category list
+        rpc.run_async(self.backend.api.get_genre_stations)()
 
-        if any(stations):
+        stations = self.backend.api.get_station_list()
+        # TODO: EAFP, replace with try-except block
+        if stations:
             if self.sort_order == 'a-z':
                 stations.sort(key=lambda x: x.name, reverse=False)
 
-            self._move_shuffle_to_top(stations)
-
         station_directories = []
-        for station in stations:
+        for station in self._move_shuffle_to_top(stations):
             station_directories.append(
                 models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
 
         station_directories.insert(0, self.genre_directory)
 
-        # Prefetch genre category list
-        rpc.run_async(self.backend.api.get_genre_stations)()
         return station_directories
 
     def _browse_tracks(self, uri):
@@ -100,6 +106,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if self._station is None or (pandora_uri.station_id != self._station.id):
 
+            # TODO: perform check on instance type instead of scheme
             if pandora_uri.is_genre_station_uri:
                 pandora_uri = self._create_station_for_genre(pandora_uri.token)
 
@@ -131,23 +138,27 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return self._pandora_history[uri]
         except KeyError:
             logger.error('Failed to lookup \'{}\' in Pandora track history.'.format(uri))
+            # TODO Raise exception, don't return none
             return None
 
     def get_next_pandora_track(self):
         try:
             pandora_track = self._station_iter.next()
-            track_uri = TrackUri.from_track(pandora_track)
-
-            if track_uri.is_ad_uri:
-                track_name = 'Advertisement'
-            else:
-                track_name = pandora_track.song_name
-
-            track = models.Ref.track(name=track_name, uri=track_uri.uri)
-
-            self._pandora_history[track.uri] = pandora_track
-            return track
-
+        # TODO: catch StopIteration exception as well.
         except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
+            logger.error('Error retrieving next Pandora track: %s', encoding.locale_decode(e))
+            # TODO: Rather raise exception than returning None
             return None
+
+        track_uri = TrackUri.from_track(pandora_track)
+
+        # TODO: perform check on instance type instead of scheme
+        if track_uri.is_ad_uri:
+            track_name = 'Advertisement'
+        else:
+            track_name = pandora_track.song_name
+
+        track = models.Ref.track(name=track_name, uri=track_uri.uri)
+
+        self._pandora_history[track.uri] = pandora_track
+        return track

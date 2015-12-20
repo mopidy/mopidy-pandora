@@ -27,6 +27,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
+    # TODO: rename, check playable, raise not playable and skip limit exceptions
     def skip_track(self, track):
         logger.warning('Skipping unplayable track with URI \'{}\'.'.format(track.uri))
         self._consecutive_track_skips += 1
@@ -63,6 +64,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         """
         is_playable = False
         try:
+            # TODO: EAFP, replace with try-except block
             pandora_track = self.backend.library.lookup_pandora_track(track_uri)
             is_playable = pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()
 
@@ -92,7 +94,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         double_clicked = self._click_time > 0 and time.time() - self._click_time < self.double_click_interval
 
         if not double_clicked:
-            self._click_time = 0
+            self.set_click_time(0)
 
         return double_clicked
 

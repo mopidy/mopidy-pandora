@@ -57,6 +57,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             logger.error('Error logging in to Pandora: {}'.format(encoding.locale_decode(e)))
 
     def prepare_next_track(self, auto_play=False):
+        # TODO: EAFP, replace with try-except block
         next_track = self.library.get_next_pandora_track()
         if next_track:
             self._trigger_expand_tracklist(next_track, auto_play)
