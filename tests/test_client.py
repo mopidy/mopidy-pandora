@@ -130,7 +130,7 @@ def test_get_invalid_station(config):
 def test_create_genre_station_invalidates_cache(config):
     backend = get_backend(config)
 
-    backend.api.create_station = mock.PropertyMock(return_value=conftest.station_result_mock())
+    backend.api.create_station = mock.PropertyMock(return_value=conftest.station_result_mock()['result'])
     backend.api._station_list_cache[time.time()] = 'test_value'
     assert backend.api._station_list_cache.currsize == 1
 

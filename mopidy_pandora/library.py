@@ -42,21 +42,22 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if type(pandora_uri) is GenreUri:
             return self._browse_genre_stations(uri)
 
-        if type(pandora_uri) is StationUri:
+        if type(pandora_uri) is StationUri or type(pandora_uri) is GenreStationUri:
             return self._browse_tracks(uri)
 
         raise Exception('Unknown or unsupported URI type \'{}\''.format(uri))
 
     def lookup(self, uri):
 
-        if isinstance(PandoraUri.parse(uri), TrackUri):
+        pandora_uri = PandoraUri.parse(uri)
+        if isinstance(pandora_uri, TrackUri):
             try:
                 pandora_track = self.lookup_pandora_track(uri)
             except KeyError:
                 logger.error('Failed to lookup \'{}\''.format(uri))
                 return []
             else:
-                if type(pandora_track) is AdItemUri:
+                if type(pandora_uri) is AdItemUri:
                     return[models.Track(name='Advertisement', uri=uri)]
 
                 else:
@@ -114,7 +115,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return [self.get_next_pandora_track()]
 
     def _create_station_for_genre(self, genre_token):
-        json_result = self.backend.api.create_station(search_token=genre_token)['result']
+        json_result = self.backend.api.create_station(search_token=genre_token)
         new_station = Station.from_json(self.backend.api, json_result)
 
         # Invalidate the cache so that it is refreshed on the next request

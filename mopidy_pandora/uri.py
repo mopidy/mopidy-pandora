@@ -63,21 +63,13 @@ class GenreUri(PandoraUri):
 
     def __init__(self, category_name):
         super(GenreUri, self).__init__(self.uri_type)
-        self.category_name = category_name
+        self.category_name = self.encode(category_name)
 
     def __repr__(self):
         return '{}:{category_name}'.format(
             super(GenreUri, self).__repr__(),
             **self.encoded_attributes
         )
-
-    @property
-    def category_name(self):
-        return PandoraUri.decode(self.category_name)
-
-    @category_name.setter
-    def category_name(self, value):
-        self.category_name = PandoraUri.encode(value)
 
 
 class StationUri(PandoraUri):
@@ -104,15 +96,21 @@ class StationUri(PandoraUri):
 class GenreStationUri(PandoraUri):
     uri_type = 'genre_station'
 
-    def __init__(self, station_id):
+    def __init__(self, token):
         super(GenreStationUri, self).__init__(self.uri_type)
-        self.station_id = station_id
+        self.token = token
+
+    def __repr__(self):
+        return '{}:{token}'.format(
+            super(GenreStationUri, self).__repr__(),
+            **self.encoded_attributes
+        )
 
     @classmethod
     def from_station(cls, station):
         if not (station.id.startswith('G') and station.id == station.token):
             raise TypeError('Not a genre station: {}'.format(station))
-        return GenreStationUri(station.id)
+        return GenreStationUri(station.token)
 
 
 class TrackUri(PandoraUri):
