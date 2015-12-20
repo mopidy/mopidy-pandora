@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 class _PandoraUriMeta(type):
     def __init__(cls, name, bases, clsdict):  # noqa N805
         super(_PandoraUriMeta, cls).__init__(name, bases, clsdict)
-        if hasattr(cls, 'type'):
-            cls.TYPES[cls.type] = cls
+        if hasattr(cls, 'uri_type'):
+            cls.TYPES[cls.uri_type] = cls
 
 
 class PandoraUri(object):
@@ -17,12 +17,26 @@ class PandoraUri(object):
     TYPES = {}
     SCHEME = 'pandora'
 
-    def __init__(self, type=None):
-        if type is not None:
-            self.type = type
+    def __init__(self, uri_type=None):
+        self.uri_type = uri_type
 
-    def quote(self, value):
+    def __repr__(self):
+        return '{}:{uri_type}'.format(self.SCHEME, **self.__dict__)
 
+    @property
+    def encoded_attributes(self):
+        encoded_dict = dict(self.__dict__)
+        for k, v in encoded_dict.items():
+            encoded_dict[k] = PandoraUri.encode(v)
+
+        return encoded_dict
+
+    @property
+    def uri(self):
+        return repr(self)
+
+    @classmethod
+    def encode(cls, value):
         if value is None:
             value = ''
 
@@ -30,13 +44,13 @@ class PandoraUri(object):
             value = str(value)
         return urllib.quote(value.encode('utf8'))
 
-    @property
-    def uri(self):
-        return '{}:{}'.format(self.SCHEME, self.quote(self.type))
+    @classmethod
+    def decode(cls, value):
+        return urllib.unquote(value).decode('utf8')
 
     @classmethod
     def parse(cls, uri):
-        parts = [urllib.unquote(p).decode('utf8') for p in uri.split(':')]
+        parts = [cls.decode(p) for p in uri.split(':')]
         uri_cls = cls.TYPES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])
@@ -45,27 +59,43 @@ class PandoraUri(object):
 
 
 class GenreUri(PandoraUri):
-    type = 'genre'
+    uri_type = 'genre'
 
     def __init__(self, category_name):
-        super(GenreUri, self).__init__()
+        super(GenreUri, self).__init__(self.uri_type)
         self.category_name = category_name
 
-    @property
-    def uri(self):
-        return '{}:{}'.format(
-            super(GenreUri, self).uri,
-            self.quote(self.category_name),
+    def __repr__(self):
+        return '{}:{category_name}'.format(
+            super(GenreUri, self).__repr__(),
+            **self.encoded_attributes
         )
 
+    @property
+    def category_name(self):
+        return PandoraUri.decode(self.category_name)
 
+    @category_name.setter
+    def category_name(self, value):
+        self.category_name = PandoraUri.encode(value)
+
+
+# TODO: refactor genres and ads into their own types, then check for those types
+#       in the code rather than using is_* methods.
 class StationUri(PandoraUri):
-    type = 'station'
+    uri_type = 'station'
 
+    # TODO: remove station token if it is not used anywhere?
     def __init__(self, station_id, token):
-        super(StationUri, self).__init__()
+        super(StationUri, self).__init__(self.uri_type)
         self.station_id = station_id
         self.token = token
+
+    def __repr__(self):
+        return '{}:{station_id}:{token}'.format(
+            super(StationUri, self).__repr__(),
+            **self.encoded_attributes
+        )
 
     @property
     def is_genre_station_uri(self):
@@ -75,21 +105,16 @@ class StationUri(PandoraUri):
     def from_station(cls, station):
         return StationUri(station.id, station.token)
 
-    @property
-    def uri(self):
-        return '{}:{}:{}'.format(
-            super(StationUri, self).uri,
-            self.quote(self.station_id),
-            self.quote(self.token),
-        )
 
-
-class TrackUri(StationUri):
-    type = 'track'
+# TODO: switch parent to PandoraUri
+class TrackUri(PandoraUri):
+    uri_type = 'track'
     ADVERTISEMENT_TOKEN = 'advertisement'
 
     def __init__(self, station_id, token):
-        super(TrackUri, self).__init__(station_id, token)
+        super(TrackUri, self).__init__(self.uri_type)
+        self.station_id = station_id
+        self.token = token
 
     @classmethod
     def from_track(cls, track):
@@ -100,10 +125,10 @@ class TrackUri(StationUri):
         else:
             raise NotImplementedError('Unsupported playlist item type')
 
-    @property
-    def uri(self):
-        return '{}'.format(
-            super(TrackUri, self).uri,
+    def __repr__(self):
+        return '{}:{station_id}:{token}'.format(
+            super(TrackUri, self).__repr__(),
+            **self.encoded_attributes
         )
 
     @property

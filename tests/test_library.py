@@ -51,7 +51,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
 
     assert len(results) == 0
 
-    assert 'Failed to lookup \'%s\' in uri translation map: %s', track_uri.uri in caplog.text()
+    assert 'Failed to lookup \'{}\''.format(track_uri.uri) in caplog.text()
 
 
 def test_browse_directory_uri(config):

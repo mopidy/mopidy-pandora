@@ -20,7 +20,7 @@ def test_pandora_parse_mock_uri():
 
 def test_pandora_parse_unicode_mock_uri():
 
-    uri = PandoraUri('pandora:Ω≈ç√∫˜µ≤≥÷')
+    uri = TrackUri(conftest.MOCK_STATION_ID, 'Ω≈ç√∫:˜µ≤≥÷')
 
     obj = PandoraUri.parse(uri.uri)
 
@@ -42,7 +42,7 @@ def test_pandora_parse_none_mock_uri():
 
     uri = PandoraUri()
 
-    assert uri.quote(None) == ''
+    assert uri.encode(None) == ''
 
 
 def test_pandora_parse_invalid_mock_uri():
@@ -56,9 +56,9 @@ def test_station_uri_from_station(station_mock):
     station_uri = StationUri.from_station(station_mock)
 
     assert station_uri.uri == 'pandora:' + \
-        station_uri.quote(conftest.MOCK_STATION_SCHEME) + ':' + \
-        station_uri.quote(conftest.MOCK_STATION_ID) + ':' + \
-        station_uri.quote(conftest.MOCK_STATION_TOKEN)
+        station_uri.encode(conftest.MOCK_STATION_TYPE) + ':' + \
+        station_uri.encode(conftest.MOCK_STATION_ID) + ':' + \
+        station_uri.encode(conftest.MOCK_STATION_TOKEN)
 
 
 def test_station_uri_parse(station_mock):
@@ -69,7 +69,7 @@ def test_station_uri_parse(station_mock):
 
     assert isinstance(obj, StationUri)
 
-    assert obj.type == conftest.MOCK_STATION_SCHEME
+    assert obj.uri_type == conftest.MOCK_STATION_TYPE
     assert obj.station_id == conftest.MOCK_STATION_ID
     assert obj.token == conftest.MOCK_STATION_TOKEN
 
@@ -81,9 +81,9 @@ def test_track_uri_from_track(playlist_item_mock):
     track_uri = TrackUri.from_track(playlist_item_mock)
 
     assert track_uri.uri == 'pandora:' + \
-        track_uri.quote(conftest.MOCK_TRACK_SCHEME) + ':' + \
-        track_uri.quote(conftest.MOCK_STATION_ID) + ':' + \
-        track_uri.quote(conftest.MOCK_TRACK_TOKEN)
+        track_uri.encode(conftest.MOCK_TRACK_TYPE) + ':' + \
+        track_uri.encode(conftest.MOCK_STATION_ID) + ':' + \
+        track_uri.encode(conftest.MOCK_TRACK_TOKEN)
 
 
 def test_track_uri_from_track_for_ads(ad_item_mock):
@@ -91,8 +91,8 @@ def test_track_uri_from_track_for_ads(ad_item_mock):
     track_uri = TrackUri.from_track(ad_item_mock)
 
     assert track_uri.uri == 'pandora:' + \
-        track_uri.quote(conftest.MOCK_TRACK_SCHEME) + '::' + \
-        track_uri.quote(TrackUri.ADVERTISEMENT_TOKEN)
+        track_uri.encode(conftest.MOCK_TRACK_TYPE) + '::' + \
+        track_uri.encode(TrackUri.ADVERTISEMENT_TOKEN)
 
 
 def test_track_uri_parse(playlist_item_mock):
@@ -103,7 +103,7 @@ def test_track_uri_parse(playlist_item_mock):
 
     assert isinstance(obj, TrackUri)
 
-    assert obj.type == conftest.MOCK_TRACK_SCHEME
+    assert obj.uri_type == conftest.MOCK_TRACK_TYPE
     assert obj.station_id == conftest.MOCK_STATION_ID
     assert obj.token == conftest.MOCK_TRACK_TOKEN
 

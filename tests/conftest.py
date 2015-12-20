@@ -12,24 +12,24 @@ import requests
 
 from mopidy_pandora import backend
 
-MOCK_STATION_SCHEME = 'station'
+MOCK_STATION_TYPE = 'station'
 MOCK_STATION_NAME = 'Mock Station'
 MOCK_STATION_ID = '0000000000000000001'
 MOCK_STATION_TOKEN = '0000000000000000010'
-MOCK_STATION_DETAIL_URL = ' http://mockup.com/station/detail_url?...'
-MOCK_STATION_ART_URL = ' http://mockup.com/station/art_url?...'
+MOCK_STATION_DETAIL_URL = 'http://mockup.com/station/detail_url?...'
+MOCK_STATION_ART_URL = 'http://mockup.com/station/art_url?...'
 
 MOCK_STATION_LIST_CHECKSUM = 'aa00aa00aa00aa00aa00aa00aa00aa00'
 
-MOCK_TRACK_SCHEME = 'track'
+MOCK_TRACK_TYPE = 'track'
 MOCK_TRACK_NAME = 'Mock Track'
 MOCK_TRACK_TOKEN = '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001'
 MOCK_TRACK_AD_TOKEN = '000000000000000000-none'
 MOCK_TRACK_AUDIO_HIGH = 'http://mockup.com/high_quality_audiofile.mp4?...'
 MOCK_TRACK_AUDIO_MED = 'http://mockup.com/medium_quality_audiofile.mp4?...'
 MOCK_TRACK_AUDIO_LOW = 'http://mockup.com/low_quality_audiofile.mp4?...'
-MOCK_TRACK_DETAIL_URL = ' http://mockup.com/track/detail_url?...'
-MOCK_TRACK_ART_URL = ' http://mockup.com/track/art_url?...'
+MOCK_TRACK_DETAIL_URL = 'http://mockup.com/track/detail_url?...'
+MOCK_TRACK_ART_URL = 'http://mockup.com/track/art_url?...'
 MOCK_TRACK_INDEX = '1'
 
 MOCK_DEFAULT_AUDIO_QUALITY = 'highQuality'
