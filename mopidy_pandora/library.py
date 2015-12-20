@@ -23,7 +23,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     genre_directory = models.Ref.directory(name=GENRE_DIR_NAME, uri=PandoraUri('genres').uri)
 
     def __init__(self, backend, sort_order):
-        self.sort_order = sort_order.upper()
+        self.sort_order = sort_order.lower()
         self._station = None
         self._station_iter = None
 
@@ -79,7 +79,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         stations = self.backend.api.get_station_list()
 
         if any(stations):
-            if self.sort_order == "A-Z":
+            if self.sort_order == "a-z":
                 stations.sort(key=lambda x: x.name, reverse=False)
 
             self._move_shuffle_to_top(stations)
@@ -124,7 +124,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def _browse_genre_stations(self, uri):
         return [models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri)
                 for station in self.backend.api.get_genre_stations()
-                [GenreUri.parse(uri).category_name]]
+                [PandoraUri.parse(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
         try:

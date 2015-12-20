@@ -39,9 +39,9 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         self.supports_events = False
         if self.config.get('event_support_enabled', False):
             self.supports_events = True
-            self.playback = EventSupportPlaybackProvider(audio=audio, backend=self)
+            self.playback = EventSupportPlaybackProvider(audio, self)
         else:
-            self.playback = PandoraPlaybackProvider(audio=audio, backend=self)
+            self.playback = PandoraPlaybackProvider(audio, self)
 
         self.uri_schemes = ['pandora']
 
@@ -62,10 +62,10 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             self._trigger_expand_tracklist(next_track, auto_play)
 
     def _trigger_expand_tracklist(self, track, auto_play):
-        listener.PandoraListener.send('expand_tracklist', track=track, auto_play=auto_play)
+        listener.PandoraListener.send('expand_tracklist', track, auto_play)
 
     def _trigger_event_processed(self, track_uri):
-        listener.PandoraListener.send('event_processed', track_uri=track_uri)
+        listener.PandoraListener.send('event_processed', track_uri)
 
     def call_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)

@@ -97,7 +97,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
             self.core.playback.play(tl_tracks.get()[0])
 
     def _trigger_prepare_next_track(self, auto_play):
-        listener.PandoraListener.send('prepare_next_track', auto_play=auto_play)
+        listener.PandoraListener.send('prepare_next_track', auto_play)
 
 
 class EventSupportPandoraFrontend(PandoraFrontend):
@@ -140,9 +140,9 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
     def _process_events(self, track_uri, time_position):
 
-        # Check if there are any events that still require processing
+        # Check if there are any events that still require processing.
         if self.event_processed_event.isSet():
-            # No events to process
+            # No events to process.
             return
 
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
@@ -165,7 +165,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
             history = self.core.history.get_history().get()
             return history[1][1].uri
         else:
-            # Trigger the event for the track that is playing currently
+            # Trigger the event for the track that is playing currently.
             return track_uri
 
     def _get_event(self, track_uri, time_position):
@@ -188,7 +188,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         self.event_processed_event.set()
 
         if not self.tracklist_changed_event.isSet():
-            # Do any 'tracklist_changed' updates that are pending
+            # Do any 'tracklist_changed' updates that are pending.
             self.tracklist_changed()
 
     def doubleclicked(self):
@@ -197,4 +197,4 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         self.core.playback.resume()
 
     def _trigger_call_event(self, track_uri, event):
-        listener.PandoraListener.send('call_event', track_uri=track_uri, pandora_event=event)
+        listener.PandoraListener.send('call_event', track_uri, event)
