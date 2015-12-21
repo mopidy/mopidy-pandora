@@ -136,7 +136,7 @@ v0.2.0 (UNRELEASED)
 - Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
   your profile. At the moment, there is no way to remove stations from within Mopidy-Pandora.
 - Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
-- Scrobbling tracks to Last.fm should now work
+- Scrobbling tracks to Last.fm should now work.
 - Implemented caching to speed up startup and browsing of the list of stations. Configuration parameter
   ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
 - Better support for users with free Pandora accounts: now plays advertisements which should prevent free accounts

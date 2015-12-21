@@ -151,7 +151,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             # TODO: Rather raise exception than returning None
             return None
         except StopIteration:
-            # Workaround for https://github.com/mcrute/pydora/issues/36
+            # TODO: workaround for https://github.com/mcrute/pydora/issues/36
             logger.error('Failed to retrieve next track for station \'{}\''.format(self._station.name))
             return None
 
