@@ -25,8 +25,8 @@ class PandoraUri(object):
 
     @property
     def encoded_attributes(self):
-        encoded_dict = dict(self.__dict__)
-        for k, v in encoded_dict.items():
+        encoded_dict = {}
+        for k, v in self.__dict__.items():
             encoded_dict[k] = PandoraUri.encode(v)
 
         return encoded_dict

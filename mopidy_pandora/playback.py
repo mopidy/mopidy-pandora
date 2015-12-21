@@ -42,7 +42,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 self._consecutive_track_skips += 1
 
                 if self._consecutive_track_skips >= self.SKIP_LIMIT:
-                    raise MaxSkipLimitExceeded('Maximum track skip limit ({}) exceeded.'.format(self.SKIP_LIMIT))
+                    raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded, stopping...'
+                                                .format(self.SKIP_LIMIT)))
 
                 # Prepare the next track to be checked on the next call of 'change_track'.
                 self.backend.prepare_next_track(True)

@@ -65,7 +65,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         listener.PandoraListener.send('expand_tracklist', track=track, auto_play=auto_play)
 
     def _trigger_event_processed(self, track_uri):
-        listener.PandoraListener.send('event_processed', uri=track_uri)
+        listener.PandoraListener.send('event_processed', track_uri=track_uri)
 
     def call_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)

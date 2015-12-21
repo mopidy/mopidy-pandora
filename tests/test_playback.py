@@ -112,8 +112,8 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
                 else:
                     assert not provider.backend.prepare_next_track.called
 
-            assert 'Maximum track skip limit ({}) exceeded, stopping...'.format(
-                str(PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text())
+            assert 'Maximum track skip limit ({:d}) exceeded, stopping...'.format(
+                PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
 
 
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):

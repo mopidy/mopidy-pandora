@@ -59,6 +59,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 if type(pandora_uri) is AdItemUri:
                     if not pandora_track.company_name or len(pandora_track.company_name) == 0:
                         pandora_track.company_name = 'Unknown'
+
                     return[models.Track(name='Advertisement',
                                         uri=uri,
                                         artists=[models.Artist(name=pandora_track.company_name)],
@@ -147,11 +148,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             pandora_track = self._station_iter.next()
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
-            # TODO: Rather raise exception than returning None
             return None
-        except StopIteration:
+        except StopIteration as e:
             # TODO: workaround for https://github.com/mcrute/pydora/issues/36
-            logger.error('Failed to retrieve next track for station \'{}\''.format(self._station.name))
+            logger.error('Failed to retrieve next track for station \'{}\', ({})'.format(
+                self._station.name, encoding.locale_decode(e)))
             return None
 
         track_uri = TrackUri.from_track(pandora_track)
