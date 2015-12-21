@@ -25,7 +25,7 @@ def test_get_station_list(config):
         assert len(station_list) == len(conftest.station_list_result_mock()['stations'])
         assert station_list[0].name == conftest.MOCK_STATION_NAME + ' 2'
         assert station_list[1].name == conftest.MOCK_STATION_NAME + ' 1'
-        assert station_list[2].name == 'QuickMix'
+        assert station_list[2].name.startswith('QuickMix')
 
 
 def test_get_station_list_populates_cache(config):

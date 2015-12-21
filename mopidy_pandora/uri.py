@@ -63,7 +63,7 @@ class GenreUri(PandoraUri):
 
     def __init__(self, category_name):
         super(GenreUri, self).__init__(self.uri_type)
-        self.category_name = self.encode(category_name)
+        self.category_name = category_name
 
     def __repr__(self):
         return '{}:{category_name}'.format(
