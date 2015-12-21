@@ -87,14 +87,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         for i, station in enumerate(list[:]):
             if station.is_quickmix:
                 quickmix_stations = station.quickmix_stations
-                station.name += ' (stations marked with *)'
+                if not station.name.endswith(' (marked with *)'):
+                    station.name += ' (marked with *)'
                 list.insert(0, list.pop(i))
                 break
 
         # Mark QuickMix stations
         for station in list:
             if station.id in quickmix_stations:
-                station.name += '*'
+                if not station.name.endswith('*'):
+                    station.name += '*'
 
         return list
 
