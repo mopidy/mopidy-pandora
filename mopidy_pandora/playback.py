@@ -27,14 +27,33 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
-    # TODO: rename, check playable, raise not playable and skip limit exceptions
-    def skip_track(self, track):
-        logger.warning('Skipping unplayable track with URI \'{}\'.'.format(track.uri))
-        self._consecutive_track_skips += 1
-        if self._consecutive_track_skips >= self.SKIP_LIMIT:
-            logger.error('Maximum track skip limit ({}) exceeded.'.format(self.SKIP_LIMIT))
-        else:
-            self.backend.prepare_next_track(True)
+    def change_pandora_track(self, track):
+        """ Attempt to retrieve and check the Pandora playlist item from the buffer.
+
+        A track is playable if it has been stored in the buffer, has a URL, and the Pandora URL can be accessed.
+
+        :param track: the track to retrieve and check the Pandora playlist item for.
+        :return: True if the track is playable, False otherwise.
+        """
+        try:
+            pandora_track = self.backend.library.lookup_pandora_track(track.uri)
+            if not (pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()):
+                # Track is not playable.
+                self._consecutive_track_skips += 1
+
+                if self._consecutive_track_skips >= self.SKIP_LIMIT:
+                    raise MaxSkipLimitExceeded('Maximum track skip limit ({}) exceeded.'.format(self.SKIP_LIMIT))
+
+                # Prepare the next track to be checked on the next call of 'change_track'.
+                self.backend.prepare_next_track(True)
+                raise Unplayable('Track with URI \'{}\' is not playable'.format(track.uri))
+
+        except requests.exceptions.RequestException as e:
+            raise Unplayable('Error checking if track is playable: {}'.format(encoding.locale_decode(e)))
+
+        # Success, reset track skip counter.
+        self._consecutive_track_skips = 0
+        return super(PandoraPlaybackProvider, self).change_track(track)
 
     def prepare_change(self):
         self.backend.prepare_next_track(False)
@@ -43,35 +62,19 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def change_track(self, track):
         if track.uri is None:
             logger.warning('No URI for track \'{}\'. Track cannot be played.'.format(track))
-            self.skip_track(track)
             return False
 
-        if self.is_playable(track.uri):
-            self._consecutive_track_skips = 0
-            return super(PandoraPlaybackProvider, self).change_track(track)
-        else:
-            self.skip_track(track)
+        try:
+            return self.change_pandora_track(track)
+        except KeyError:
+            logger.error('Error changing track: failed to lookup \'{}\''.format(track.uri))
+            return False
+        except (MaxSkipLimitExceeded, Unplayable) as e:
+            logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
             return False
 
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
-
-    def is_playable(self, track_uri):
-        """ A track is playable if it can be retrieved, has a URL, and the Pandora URL can be accessed.
-
-        :param track_uri: uri of the track to be checked.
-        :return: True if the track is playable, False otherwise.
-        """
-        is_playable = False
-        try:
-            # TODO: EAFP, replace with try-except block
-            pandora_track = self.backend.library.lookup_pandora_track(track_uri)
-            is_playable = pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()
-
-        except requests.exceptions.RequestException as e:
-            logger.error('Error checking if track is playable: {}'.format(encoding.locale_decode(e)))
-        finally:
-            return is_playable
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
@@ -120,3 +123,11 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def _trigger_doubleclicked(self):
         listener.PandoraListener.send('doubleclicked')
+
+
+class MaxSkipLimitExceeded(Exception):
+    pass
+
+
+class Unplayable(Exception):
+    pass

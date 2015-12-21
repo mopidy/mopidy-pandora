@@ -58,9 +58,9 @@ def test_is_a_playback_provider(provider):
 def test_change_track_skips_if_no_track_uri(provider):
     track = models.Track(uri=None)
 
-    provider.skip_track = mock.PropertyMock()
+    provider.change_pandora_track = mock.PropertyMock()
     assert provider.change_track(track) is False
-    assert provider.skip_track.called
+    assert not provider.change_pandora_track.called
 
 
 def test_pause_starts_double_click_timer(provider):

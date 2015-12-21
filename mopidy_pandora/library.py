@@ -82,7 +82,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             raise ValueError('Unexpected URI type: {}'.format(uri))
 
     def _move_quickmix_to_top(self, list):
-        # TODO: investigate effect of 'includeShuffleInsteadOfQuickMix' rpc parameter
         for i, station in enumerate(list[:]):
             if station.name == 'QuickMix':
                 list.insert(0, list.pop(i))
@@ -94,16 +93,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         # Prefetch genre category list
         rpc.run_async(self.backend.api.get_genre_stations)()
 
+        station_directories = []
+
         stations = self.backend.api.get_station_list()
-        # TODO: EAFP, replace with try-except block
         if stations:
             if self.sort_order == 'a-z':
                 stations.sort(key=lambda x: x.name, reverse=False)
 
-        station_directories = []
-        for station in self._move_quickmix_to_top(stations):
-            station_directories.append(
-                models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
+            for station in self._move_quickmix_to_top(stations):
+                station_directories.append(
+                    models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
 
         station_directories.insert(0, self.genre_directory)
 
