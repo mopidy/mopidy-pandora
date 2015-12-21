@@ -133,6 +133,7 @@ def playlist_result_mock():
                                'protocol': 'http'
                            }
                        },
+                       'trackLength': 0,
                        'songName': MOCK_TRACK_NAME,
                        'songDetailUrl': MOCK_TRACK_DETAIL_URL,
                        'stationId': MOCK_STATION_ID,
@@ -165,6 +166,7 @@ def playlist_result_mock():
                                    'protocol': 'http'
                                }
                            },
+                           'trackLength': 0,
                            'songName': None,
                            'songDetailUrl': None,
                            'stationId': None,
@@ -250,7 +252,7 @@ def station_list_result_mock():
                         'stationName': MOCK_STATION_NAME + ' 1'},
                        {'stationId': MOCK_STATION_ID.replace('1', '3'),
                         'stationToken': MOCK_STATION_TOKEN.replace('0010', '1000'),
-                        'stationName': 'QuickMix'},
+                        'stationName': 'QuickMix', 'isQuickMix': True},
                    ], 'checksum': MOCK_STATION_LIST_CHECKSUM},
                    }
 

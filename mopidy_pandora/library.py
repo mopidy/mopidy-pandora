@@ -82,11 +82,19 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         else:
             raise ValueError('Unexpected URI type: {}'.format(uri))
 
-    def _move_quickmix_to_top(self, list):
+    def _format_station_list(self, list):
+        # Find QuickMix stations and move QuickMix to top
         for i, station in enumerate(list[:]):
-            if station.name == 'QuickMix':
+            if station.is_quickmix:
+                quickmix_stations = station.quickmix_stations
+                station.name += ' (stations marked with *)'
                 list.insert(0, list.pop(i))
                 break
+
+        # Mark QuickMix stations
+        for station in list:
+            if station.id in quickmix_stations:
+                station.name += '*'
 
         return list
 
@@ -101,7 +109,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             if self.sort_order == 'a-z':
                 stations.sort(key=lambda x: x.name, reverse=False)
 
-            for station in self._move_quickmix_to_top(stations):
+            for station in self._format_station_list(stations):
+
                 station_directories.append(
                     models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
 
