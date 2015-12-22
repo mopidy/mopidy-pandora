@@ -23,20 +23,33 @@ def only_execute_for_pandora_uris(func):
         """ Check if a pandora track is currently being played.
 
         :param args: all arguments will be passed to the target function
-        :param kwargs: active_uri should contain the uri to be checkrd, all other kwargs
+        :param kwargs: active_uri should contain the uri to be checked, all other kwargs
                will be passed to the target function
         :return: the return value of the function if it was run or 'None' otherwise.
         """
-        active_uri = kwargs.pop('active_uri', None)
-        if active_uri is None:
-            active_track = self.core.playback.get_current_tl_track().get()
-            if active_track:
-                active_uri = active_track.track.uri
 
-        if is_pandora_uri(active_uri):
+        try:
+            # Ask Mopidy for the currently playing track
+            active_uri = self.core.playback.get_current_tl_track().get().track.uri
+        except AttributeError:
+            # None available, try kwargs
+            try:
+                active_uri = kwargs['tl_track'].track.uri
+            except KeyError:
+                # Not there either, see if it was passed as the first argument
+                try:
+                    if type(args[0]) is TlTrack:
+                        active_uri = args[0].track.uri
+                except IndexError:
+                    # Giving up
+                    return None
+
+        try:
+            PandoraUri.parse(active_uri)
             return func(self, *args, **kwargs)
-        else:
+        except (NotImplementedError) as e:
             # Not playing a Pandora track. Don't do anything.
+            logger.info('Not a Pandora track: ({}, {})'.format(func.func_name, encoding.locale_decode(e)))
             pass
 
     return check_pandora
