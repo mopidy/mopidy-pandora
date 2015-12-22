@@ -130,21 +130,20 @@ Changelog
 v0.2.0 (UNRELEASED)
 -------------------
 
-- Major overhaul that completely changes how tracks are handled. Finally allows all track information to be accessible
-  during playback (e.g. song and artist names, album covers, track length, bitrate etc.).
+- Now displays all of the correct track information during playback (e.g. song and artist names, album covers, track
+  length, bitrate etc.).
 - Simulate dynamic tracklist (workaround for `#2 <https://github.com/rectalogic/mopidy-pandora/issues/2)>`_)
 - Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
   your profile. At the moment there is no way to remove stations from within Mopidy-Pandora.
+- Move 'QuickMix' to the top of the station list. Stations that will be played as part of QuickMix are marked with an
+  asterisk (*).
+- Scrobbling tracks to Last.fm is now supported.
+- Station lists are now cached which speeds up startup and browsing of the list of stations dramatically. Configuration
+  parameter ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
 - Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
-- Scrobbling tracks to Last.fm should now work.
-- Implemented caching to speed up startup and browsing of the list of stations. Configuration parameter
-  ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
-- Better support for users with free Pandora accounts: now plays advertisements which should prevent free accounts
-  from being locked.
-- Move 'QuickMix' to the top of the station list. Stations that will be played as part of QuickMix are marked
-  with an asterisk (*).
+- Now plays advertisements which should prevent non-Pandora One accounts from being locked after extended use.
 - **Event support does not work at the moment**, so it has been disabled by default until
-  `#1352 <https://github.com/mopidy/mopidy/issues/1352>`_ is fixed. Alternatively you can patch Mopidy 1.1.1 with
+  `#1352 <https://github.com/mopidy/mopidy/issues/1352>`_ is fixed. Alternatively, you can patch Mopidy 1.1.1 with
   `#1356 <https://github.com/mopidy/mopidy/pull/1356>`_ if you want to keep using events in the interim.
 
 v0.1.7 (Oct 31, 2015)
