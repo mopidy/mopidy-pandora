@@ -28,9 +28,10 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
 
     def change_pandora_track(self, track):
-        """ Attempt to retrieve and check the Pandora playlist item from the buffer.
+        """ Attempt to retrieve the Pandora playlist item from the buffer and verify that it is ready to be played.
 
-        A track is playable if it has been stored in the buffer, has a URL, and the Pandora URL can be accessed.
+        A track is playable if it has been stored in the buffer, has a URL, and the header for the Pandora URL can be
+        retrieved and the status code checked.
 
         :param track: the track to retrieve and check the Pandora playlist item for.
         :return: True if the track is playable, False otherwise.
@@ -47,7 +48,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
                 # Prepare the next track to be checked on the next call of 'change_track'.
                 self.backend.prepare_next_track(True)
-                raise Unplayable('Track with URI \'{}\' is not playable'.format(track.uri))
+                raise Unplayable("Track with URI '{}' is not playable".format(track.uri))
 
         except requests.exceptions.RequestException as e:
             raise Unplayable('Error checking if track is playable: {}'.format(encoding.locale_decode(e)))
@@ -62,13 +63,13 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def change_track(self, track):
         if track.uri is None:
-            logger.warning('No URI for track \'{}\'. Track cannot be played.'.format(track))
+            logger.warning("No URI for track '{}'. Track cannot be played.".format(track))
             return False
 
         try:
             return self.change_pandora_track(track)
         except KeyError:
-            logger.error('Error changing track: failed to lookup \'{}\''.format(track.uri))
+            logger.error("Error changing track: failed to lookup '{}'".format(track.uri))
             return False
         except (MaxSkipLimitExceeded, Unplayable) as e:
             logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
@@ -106,7 +107,6 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
         if self.is_double_click():
             self._trigger_doubleclicked()
-            self.set_click_time(0)
 
         return super(EventSupportPlaybackProvider, self).change_track(track)
 
@@ -123,6 +123,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         return super(EventSupportPlaybackProvider, self).pause()
 
     def _trigger_doubleclicked(self):
+        self.set_click_time(0)
         listener.PandoraListener.send('doubleclicked')
 
 

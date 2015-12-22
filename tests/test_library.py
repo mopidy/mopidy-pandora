@@ -20,7 +20,7 @@ from tests.conftest import get_station_list_mock
 
 
 def test_lookup_of_invalid_uri(config, caplog):
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         backend = conftest.get_backend(config)
 
         backend.library.lookup('pandora:invalid')

@@ -92,7 +92,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
 
-    def expand_tracklist(self, track, auto_play):
+    def prepare_tracklist(self, track, auto_play):
         tl_tracks = self.core.tracklist.add(uris=[track.uri])
         if auto_play:
             self.core.playback.play(tl_tracks.get()[0])

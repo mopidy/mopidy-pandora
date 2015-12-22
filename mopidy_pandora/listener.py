@@ -12,7 +12,7 @@ class PandoraListener(listener.Listener):
     def prepare_next_track(self, auto_play):
         pass
 
-    def expand_tracklist(self, track, auto_play):
+    def prepare_tracklist(self, track, auto_play):
         pass
 
     def doubleclicked(self):

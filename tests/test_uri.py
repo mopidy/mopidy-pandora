@@ -10,27 +10,18 @@ from mopidy_pandora.uri import AdItemUri, PandoraUri, PlaylistItemUri, StationUr
 
 def test_pandora_parse_mock_uri():
 
-    uri = 'pandora:mock'
+    uri = 'pandora:station:mock_id:mock_token'
 
     obj = PandoraUri.parse(uri)
 
     assert isinstance(obj, PandoraUri)
+    assert type(obj) is StationUri
     assert obj.uri == uri
 
 
 def test_pandora_parse_unicode_mock_uri():
 
     uri = PlaylistItemUri(conftest.MOCK_STATION_ID, 'Ω≈ç√∫:˜µ≤≥÷')
-
-    obj = PandoraUri.parse(uri.uri)
-
-    assert isinstance(obj, PandoraUri)
-    assert obj.uri == uri.uri
-
-
-def test_pandora_parse_int_mock_uri():
-
-    uri = PandoraUri(1)
 
     obj = PandoraUri.parse(uri.uri)
 
@@ -46,9 +37,9 @@ def test_pandora_parse_none_mock_uri():
 
 
 def test_pandora_parse_invalid_mock_uri():
-    with pytest.raises(IndexError):
+    with pytest.raises(NotImplementedError):
 
-        PandoraUri().parse('invalid')
+        PandoraUri().parse('pandora:invalid')
 
 
 def test_station_uri_from_station(station_mock):

@@ -51,11 +51,13 @@ class PandoraUri(object):
     @classmethod
     def parse(cls, uri):
         parts = [cls.decode(p) for p in uri.split(':')]
+        if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
+            raise NotImplementedError('Not a Pandora URI: {}'.format(uri))
         uri_cls = cls.TYPES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])
         else:
-            return cls(*parts[1:])
+            raise NotImplementedError("Unsupported Pandora URI type '{}'".format(uri))
 
 
 class GenreUri(PandoraUri):
@@ -113,7 +115,7 @@ class TrackUri(PandoraUri):
         elif isinstance(track, AdItem):
             return AdItemUri(track.station_id)
         else:
-            raise NotImplementedError('Unsupported playlist item type')
+            raise NotImplementedError("Unsupported playlist item type '{}'".format(track))
 
 
 class PlaylistItemUri(TrackUri):

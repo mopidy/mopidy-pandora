@@ -59,10 +59,10 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def prepare_next_track(self, auto_play=False):
         next_track = self.library.get_next_pandora_track()
         if next_track:
-            self._trigger_expand_tracklist(next_track, auto_play)
+            self._trigger_prepare_tracklist(next_track, auto_play)
 
-    def _trigger_expand_tracklist(self, track, auto_play):
-        listener.PandoraListener.send('expand_tracklist', track=track, auto_play=auto_play)
+    def _trigger_prepare_tracklist(self, track, auto_play):
+        listener.PandoraListener.send('prepare_tracklist', track=track, auto_play=auto_play)
 
     def _trigger_event_processed(self, track_uri):
         listener.PandoraListener.send('event_processed', track_uri=track_uri)
@@ -70,7 +70,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def call_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)
         try:
-            logger.info('Triggering event \'{}\' for song: \'{}\''.format(pandora_event,
+            logger.info("Triggering event '{}' for song: '{}'".format(pandora_event,
                         self.library.lookup_pandora_track(track_uri).song_name))
             func(track_uri)
             self._trigger_event_processed(track_uri)

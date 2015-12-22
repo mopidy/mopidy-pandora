@@ -44,7 +44,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if type(pandora_uri) is StationUri or type(pandora_uri) is GenreStationUri:
             return self._browse_tracks(uri)
 
-        raise Exception('Unknown or unsupported URI type \'{}\''.format(uri))
+        raise Exception("Unknown or unsupported URI type '{}'".format(uri))
 
     def lookup(self, uri):
 
@@ -53,7 +53,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 pandora_track = self.lookup_pandora_track(uri)
             except KeyError:
-                logger.error('Failed to lookup \'{}\''.format(uri))
+                logger.error("Failed to lookup '{}'".format(uri))
                 return []
             else:
                 if type(pandora_uri) is AdItemUri:
@@ -161,7 +161,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return None
         except StopIteration as e:
             # TODO: workaround for https://github.com/mcrute/pydora/issues/36
-            logger.error('Failed to retrieve next track for station \'{}\', ({})'.format(
+            logger.error("Failed to retrieve next track for station '{}', ({})".format(
                 self._station.name, encoding.locale_decode(e)))
             return None
 

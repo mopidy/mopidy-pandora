@@ -79,8 +79,8 @@ The following configuration values are available:
   alphabetical order.
 
 - ``pandora/auto_setup``: If Mopidy-Pandora should automatically configure the Mopidy player for best compatibility
-  with the Pandora radio stream. Defaults to ``true`` and turns on ``consume`` mode and ``repeat``, ``random``, and
-  ``single`` off.
+  with the Pandora radio stream. Defaults to ``true`` and turns off ``consume``, ``repeat``, ``random``, and ``single``
+  modes.
 
 - ``pandora/cache_time_to_live``: specifies how long station and genre lists should be cached for between refreshes,
   which greatly speeds up browsing the library. Setting this to ``0`` will disable caching entirely and ensure that the
