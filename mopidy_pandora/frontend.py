@@ -1,6 +1,7 @@
 import threading
 
 from mopidy import core
+from mopidy.internal import encoding
 
 import pykka
 
@@ -56,8 +57,8 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
             assert isinstance(self.core.tracklist, object)
-            if self.core.tracklist.get_repeat().get() is True:
-                self.core.tracklist.set_repeat(False)
+            if self.core.tracklist.get_repeat().get() is False:
+                self.core.tracklist.set_repeat(True)
             if self.core.tracklist.get_consume().get() is True:
                 self.core.tracklist.set_consume(False)
             if self.core.tracklist.get_random().get() is True:
@@ -148,16 +149,18 @@ class EventSupportPandoraFrontend(PandoraFrontend):
             return
 
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
+        assert event_target_uri
 
         if type(PandoraUri.parse(event_target_uri)) is AdItemUri:
             logger.info('Ignoring doubleclick event for advertisement')
             self.event_processed_event.set()
             return
 
-        event = self._get_event(track_uri, time_position)
-
-        assert event_target_uri and event
-        self._trigger_call_event(event_target_uri, event)
+        try:
+            self._trigger_call_event(event_target_uri, self._get_event(track_uri, time_position))
+        except ValueError as e:
+            logger.error(("Error processing event for URI '{}': ({})"
+                          .format(event_target_uri, encoding.locale_decode(e))))
 
     def _get_event_target_uri(self, track_uri, time_position):
         if time_position == 0:
@@ -170,15 +173,16 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
     def _get_event(self, track_uri, time_position):
         if track_uri == self.current_track_uri:
-            return self.settings['OPR_EVENT']
+            if time_position > 0:
+                # Resuming playback on the first track in the tracklist.
+                return self.settings['OPR_EVENT']
+            else:
+                return self.settings['OPP_EVENT']
 
         elif track_uri == self.next_track_uri:
             return self.settings['OPN_EVENT']
-        elif time_position > 0:
-            # Resuming playback on the first track in the tracklist.
-            return self.settings['OPR_EVENT']
         else:
-            return self.settings['OPP_EVENT']
+            raise ValueError('Unexpected event URI: {}'.format(track_uri))
 
     def event_processed(self, track_uri):
         self.event_processed_event.set()
