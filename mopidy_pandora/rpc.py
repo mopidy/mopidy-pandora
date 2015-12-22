@@ -2,8 +2,6 @@ import json
 
 import requests
 
-thread_timeout = 2
-
 
 def run_async(func):
     """ Function decorator intended to make "func" run in a separate thread (asynchronously).
