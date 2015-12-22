@@ -11,7 +11,7 @@ from mopidy_pandora.uri import logger
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
-    SKIP_LIMIT = 3
+    SKIP_LIMIT = 5
 
     def __init__(self, audio, backend):
         super(PandoraPlaybackProvider, self).__init__(audio, backend)
@@ -36,7 +36,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         :param track: the track to retrieve and check the Pandora playlist item for.
         :return: True if the track is playable, False otherwise.
         """
-        self._trigger_track_changed(track)
         try:
             pandora_track = self.backend.library.lookup_pandora_track(track.uri)
             if not (pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()):
@@ -54,10 +53,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         # Success, reset track skip counter.
         self._consecutive_track_skips = 0
-
-    def prepare_change(self):
-        # self.backend.prepare_next_track(False)
-        super(PandoraPlaybackProvider, self).prepare_change()
+        self._trigger_track_changed(track)
 
     def change_track(self, track):
         if track.uri is None:
@@ -71,7 +67,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         except KeyError:
             logger.error("Error changing track: failed to lookup '{}'".format(track.uri))
             return False
-        except (MaxSkipLimitExceeded, Unplayable) as e:
+        except Unplayable as e:
+            logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
+            self.backend.prepare_next_track(auto_play=True)
+            return False
+        except MaxSkipLimitExceeded as e:
             logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
             return False
 
