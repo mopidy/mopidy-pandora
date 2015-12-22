@@ -142,9 +142,9 @@ v0.2.0 (UNRELEASED)
   parameter ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
 - Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
 - Now plays advertisements which should prevent non-Pandora One accounts from being locked after extended use.
-- **Event support does not work at the moment**, so it has been disabled by default until
-  `#1352 <https://github.com/mopidy/mopidy/issues/1352>`_ is fixed. Alternatively, you can patch Mopidy 1.1.1 with
-  `#1356 <https://github.com/mopidy/mopidy/pull/1356>`_ if you want to keep using events in the interim.
+- **Event support does not work at the moment** (see `#35 <https://github.com/rectalogic/mopidy-pandora/issues/35>`_),
+  so it has been disabled by default. In the interim, you can patch Mopidy 1.1.1 with `#1356 <https://github.com/mopidy/mopidy/pull/1356>`_
+  if you want to keep using events until the fix is available.
 
 v0.1.7 (Oct 31, 2015)
 ---------------------
