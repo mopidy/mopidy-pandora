@@ -159,10 +159,10 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
             return None
-        except StopIteration as e:
+        except StopIteration:
             # TODO: workaround for https://github.com/mcrute/pydora/issues/36
-            logger.error("Failed to retrieve next track for station '{}', ({})".format(
-                self._station.name, encoding.locale_decode(e)))
+            logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
+                self._station.name))
             return None
 
         track_uri = TrackUri.from_track(pandora_track)

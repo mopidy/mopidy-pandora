@@ -27,29 +27,11 @@ def only_execute_for_pandora_uris(func):
                will be passed to the target function
         :return: the return value of the function if it was run or 'None' otherwise.
         """
-
         try:
-            # Ask Mopidy for the currently playing track
-            active_uri = self.core.playback.get_current_tl_track().get().track.uri
-        except AttributeError:
-            # None available, try kwargs
-            try:
-                active_uri = kwargs['tl_track'].track.uri
-            except KeyError:
-                # Not there either, see if it was passed as the first argument
-                try:
-                    if type(args[0]) is TlTrack:
-                        active_uri = args[0].track.uri
-                except IndexError:
-                    # Giving up
-                    return None
-
-        try:
-            PandoraUri.parse(active_uri)
+            PandoraUri.parse(self.core.playback.get_current_tl_track().get().track.uri)
             return func(self, *args, **kwargs)
-        except (NotImplementedError) as e:
+        except (AttributeError, NotImplementedError):
             # Not playing a Pandora track. Don't do anything.
-            logger.info('Not a Pandora track: ({}, {})'.format(func.func_name, encoding.locale_decode(e)))
             pass
 
     return check_pandora
@@ -104,10 +86,16 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
 
+    def track_changed(self, track):
+        if self.core.tracklist.get_length().get() < 2 or track != self.core.tracklist.get_tl_tracks().get()[0].track:
+            self._trigger_prepare_next_track(auto_play=False)
+
     def prepare_tracklist(self, track, auto_play):
-        tl_tracks = self.core.tracklist.add(uris=[track.uri])
+        self.core.tracklist.add(uris=[track.uri])
+        if self.core.tracklist.get_length().get() > 2:
+            self.core.tracklist.remove({'tlid': [self.core.tracklist.get_tl_tracks().get()[0].tlid]})
         if auto_play:
-            self.core.playback.play(tl_tracks.get()[0])
+            self.core.playback.play(self.core.tracklist.get_tl_tracks().get()[0])
 
     def _trigger_prepare_next_track(self, auto_play):
         listener.PandoraListener.send('prepare_next_track', auto_play=auto_play)
@@ -142,7 +130,6 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         else:
             current_tl_track = self.core.playback.get_current_tl_track().get()
             self.current_track_uri = current_tl_track.track.uri
-            # self.previous_tl_track = self.core.tracklist.previous_track(self.current_track_uri).get()
             self.next_track_uri = self.core.tracklist.next_track(current_tl_track).get().track.uri
 
             self.tracklist_changed_event.set()

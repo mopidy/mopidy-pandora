@@ -23,3 +23,6 @@ class PandoraListener(listener.Listener):
 
     def event_processed(self, track_uri):
         pass
+
+    def track_changed(self, track):
+        pass

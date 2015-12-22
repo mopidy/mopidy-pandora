@@ -36,6 +36,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         :param track: the track to retrieve and check the Pandora playlist item for.
         :return: True if the track is playable, False otherwise.
         """
+        self._trigger_track_changed(track)
         try:
             pandora_track = self.backend.library.lookup_pandora_track(track.uri)
             if not (pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()):
@@ -46,8 +47,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                     raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded, stopping...'
                                                 .format(self.SKIP_LIMIT)))
 
-                # Prepare the next track to be checked on the next call of 'change_track'.
-                self.backend.prepare_next_track(True)
                 raise Unplayable("Track with URI '{}' is not playable".format(track.uri))
 
         except requests.exceptions.RequestException as e:
@@ -55,10 +54,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         # Success, reset track skip counter.
         self._consecutive_track_skips = 0
-        return super(PandoraPlaybackProvider, self).change_track(track)
 
     def prepare_change(self):
-        self.backend.prepare_next_track(False)
+        # self.backend.prepare_next_track(False)
         super(PandoraPlaybackProvider, self).prepare_change()
 
     def change_track(self, track):
@@ -67,7 +65,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             return False
 
         try:
-            return self.change_pandora_track(track)
+            self.change_pandora_track(track)
+            return super(PandoraPlaybackProvider, self).change_track(track)
+
         except KeyError:
             logger.error("Error changing track: failed to lookup '{}'".format(track.uri))
             return False
@@ -77,6 +77,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
+
+    def _trigger_track_changed(self, track):
+        listener.PandoraListener.send('track_changed', track=track)
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
