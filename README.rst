@@ -59,6 +59,7 @@ the details of the JSON API endpoint that you would like to use::
     partner_device = IP01
     username =
     password =
+
 The following configuration values are available:
 
 - ``pandora/enabled``: If the Pandora extension should be enabled or not. Defaults to ``true``.
