@@ -93,7 +93,7 @@ class StationUri(PandoraUri):
     @classmethod
     def from_station(cls, station):
         if station.id.startswith('G') and station.id == station.token:
-            raise TypeError('Cannot instantiate StationUri from genre station: {}'.format(station))
+            return GenreStationUri(station.id, station.token)
         return StationUri(station.id, station.token)
 
 
@@ -103,7 +103,7 @@ class GenreStationUri(StationUri):
     @classmethod
     def from_station(cls, station):
         if not (station.id.startswith('G') and station.id == station.token):
-            raise TypeError('Not a genre station: {}'.format(station))
+            return StationUri(station.id, station.token)
         return GenreStationUri(station.id, station.token)
 
 
