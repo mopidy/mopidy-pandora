@@ -2,6 +2,7 @@ import logging
 import threading
 
 from mopidy import core
+from mopidy.audio import PlaybackState
 from mopidy.internal import encoding
 
 import pykka
@@ -46,12 +47,11 @@ def is_pandora_uri(active_uri):
     return active_uri and active_uri.startswith('pandora:')
 
 
-class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener,
-                             listener.PandoraPlaybackListener):
+class PandoraFrontendFactory(pykka.ThreadingActor):
 
     def __new__(cls, config, core):
         if config['pandora'].get('event_support_enabled'):
-            return EventSupportPandoraFrontend(config, core)
+            return EventHandlingPandoraFrontend(config, core)
         else:
             return PandoraFrontend(config, core)
 
@@ -104,31 +104,29 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def track_changed(self, track):
         if self.core.tracklist.get_length().get() < 2 or track != self.core.tracklist.get_tl_tracks().get()[0].track:
-            self._trigger_end_of_tracklist_reached(auto_play=False)
+            self._trigger_end_of_tracklist_reached()
 
-    def next_track_available(self, track, auto_play):
-        self.sync_tracklist(track, auto_play)
+    def next_track_available(self, track):
+        self.add_track(track)
 
-    def sync_tracklist(self, track, auto_play):
+    def add_track(self, track):
         # Add the next Pandora track
-        self.core.tracklist.add(uris=[track.uri])
-        tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        tl_tracks = self.core.tracklist.add(uris=[track.uri]).get()
+        if self.core.playback.get_state() == PlaybackState.STOPPED:
+            # Playback stopped after previous track was unplayable. Resume playback with the freshly seeded tracklist.
+            self.core.playback.play(tl_tracks[-1])
         if len(tl_tracks) > 2:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
-            self.core.tracklist.remove({'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]})
-        if auto_play:
-            # Play the track that was just added
-            self.core.playback.play(tl_tracks[-1])
+            self.core.tracklist.remove({'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]}).get()
 
-    def _trigger_end_of_tracklist_reached(self, auto_play):
-        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.end_of_tracklist_reached.__name__,
-                                               auto_play=auto_play))
+    def _trigger_end_of_tracklist_reached(self):
+        listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.end_of_tracklist_reached.__name__)
 
 
-class EventSupportPandoraFrontend(PandoraFrontend):
+class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlingPlaybackListener):
 
     def __init__(self, config, core):
-        super(EventSupportPandoraFrontend, self).__init__(config, core)
+        super(EventHandlingPandoraFrontend, self).__init__(config, core)
 
         self.settings = {
             'OPR_EVENT': config.get('on_pause_resume_click'),
@@ -160,7 +158,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
 
     @only_execute_for_pandora_uris
     def track_playback_resumed(self, tl_track, time_position):
-        super(EventSupportPandoraFrontend, self).track_playback_resumed(tl_track, time_position)
+        super(EventHandlingPandoraFrontend, self).track_playback_resumed(tl_track, time_position)
 
         self._process_events(tl_track.track.uri, time_position)
 
@@ -207,7 +205,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         else:
             raise ValueError('Unexpected event URI: {}'.format(track_uri))
 
-    def event_processed(self, track_uri):
+    def event_processed(self):
         self.event_processed_event.set()
 
         if not self.tracklist_changed_event.isSet():
@@ -217,7 +215,8 @@ class EventSupportPandoraFrontend(PandoraFrontend):
     def doubleclicked(self):
         self.event_processed_event.clear()
         # Resume playback...
-        self.core.playback.resume()
+        if self.core.playback.get_state() != PlaybackState.PLAYING:
+            self.core.playback.resume()
 
     def _trigger_event_triggered(self, track_uri, event):
         (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.event_triggered.__name__,

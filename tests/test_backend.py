@@ -53,7 +53,7 @@ def test_playback_provider_selection_events_enabled(config):
     config['pandora']['event_support_enabled'] = 'true'
     backend = get_backend(config)
 
-    assert isinstance(backend.playback, playback.EventSupportPlaybackProvider)
+    assert isinstance(backend.playback, playback.EventHandlingPlaybackProvider)
 
 
 def test_on_start_logs_in(config):

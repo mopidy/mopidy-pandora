@@ -71,7 +71,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             return False
         except Unplayable as e:
             logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
-            self.backend.more_tracks_needed(auto_play=True)
+            self.backend.prepare_next_track()
             return False
         except MaxSkipLimitExceeded as e:
             logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
@@ -84,9 +84,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_changed.__name__, track=track)
 
 
-class EventSupportPlaybackProvider(PandoraPlaybackProvider):
+class EventHandlingPlaybackProvider(PandoraPlaybackProvider):
     def __init__(self, audio, backend):
-        super(EventSupportPlaybackProvider, self).__init__(audio, backend)
+        super(EventHandlingPlaybackProvider, self).__init__(audio, backend)
 
         self.double_click_interval = float(backend.config.get('double_click_interval'))
         self._click_time = 0
@@ -113,23 +113,24 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
         if self.is_double_click():
             self._trigger_doubleclicked()
 
-        return super(EventSupportPlaybackProvider, self).change_track(track)
+        return super(EventHandlingPlaybackProvider, self).change_track(track)
 
     def resume(self):
         if self.is_double_click() and self.get_time_position() > 0:
             self._trigger_doubleclicked()
 
-        return super(EventSupportPlaybackProvider, self).resume()
+        return super(EventHandlingPlaybackProvider, self).resume()
 
     def pause(self):
         if self.get_time_position() > 0:
             self.set_click_time()
 
-        return super(EventSupportPlaybackProvider, self).pause()
+        return super(EventHandlingPlaybackProvider, self).pause()
 
     def _trigger_doubleclicked(self):
         self.set_click_time(0)
-        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.doubleclicked.__name__)
+        listener.PandoraEventHandlingPlaybackListener.send(
+            listener.PandoraEventHandlingPlaybackListener.doubleclicked.__name__)
 
 
 class MaxSkipLimitExceeded(Exception):
