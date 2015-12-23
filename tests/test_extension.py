@@ -66,6 +66,6 @@ class ExtensionTest(unittest.TestCase):
 
         ext = Extension()
         ext.setup(registry)
-        calls = [mock.call('frontend', frontend_lib.EventSupportPandoraFrontend),
+        calls = [mock.call('frontend', frontend_lib.PandoraFrontendFactory),
                  mock.call('backend',  backend_lib.PandoraBackend)]
         registry.add.assert_has_calls(calls, any_order=True)

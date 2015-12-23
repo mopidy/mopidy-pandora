@@ -1,7 +1,8 @@
+import logging
+
 from mopidy import backend, core
 from mopidy.internal import encoding
 
-from pandora import BaseAPIClient
 from pandora.errors import PandoraException
 
 import pykka
@@ -10,11 +11,13 @@ import requests
 
 from mopidy_pandora import listener, rpc
 
-
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import EventSupportPlaybackProvider, PandoraPlaybackProvider
-from mopidy_pandora.uri import logger, PandoraUri  # noqa: I101
+from mopidy_pandora.uri import PandoraUri  # noqa: I101
+
+
+logger = logging.getLogger(__name__)
 
 
 class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, listener.PandoraListener):
@@ -23,21 +26,21 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         super(PandoraBackend, self).__init__()
         self.config = config['pandora']
         settings = {
-            'CACHE_TTL': self.config.get('cache_time_to_live', 1800),
-            'API_HOST': self.config.get('api_host', 'tuner.pandora.com/services/json/'),
+            'CACHE_TTL': self.config.get('cache_time_to_live'),
+            'API_HOST': self.config.get('api_host'),
             'DECRYPTION_KEY': self.config['partner_decryption_key'],
             'ENCRYPTION_KEY': self.config['partner_encryption_key'],
             'PARTNER_USER': self.config['partner_username'],
             'PARTNER_PASSWORD': self.config['partner_password'],
             'DEVICE': self.config['partner_device'],
-            'AUDIO_QUALITY': self.config.get('preferred_audio_quality', BaseAPIClient.HIGH_AUDIO_QUALITY)
+            'AUDIO_QUALITY': self.config.get('preferred_audio_quality')
         }
 
         self.api = MopidySettingsDictBuilder(settings, client_class=MopidyAPIClient).build()
-        self.library = PandoraLibraryProvider(backend=self, sort_order=self.config.get('sort_order', 'date'))
+        self.library = PandoraLibraryProvider(backend=self, sort_order=self.config.get('sort_order'))
 
         self.supports_events = False
-        if self.config.get('event_support_enabled', False):
+        if self.config.get('event_support_enabled'):
             self.supports_events = True
             self.playback = EventSupportPlaybackProvider(audio, self)
         else:

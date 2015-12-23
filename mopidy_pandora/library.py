@@ -1,3 +1,5 @@
+import logging
+
 from collections import OrderedDict
 
 from mopidy import backend, models
@@ -11,7 +13,10 @@ from pydora.utils import iterate_forever
 import requests
 
 from mopidy_pandora import rpc
-from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, logger, PandoraUri, StationUri, TrackUri  # noqa I101
+from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
+
+
+logger = logging.getLogger(__name__)
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):

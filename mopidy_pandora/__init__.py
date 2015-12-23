@@ -1,15 +1,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import logging
 import os
 
 from mopidy import config, ext
 
-from pandora import BaseAPIClient
 
 __version__ = '0.2.0'
-
-logger = logging.getLogger(__name__)
 
 
 class Extension(ext.Extension):
@@ -23,6 +19,7 @@ class Extension(ext.Extension):
         return config.read(conf_file)
 
     def get_config_schema(self):
+        from pandora import BaseAPIClient
         schema = super(Extension, self).get_config_schema()
         schema['api_host'] = config.String(optional=True)
         schema['partner_encryption_key'] = config.String()
@@ -48,6 +45,6 @@ class Extension(ext.Extension):
 
     def setup(self, registry):
         from .backend import PandoraBackend
-        from .frontend import EventSupportPandoraFrontend
+        from .frontend import PandoraFrontendFactory
         registry.add('backend', PandoraBackend)
-        registry.add('frontend', EventSupportPandoraFrontend)
+        registry.add('frontend', PandoraFrontendFactory)

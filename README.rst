@@ -18,14 +18,14 @@ Mopidy-Pandora
    :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=develop
    :alt: Test coverage
 
-Mopidy extension for Pandora Internet Radio (http://www.pandora.com).
+`Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora Radio <http://www.pandora.com/>`_.
 
 
 Dependencies
 ============
 
-- A free, ad supported, Pandora account or a paid Pandora One subscription (provides ad-free playback and higher quality
-  192 Kbps audio stream).
+- Requires a free (ad supported) Pandora account or a Pandora One subscription (provides ad-free playback and higher
+  quality 192 Kbps audio stream).
 
 - ``pydora`` >= 1.6.3. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
@@ -66,18 +66,19 @@ The following configuration values are available:
 
 - ``pandora/api_host``: Which of the JSON API `endpoints <http://6xq.net/pandora-apidoc/json/>`_ to use.
 
-- ``pandora/partner_`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_ to use for the Pandora API entry point.
+- ``pandora/partner_`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+  to use for the Pandora API entry point.
 
 - ``pandora/username``: Your Pandora username. You *must* provide this.
 
 - ``pandora/password``: Your Pandora password. You *must* provide this.
 
-- ``pandora/preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default). If the
-  preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream that
-  Pandora supports for the chosen device will be used.
+- ``pandora/preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default).
+  If the preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream
+  that Pandora supports for the chosen device will be used.
 
-- ``pandora/sort_order``: defaults to the ``date`` that the station was added. Use ``A-Z`` to display the list of stations in
-  alphabetical order.
+- ``pandora/sort_order``: defaults to the ``date`` that the station was added. Use ``a-z`` to display the list of
+  stations in alphabetical order.
 
 - ``pandora/auto_setup``: If Mopidy-Pandora should automatically configure the Mopidy player for best compatibility
   with the Pandora radio stream. Defaults to ``true`` and turns ``repeat`` on and ``consume``, ``random``, and
@@ -88,8 +89,8 @@ The following configuration values are available:
   latest lists are always retrieved from Pandora. It should not be necessary to fiddle with this unless you want
   Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other players.
 
-**EXPERIMENTAL EVENT HANDLING IMPLEMENTATION:** apply Pandora ratings or perform other actions on the track that is
-currently playing using the standard pause/play/previous/next buttons.
+It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
+pause/play/previous/next buttons.
 
 - ``pandora/event_support_enabled``: setting this to ``false`` will disable all event triggers entirely.
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval (in seconds) will
@@ -107,14 +108,14 @@ The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sle
 Usage
 =====
 
-Mopidy needs `dynamic playlist <https://github.com/mopidy/mopidy/issues/620>`_ and
-`core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ support to properly support Pandora. In the meantime,
-Mopidy-Pandora simulates dynamic playlists by adding more tracks to the tracklist as needed.  Mopidy-Pandora will
-ensure that there are always at least two tracks in the playlist to avoid playback gaps when switching tracks.
+Mopidy needs `dynamic playlists <https://github.com/mopidy/mopidy/issues/620>`_ and
+`core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ to properly support Pandora. In the meantime,
+Mopidy-Pandora comes bundled with a frontend extension that automatically adds more tracks to the tracklist as needed.
+Mopidy-Pandora will ensure that there are always at least two tracks in the playlist to avoid playback gaps when
+switching tracks.
 
-Pandora radio expects the user to interact with tracks at the time and in the order that it serves them up. For this
-reason, trying to create playlist or manually interact with the tracklist queque is probably not a good idea. And not
-supported.
+Pandora expects users to interact with tracks at the time and in the sequence that it serves them up. For this reason,
+trying to create playlists manually or mess with the tracklist queue is probably not a good idea. And not supported.
 
 
 Project resources

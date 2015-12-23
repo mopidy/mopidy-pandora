@@ -1,5 +1,4 @@
 import logging
-
 import time
 
 from cachetools import TTLCache
@@ -10,6 +9,7 @@ import pandora
 from pandora.clientbuilder import APITransport, DEFAULT_API_HOST, Encryptor, SettingsDictBuilder
 
 import requests
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,17 +50,23 @@ class MopidyAPIClient(pandora.APIClient):
 
     def get_station_list(self, force_refresh=False):
 
+        list = []
         try:
             if (self._station_list_cache.currsize == 0 or
                     (force_refresh and self._station_list_cache.itervalues().next().has_changed())):
 
-                self._station_list_cache[time.time()] = super(MopidyAPIClient, self).get_station_list()
+                list = super(MopidyAPIClient, self).get_station_list()
+                self._station_list_cache[time.time()] = list
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving station list: {}'.format(encoding.locale_decode(e)))
-            return []
+            return list
 
-        return self._station_list_cache.itervalues().next()
+        try:
+            return self._station_list_cache.itervalues().next()
+        except StopIteration:
+            # Cache disabled
+            return list
 
     def get_station(self, station_id):
 
@@ -72,6 +78,7 @@ class MopidyAPIClient(pandora.APIClient):
 
     def get_genre_stations(self, force_refresh=False):
 
+        list = []
         try:
             if (self._genre_stations_cache.currsize == 0 or
                     (force_refresh and self._genre_stations_cache.itervalues().next().has_changed())):
@@ -80,6 +87,10 @@ class MopidyAPIClient(pandora.APIClient):
 
         except requests.exceptions.RequestException as e:
             logger.error('Error retrieving genre stations: {}'.format(encoding.locale_decode(e)))
-            return []
+            return list
 
-        return self._genre_stations_cache.itervalues().next()
+        try:
+            return self._genre_stations_cache.itervalues().next()
+        except StopIteration:
+            # Cache disabled
+            return list

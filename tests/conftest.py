@@ -45,6 +45,7 @@ def config():
             'port': '6680'
         },
         'pandora': {
+            'enabled': True,
             'api_host': 'test_host',
             'partner_encryption_key': 'test_encryption_key',
             'partner_decryption_key': 'test_decryption_key',
@@ -56,6 +57,7 @@ def config():
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
             'auto_setup': True,
+            'cache_time_to_live': 1800,
 
             'event_support_enabled': True,
             'double_click_interval': '0.1',

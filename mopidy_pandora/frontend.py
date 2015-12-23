@@ -1,3 +1,4 @@
+import logging
 import threading
 
 from mopidy import core
@@ -5,8 +6,11 @@ from mopidy.internal import encoding
 
 import pykka
 
-from mopidy_pandora import listener, logger
+from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
+
+
+logger = logging.getLogger(__name__)
 
 
 def only_execute_for_pandora_uris(func):
@@ -42,13 +46,22 @@ def is_pandora_uri(active_uri):
     return active_uri and active_uri.startswith('pandora:')
 
 
+class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.PandoraListener):
+
+    def __new__(cls, config, core):
+        if config['pandora'].get('event_support_enabled'):
+            return EventSupportPandoraFrontend(config, core)
+        else:
+            return PandoraFrontend(config, core)
+
+
 class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraListener):
 
     def __init__(self, config, core):
         super(PandoraFrontend, self).__init__()
 
         self.config = config
-        self.auto_setup = self.config.get('auto_setup', True)
+        self.auto_setup = self.config.get('auto_setup')
 
         self.setup_required = True
         self.core = core
@@ -108,9 +121,9 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         super(EventSupportPandoraFrontend, self).__init__(config, core)
 
         self.settings = {
-            'OPR_EVENT': config.get('on_pause_resume_click', 'thumbs_up'),
-            'OPN_EVENT': config.get('on_pause_next_click', 'thumbs_down'),
-            'OPP_EVENT': config.get('on_pause_previous_click', 'sleep')
+            'OPR_EVENT': config.get('on_pause_resume_click'),
+            'OPN_EVENT': config.get('on_pause_next_click'),
+            'OPP_EVENT': config.get('on_pause_previous_click')
         }
 
         self.current_track_uri = None

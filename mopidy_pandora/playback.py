@@ -1,3 +1,4 @@
+import logging
 import time
 
 from mopidy import backend
@@ -7,7 +8,8 @@ import requests
 
 from mopidy_pandora import listener
 
-from mopidy_pandora.uri import logger
+
+logger = logging.getLogger(__name__)
 
 
 class PandoraPlaybackProvider(backend.PlaybackProvider):
@@ -86,7 +88,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
     def __init__(self, audio, backend):
         super(EventSupportPlaybackProvider, self).__init__(audio, backend)
 
-        self.double_click_interval = float(backend.config.get('double_click_interval', 2.00))
+        self.double_click_interval = float(backend.config.get('double_click_interval'))
         self._click_time = 0
 
     def set_click_time(self, click_time=None):
