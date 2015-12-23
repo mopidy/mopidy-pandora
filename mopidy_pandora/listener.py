@@ -8,10 +8,10 @@ class PandoraFrontendListener(listener.Listener):
     def send(event, **kwargs):
         listener.send_async(PandoraFrontendListener, event, **kwargs)
 
-    def more_tracks_needed(self, auto_play):
+    def end_of_tracklist_reached(self, auto_play):
         pass
 
-    def process_event(self, track_uri, pandora_event):
+    def event_triggered(self, track_uri, pandora_event):
         pass
 
 
@@ -20,7 +20,7 @@ class PandoraBackendListener(backend.BackendListener):
     def send(event, **kwargs):
         listener.send_async(PandoraBackendListener, event, **kwargs)
 
-    def next_track_prepared(self, track, auto_play):
+    def next_track_available(self, track, auto_play):
         pass
 
     def event_processed(self, track_uri):

@@ -104,9 +104,9 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def track_changed(self, track):
         if self.core.tracklist.get_length().get() < 2 or track != self.core.tracklist.get_tl_tracks().get()[0].track:
-            self._trigger_more_tracks_needed(auto_play=False)
+            self._trigger_end_of_tracklist_reached(auto_play=False)
 
-    def next_track_prepared(self, track, auto_play):
+    def next_track_available(self, track, auto_play):
         self.sync_tracklist(track, auto_play)
 
     def sync_tracklist(self, track, auto_play):
@@ -120,8 +120,8 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             # Play the track that was just added
             self.core.playback.play(tl_tracks[-1])
 
-    def _trigger_more_tracks_needed(self, auto_play):
-        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.more_tracks_needed.__name__,
+    def _trigger_end_of_tracklist_reached(self, auto_play):
+        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.end_of_tracklist_reached.__name__,
                                                auto_play=auto_play))
 
 
@@ -180,7 +180,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
             return
 
         try:
-            self._trigger_process_event(event_target_uri, self._get_event(track_uri, time_position))
+            self._trigger_event_triggered(event_target_uri, self._get_event(track_uri, time_position))
         except ValueError as e:
             logger.error(("Error processing event for URI '{}': ({})"
                           .format(event_target_uri, encoding.locale_decode(e))))
@@ -219,6 +219,6 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         # Resume playback...
         self.core.playback.resume()
 
-    def _trigger_process_event(self, track_uri, event):
-        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.process_event.__name__,
+    def _trigger_event_triggered(self, track_uri, event):
+        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.event_triggered.__name__,
                                                track_uri=track_uri, pandora_event=event))
