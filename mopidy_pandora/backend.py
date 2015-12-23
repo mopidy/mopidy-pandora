@@ -65,14 +65,6 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         if next_track:
             self._trigger_next_track_prepared(next_track, auto_play)
 
-    def _trigger_next_track_prepared(self, track, auto_play):
-        (listener.PandoraFrontendListener.send(listener.PandoraBackendListener.next_track_prepared.__name__,
-                                               track=track, auto_play=auto_play))
-
-    def _trigger_event_processed(self, track_uri):
-        (listener.PandoraFrontendListener.send(listener.PandoraBackendListener.event_processed.__name__,
-                                               track_uri=track_uri))
-
     def process_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)
         try:
@@ -98,3 +90,11 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
 
     def add_song_bookmark(self, track_uri):
         return self.api.add_song_bookmark(PandoraUri.parse(track_uri).token)
+
+    def _trigger_next_track_prepared(self, track, auto_play):
+        (listener.PandoraBackendListener.send(listener.PandoraBackendListener.next_track_prepared.__name__,
+                                               track=track, auto_play=auto_play))
+
+    def _trigger_event_processed(self, track_uri):
+        (listener.PandoraBackendListener.send(listener.PandoraBackendListener.event_processed.__name__,
+                                               track_uri=track_uri))

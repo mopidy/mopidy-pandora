@@ -46,7 +46,8 @@ def is_pandora_uri(active_uri):
     return active_uri and active_uri.startswith('pandora:')
 
 
-class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener):
+class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener,
+                             listener.PandoraPlaybackListener):
 
     def __new__(cls, config, core):
         if config['pandora'].get('event_support_enabled'):
@@ -55,7 +56,8 @@ class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.P
             return PandoraFrontend(config, core)
 
 
-class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener):
+class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener,
+                      listener.PandoraPlaybackListener):
 
     def __init__(self, config, core):
         super(PandoraFrontend, self).__init__()
@@ -105,7 +107,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             self._trigger_more_tracks_needed(auto_play=False)
 
     def next_track_prepared(self, track, auto_play):
-        self.sync_tracklist()
+        self.sync_tracklist(track, auto_play)
 
     def sync_tracklist(self, track, auto_play):
         # Add the next Pandora track
@@ -113,7 +115,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
         if len(tl_tracks) > 2:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
-            self.core.tracklist.remove({'tlid': [lambda: tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]})
+            self.core.tracklist.remove({'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]})
         if auto_play:
             # Play the track that was just added
             self.core.playback.play(tl_tracks[-1])

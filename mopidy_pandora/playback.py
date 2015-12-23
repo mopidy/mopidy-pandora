@@ -81,7 +81,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
     def _trigger_track_changed(self, track):
-        listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.track_changed.__name__, track=track)
+        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_changed.__name__, track=track)
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
@@ -129,7 +129,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def _trigger_doubleclicked(self):
         self.set_click_time(0)
-        listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.doubleclicked.__name__)
+        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.doubleclicked.__name__)
 
 
 class MaxSkipLimitExceeded(Exception):

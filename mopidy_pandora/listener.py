@@ -11,13 +11,7 @@ class PandoraFrontendListener(listener.Listener):
     def more_tracks_needed(self, auto_play):
         pass
 
-    def doubleclicked(self):
-        pass
-
     def process_event(self, track_uri, pandora_event):
-        pass
-
-    def track_changed(self, track):
         pass
 
 
@@ -30,4 +24,16 @@ class PandoraBackendListener(backend.BackendListener):
         pass
 
     def event_processed(self, track_uri):
+        pass
+
+
+class PandoraPlaybackListener(listener.Listener):
+    @staticmethod
+    def send(event, **kwargs):
+        listener.send_async(PandoraPlaybackListener, event, **kwargs)
+
+    def doubleclicked(self):
+        pass
+
+    def track_changed(self, track):
         pass
