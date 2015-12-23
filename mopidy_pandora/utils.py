@@ -4,8 +4,6 @@ from mopidy import httpclient
 
 import requests
 
-import mopidy_pandora
-
 
 def run_async(func):
     """ Function decorator intended to make "func" run in a separate thread (asynchronously).
@@ -75,7 +73,7 @@ class RPCClient(object):
 
     @classmethod
     @run_async
-    def _do_rpc(cls, mopidy_config, method, params=None, queue=None):
+    def _do_rpc(cls, method, params=None, queue=None):
         """ Makes an asynchronously remote procedure call to the Mopidy server.
 
         :param method: the name of the Mopidy remote procedure to be called (typically from the 'core' module.
@@ -89,14 +87,8 @@ class RPCClient(object):
         if params is not None:
             data['params'] = params
 
-        session = get_requests_session(
-            proxy_config=mopidy_config['proxy'],
-            user_agent='%s/%s' % (
-                mopidy_pandora.Extension.dist_name,
-                mopidy_pandora.__version__))
-
-        json_data = json.loads(session.get('POST', cls.url, data=json.dumps(data),
-                                           headers={'Content-Type': 'application/json'}).text)
+        json_data = json.loads(requests.request('POST', cls.url, data=json.dumps(data),
+                                                headers={'Content-Type': 'application/json'}).text)
         if queue is not None:
             queue.put(json_data['result'])
 
