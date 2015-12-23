@@ -111,7 +111,8 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def add_track(self, track):
         # Add the next Pandora track
-        tl_tracks = self.core.tracklist.add(uris=[track.uri]).get()
+        self.core.tracklist.add(uris=[track.uri]).get()
+        tl_tracks = self.core.tracklist.get_tl_tracks().get()
         if self.core.playback.get_state() == PlaybackState.STOPPED:
             # Playback stopped after previous track was unplayable. Resume playback with the freshly seeded tracklist.
             self.core.playback.play(tl_tracks[-1])
