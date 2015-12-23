@@ -12,7 +12,7 @@ from pydora.utils import iterate_forever
 
 import requests
 
-from mopidy_pandora import rpc
+from mopidy_pandora import utils
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
 
 
@@ -107,7 +107,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _browse_stations(self):
         # Prefetch genre category list
-        rpc.run_async(self.backend.api.get_genre_stations)()
+        utils.run_async(self.backend.api.get_genre_stations)()
 
         station_directories = []
 

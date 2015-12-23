@@ -64,7 +64,7 @@ def test_on_start_logs_in(config):
     t = backend.on_start()
     t.join()
 
-    backend.api.login.assert_called_once_with('john', 'doe')
+    backend.api.login.assert_called_once_with('john', 'smith')
 
 
 def test_on_start_pre_fetches_lists(config):

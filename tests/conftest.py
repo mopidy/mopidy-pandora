@@ -44,6 +44,10 @@ def config():
             'hostname': '127.0.0.1',
             'port': '6680'
         },
+        'proxy': {
+            'hostname': 'mock_host',
+            'port': 'mock_port'
+        },
         'pandora': {
             'enabled': True,
             'api_host': 'test_host',
@@ -53,7 +57,7 @@ def config():
             'partner_password': 'partner_password',
             'partner_device': 'test_device',
             'username': 'john',
-            'password': 'doe',
+            'password': 'smith',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
             'sort_order': 'date',
             'auto_setup': True,

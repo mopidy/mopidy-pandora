@@ -9,7 +9,7 @@ import pykka
 
 import requests
 
-from mopidy_pandora import listener, rpc
+from mopidy_pandora import listener, utils
 
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
@@ -33,6 +33,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             'PARTNER_USER': self.config['partner_username'],
             'PARTNER_PASSWORD': self.config['partner_password'],
             'DEVICE': self.config['partner_device'],
+            'PROXY': utils.format_proxy(config['proxy']),
             'AUDIO_QUALITY': self.config.get('preferred_audio_quality')
         }
 
@@ -48,7 +49,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
 
         self.uri_schemes = [PandoraUri.SCHEME]
 
-    @rpc.run_async
+    @utils.run_async
     def on_start(self):
         try:
             self.api.login(self.config['username'], self.config['password'])

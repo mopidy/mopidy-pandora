@@ -1,6 +1,10 @@
 import json
 
+from mopidy import httpclient
+
 import requests
+
+import mopidy_pandora
 
 
 def run_async(func):
@@ -33,6 +37,30 @@ def run_async(func):
     return async_func
 
 
+def format_proxy(proxy_config):
+    if not proxy_config.get('hostname'):
+        return None
+
+    port = proxy_config.get('port', 80)
+    if port < 0:
+        port = 80
+
+    template = '{hostname}:{port}'
+
+    return template.format(hostname=proxy_config['hostname'], port=port)
+
+
+def get_requests_session(proxy_config, user_agent):
+    proxy = httpclient.format_proxy(proxy_config)
+    full_user_agent = httpclient.format_user_agent(user_agent)
+
+    session = requests.Session()
+    session.proxies.update({'http': proxy, 'https': proxy})
+    session.headers.update({'user-agent': full_user_agent})
+
+    return session
+
+
 class RPCClient(object):
     hostname = '127.0.0.1'
     port = '6680'
@@ -47,7 +75,7 @@ class RPCClient(object):
 
     @classmethod
     @run_async
-    def _do_rpc(cls, method, params=None, queue=None):
+    def _do_rpc(cls, mopidy_config, method, params=None, queue=None):
         """ Makes an asynchronously remote procedure call to the Mopidy server.
 
         :param method: the name of the Mopidy remote procedure to be called (typically from the 'core' module.
@@ -61,8 +89,14 @@ class RPCClient(object):
         if params is not None:
             data['params'] = params
 
-        json_data = json.loads(requests.request('POST', cls.url, data=json.dumps(data),
-                                                headers={'Content-Type': 'application/json'}).text)
+        session = get_requests_session(
+            proxy_config=mopidy_config['proxy'],
+            user_agent='%s/%s' % (
+                mopidy_pandora.Extension.dist_name,
+                mopidy_pandora.__version__))
+
+        json_data = json.loads(session.get('POST', cls.url, data=json.dumps(data),
+                                           headers={'Content-Type': 'application/json'}).text)
         if queue is not None:
             queue.put(json_data['result'])
 
