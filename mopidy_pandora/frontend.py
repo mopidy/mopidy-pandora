@@ -108,11 +108,15 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         self.sync_tracklist()
 
     def sync_tracklist(self, track, auto_play):
+        # Add the next Pandora track
         self.core.tracklist.add(uris=[track.uri])
-        if self.core.tracklist.get_length().get() > 2:
-            self.core.tracklist.remove({'tlid': [self.core.tracklist.get_tl_tracks().get()[0].tlid]})
+        tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        if len(tl_tracks) > 2:
+            # Only need two tracks in the tracklist at any given time, remove the oldest tracks
+            self.core.tracklist.remove({'tlid': [lambda: tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]})
         if auto_play:
-            self.core.playback.play(self.core.tracklist.get_tl_tracks().get()[0])
+            # Play the track that was just added
+            self.core.playback.play(tl_tracks[-1])
 
     def _trigger_more_tracks_needed(self, auto_play):
         (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.more_tracks_needed.__name__,
