@@ -21,7 +21,7 @@ class Extension(ext.Extension):
     def get_config_schema(self):
         from pandora import BaseAPIClient
         schema = super(Extension, self).get_config_schema()
-        schema['api_host'] = config.String(optional=True)
+        schema['api_host'] = config.String()
         schema['partner_encryption_key'] = config.String()
         schema['partner_decryption_key'] = config.String()
         schema['partner_username'] = config.String()
@@ -29,18 +29,18 @@ class Extension(ext.Extension):
         schema['partner_device'] = config.String()
         schema['username'] = config.String()
         schema['password'] = config.Secret()
-        schema['preferred_audio_quality'] = config.String(optional=True, choices=[BaseAPIClient.LOW_AUDIO_QUALITY,
-                                                                                  BaseAPIClient.MED_AUDIO_QUALITY,
-                                                                                  BaseAPIClient.HIGH_AUDIO_QUALITY])
-        schema['sort_order'] = config.String(optional=True, choices=['date', 'A-Z', 'a-z'])
-        schema['auto_setup'] = config.Boolean(optional=True)
+        schema['preferred_audio_quality'] = config.String(choices=[BaseAPIClient.LOW_AUDIO_QUALITY,
+                                                                   BaseAPIClient.MED_AUDIO_QUALITY,
+                                                                   BaseAPIClient.HIGH_AUDIO_QUALITY])
+        schema['sort_order'] = config.String(choices=['date', 'A-Z', 'a-z'])
+        schema['auto_setup'] = config.Boolean()
         schema['auto_set_repeat'] = config.Deprecated()
-        schema['cache_time_to_live'] = config.Integer(optional=True)
-        schema['event_support_enabled'] = config.Boolean(optional=True)
-        schema['double_click_interval'] = config.String(optional=True)
-        schema['on_pause_resume_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['on_pause_next_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['on_pause_previous_click'] = config.String(optional=True, choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['cache_time_to_live'] = config.Integer(minimum=0)
+        schema['event_support_enabled'] = config.Boolean()
+        schema['double_click_interval'] = config.String()
+        schema['on_pause_resume_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['on_pause_next_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['on_pause_previous_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
         return schema
 
     def setup(self, registry):

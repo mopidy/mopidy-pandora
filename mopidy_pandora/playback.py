@@ -71,7 +71,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             return False
         except Unplayable as e:
             logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
-            self.backend.prepare_next_track(auto_play=True)
+            self.backend.more_tracks_needed(auto_play=True)
             return False
         except MaxSkipLimitExceeded as e:
             logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
@@ -81,7 +81,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
     def _trigger_track_changed(self, track):
-        listener.PandoraListener.send('track_changed', track=track)
+        listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.track_changed.__name__, track=track)
 
 
 class EventSupportPlaybackProvider(PandoraPlaybackProvider):
@@ -129,7 +129,7 @@ class EventSupportPlaybackProvider(PandoraPlaybackProvider):
 
     def _trigger_doubleclicked(self):
         self.set_click_time(0)
-        listener.PandoraListener.send('doubleclicked')
+        listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.doubleclicked.__name__)
 
 
 class MaxSkipLimitExceeded(Exception):

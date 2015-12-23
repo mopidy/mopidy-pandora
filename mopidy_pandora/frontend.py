@@ -46,7 +46,7 @@ def is_pandora_uri(active_uri):
     return active_uri and active_uri.startswith('pandora:')
 
 
-class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.PandoraListener):
+class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener):
 
     def __new__(cls, config, core):
         if config['pandora'].get('event_support_enabled'):
@@ -55,7 +55,7 @@ class PandoraFrontendFactory(pykka.ThreadingActor, core.CoreListener, listener.P
             return PandoraFrontend(config, core)
 
 
-class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraListener):
+class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener):
 
     def __init__(self, config, core):
         super(PandoraFrontend, self).__init__()
@@ -102,17 +102,21 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraL
 
     def track_changed(self, track):
         if self.core.tracklist.get_length().get() < 2 or track != self.core.tracklist.get_tl_tracks().get()[0].track:
-            self._trigger_prepare_next_track(auto_play=False)
+            self._trigger_more_tracks_needed(auto_play=False)
 
-    def prepare_tracklist(self, track, auto_play):
+    def next_track_prepared(self, track, auto_play):
+        self.sync_tracklist()
+
+    def sync_tracklist(self, track, auto_play):
         self.core.tracklist.add(uris=[track.uri])
         if self.core.tracklist.get_length().get() > 2:
             self.core.tracklist.remove({'tlid': [self.core.tracklist.get_tl_tracks().get()[0].tlid]})
         if auto_play:
             self.core.playback.play(self.core.tracklist.get_tl_tracks().get()[0])
 
-    def _trigger_prepare_next_track(self, auto_play):
-        listener.PandoraListener.send('prepare_next_track', auto_play=auto_play)
+    def _trigger_more_tracks_needed(self, auto_play):
+        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.more_tracks_needed.__name__,
+                                               auto_play=auto_play))
 
 
 class EventSupportPandoraFrontend(PandoraFrontend):
@@ -170,7 +174,7 @@ class EventSupportPandoraFrontend(PandoraFrontend):
             return
 
         try:
-            self._trigger_call_event(event_target_uri, self._get_event(track_uri, time_position))
+            self._trigger_process_event(event_target_uri, self._get_event(track_uri, time_position))
         except ValueError as e:
             logger.error(("Error processing event for URI '{}': ({})"
                           .format(event_target_uri, encoding.locale_decode(e))))
@@ -209,5 +213,6 @@ class EventSupportPandoraFrontend(PandoraFrontend):
         # Resume playback...
         self.core.playback.resume()
 
-    def _trigger_call_event(self, track_uri, event):
-        listener.PandoraListener.send('call_event', track_uri=track_uri, pandora_event=event)
+    def _trigger_process_event(self, track_uri, event):
+        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.process_event.__name__,
+                                               track_uri=track_uri, pandora_event=event))

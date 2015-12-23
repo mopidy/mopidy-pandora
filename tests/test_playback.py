@@ -102,15 +102,15 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
             provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
             provider.next_tl_track = {'track': {'uri': track.uri}}
 
-            provider.backend.prepare_next_track = mock.PropertyMock()
+            provider.backend.more_tracks_needed = mock.PropertyMock()
 
             for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
                 assert provider.change_track(track) is False
                 if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
-                    assert provider.backend.prepare_next_track.called
-                    provider.backend.prepare_next_track.reset_mock()
+                    assert provider.backend.more_tracks_needed.called
+                    provider.backend.more_tracks_needed.reset_mock()
                 else:
-                    assert not provider.backend.prepare_next_track.called
+                    assert not provider.backend.more_tracks_needed.called
 
             assert 'Maximum track skip limit ({:d}) exceeded, stopping...'.format(
                 PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
