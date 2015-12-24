@@ -34,7 +34,7 @@ def only_execute_for_pandora_uris(func):
         :return: the return value of the function if it was run or 'None' otherwise.
         """
         try:
-            PandoraUri.parse(self.core.playback.get_current_tl_track().get().track.uri)
+            PandoraUri.factory(self.core.playback.get_current_tl_track().get().track.uri)
             return func(self, *args, **kwargs)
         except (AttributeError, NotImplementedError):
             # Not playing a Pandora track. Don't do anything.
@@ -173,7 +173,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
         assert event_target_uri
 
-        if type(PandoraUri.parse(event_target_uri)) is AdItemUri:
+        if type(PandoraUri.factory(event_target_uri)) is AdItemUri:
             logger.info('Ignoring doubleclick event for advertisement')
             self.event_processed_event.set()
             return

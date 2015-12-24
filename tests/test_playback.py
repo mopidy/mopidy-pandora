@@ -94,7 +94,7 @@ def test_resume_checks_for_double_click(provider):
 def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
     with mock.patch.object(EventHandlingPlaybackProvider, 'is_double_click', return_value=False):
         with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=None):
-            track = TrackUri.from_track(playlist_item_mock)
+            track = TrackUri._from_track(playlist_item_mock)
 
             provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
             provider.next_tl_track = {'track': {'uri': track.uri}}

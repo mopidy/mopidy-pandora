@@ -84,19 +84,19 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             return False
 
     def thumbs_up(self, track_uri):
-        return self.api.add_feedback(PandoraUri.parse(track_uri).token, True)
+        return self.api.add_feedback(PandoraUri.factory(track_uri).token, True)
 
     def thumbs_down(self, track_uri):
-        return self.api.add_feedback(PandoraUri.parse(track_uri).token, False)
+        return self.api.add_feedback(PandoraUri.factory(track_uri).token, False)
 
     def sleep(self, track_uri):
-        return self.api.sleep_song(PandoraUri.parse(track_uri).token)
+        return self.api.sleep_song(PandoraUri.factory(track_uri).token)
 
     def add_artist_bookmark(self, track_uri):
-        return self.api.add_artist_bookmark(PandoraUri.parse(track_uri).token)
+        return self.api.add_artist_bookmark(PandoraUri.factory(track_uri).token)
 
     def add_song_bookmark(self, track_uri):
-        return self.api.add_song_bookmark(PandoraUri.parse(track_uri).token)
+        return self.api.add_song_bookmark(PandoraUri.factory(track_uri).token)
 
     def _trigger_next_track_available(self, track):
         (listener.PandoraBackendListener.send(listener.PandoraBackendListener.next_track_available.__name__,

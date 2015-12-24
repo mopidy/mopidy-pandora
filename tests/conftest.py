@@ -237,8 +237,10 @@ def playlist_item_mock():
 
 @pytest.fixture(scope='session')
 def ad_item_mock():
-    return AdItem.from_json(get_backend(
+    ad_item = AdItem.from_json(get_backend(
         config()).api, ad_metadata_result_mock()['result'])
+    ad_item.station_id = MOCK_STATION_ID
+    return ad_item
 
 
 @pytest.fixture

@@ -30,7 +30,7 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
 
     backend = conftest.get_backend(config)
 
-    track_uri = PlaylistItemUri.from_track(playlist_item_mock)
+    track_uri = PlaylistItemUri._from_track(playlist_item_mock)
     backend.library._pandora_track_buffer[track_uri.uri] = playlist_item_mock
 
     results = backend.library.lookup(track_uri.uri)
@@ -46,7 +46,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
 
     backend = conftest.get_backend(config)
 
-    track_uri = TrackUri.from_track(playlist_item_mock)
+    track_uri = TrackUri._from_track(playlist_item_mock)
     results = backend.library.lookup(track_uri.uri)
 
     assert len(results) == 0
@@ -68,17 +68,17 @@ def test_browse_directory_uri(config):
 
         assert results[1].type == models.Ref.DIRECTORY
         assert results[1].name.startswith('QuickMix')
-        assert results[1].uri == StationUri.from_station(
+        assert results[1].uri == StationUri._from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][2])).uri
 
         assert results[2].type == models.Ref.DIRECTORY
         assert results[2].name == conftest.MOCK_STATION_NAME + ' 2'
-        assert results[2].uri == StationUri.from_station(
+        assert results[2].uri == StationUri._from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][0])).uri
 
         assert results[3].type == models.Ref.DIRECTORY
         assert results[3].name == conftest.MOCK_STATION_NAME + ' 1'
-        assert results[3].uri == StationUri.from_station(
+        assert results[3].uri == StationUri._from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][1])).uri
 
 
@@ -115,7 +115,7 @@ def test_browse_station_uri(config, station_mock):
         with mock.patch.object(Station, 'get_playlist', conftest.get_station_playlist_mock):
 
             backend = conftest.get_backend(config)
-            station_uri = StationUri.from_station(station_mock)
+            station_uri = StationUri._from_station(station_mock)
 
             results = backend.library.browse(station_uri.uri)
 

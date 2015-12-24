@@ -1,8 +1,7 @@
 import logging
 import urllib
 
-from pandora.models.pandora import AdItem, PlaylistItem
-
+from pandora.models.pandora import AdItem, PlaylistItem, Station
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +50,18 @@ class PandoraUri(object):
         return urllib.unquote(value).decode('utf8')
 
     @classmethod
-    def parse(cls, uri):
+    def factory(cls, obj):
+        if isinstance(obj, basestring):
+            return PandoraUri._from_uri(obj)
+        elif isinstance(obj, Station):
+            return PandoraUri._from_station(obj)
+        elif isinstance(obj, PlaylistItem) or isinstance(obj, AdItem):
+            return PandoraUri._from_track(obj)
+        else:
+            raise NotImplementedError("Unsupported URI object type '{}'".format(obj))
+
+    @classmethod
+    def _from_uri(cls, uri):
         parts = [cls.decode(p) for p in uri.split(':')]
         if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
             raise NotImplementedError('Not a Pandora URI: {}'.format(uri))
@@ -60,6 +70,24 @@ class PandoraUri(object):
             return uri_cls(*parts[2:])
         else:
             raise NotImplementedError("Unsupported Pandora URI type '{}'".format(uri))
+
+    @classmethod
+    def _from_station(cls, station):
+        if isinstance(station, Station):
+            if station.id.startswith('G') and station.id == station.token:
+                return GenreStationUri(station.id, station.token)
+            return StationUri(station.id, station.token)
+        else:
+            raise NotImplementedError("Unsupported station item type '{}'".format(station))
+
+    @classmethod
+    def _from_track(cls, track):
+        if isinstance(track, PlaylistItem):
+            return PlaylistItemUri(track.station_id, track.track_token)
+        elif isinstance(track, AdItem):
+            return AdItemUri(track.station_id)
+        else:
+            raise NotImplementedError("Unsupported playlist item type '{}'".format(track))
 
 
 class GenreUri(PandoraUri):
@@ -90,34 +118,13 @@ class StationUri(PandoraUri):
             **self.encoded_attributes
         )
 
-    @classmethod
-    def from_station(cls, station):
-        if station.id.startswith('G') and station.id == station.token:
-            return GenreStationUri(station.id, station.token)
-        return StationUri(station.id, station.token)
-
 
 class GenreStationUri(StationUri):
     uri_type = 'genre_station'
 
-    @classmethod
-    def from_station(cls, station):
-        if not (station.id.startswith('G') and station.id == station.token):
-            return StationUri(station.id, station.token)
-        return GenreStationUri(station.id, station.token)
-
 
 class TrackUri(PandoraUri):
     uri_type = 'track'
-
-    @classmethod
-    def from_track(cls, track):
-        if isinstance(track, PlaylistItem):
-            return PlaylistItemUri(track.station_id, track.track_token)
-        elif isinstance(track, AdItem):
-            return AdItemUri(track.station_id)
-        else:
-            raise NotImplementedError("Unsupported playlist item type '{}'".format(track))
 
 
 class PlaylistItemUri(TrackUri):

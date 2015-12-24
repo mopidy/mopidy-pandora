@@ -41,7 +41,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if uri == self.genre_directory.uri:
             return self._browse_genre_categories()
 
-        pandora_uri = PandoraUri.parse(uri)
+        pandora_uri = PandoraUri.factory(uri)
 
         if type(pandora_uri) is GenreUri:
             return self._browse_genre_stations(uri)
@@ -53,7 +53,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup(self, uri):
 
-        pandora_uri = PandoraUri.parse(uri)
+        pandora_uri = PandoraUri.factory(uri)
         if isinstance(pandora_uri, TrackUri):
             try:
                 pandora_track = self.lookup_pandora_track(uri)
@@ -118,14 +118,14 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
             for station in self._formatted_station_list(stations):
                 station_directories.append(
-                    models.Ref.directory(name=station.name, uri=StationUri.from_station(station).uri))
+                    models.Ref.directory(name=station.name, uri=PandoraUri.factory(station).uri))
 
         station_directories.insert(0, self.genre_directory)
 
         return station_directories
 
     def _browse_tracks(self, uri):
-        pandora_uri = PandoraUri.parse(uri)
+        pandora_uri = PandoraUri.factory(uri)
 
         if self._station is None or (pandora_uri.station_id != self._station.id):
 
@@ -144,16 +144,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         # Invalidate the cache so that it is refreshed on the next request
         self.backend.api._station_list_cache.popitem()
 
-        return StationUri.from_station(new_station)
+        return PandoraUri.factory(new_station)
 
     def _browse_genre_categories(self):
         return [models.Ref.directory(name=category, uri=GenreUri(category).uri)
                 for category in sorted(self.backend.api.get_genre_stations().keys())]
 
     def _browse_genre_stations(self, uri):
-        return [models.Ref.directory(name=station.name, uri=GenreStationUri.from_station(station).uri)
+        return [models.Ref.directory(name=station.name, uri=PandoraUri.factory(station).uri)
                 for station in self.backend.api.get_genre_stations()
-                [PandoraUri.parse(uri).category_name]]
+                [PandoraUri.factory(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
         return self._pandora_track_buffer[uri]
@@ -170,7 +170,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 self._station.name))
             return None
 
-        track_uri = TrackUri.from_track(pandora_track)
+        track_uri = PandoraUri.factory(pandora_track)
 
         if type(track_uri) is AdItemUri:
             track_name = 'Advertisement'
