@@ -34,6 +34,8 @@ def test_format_proxy_no_hostname():
     }
 
     assert utils.format_proxy(config['proxy']) is None
+    config.pop('hostname')
+    assert utils.format_proxy(config['proxy']) is None
 
 
 def test_format_proxy_no_port():
@@ -44,6 +46,8 @@ def test_format_proxy_no_port():
         }
     }
 
+    assert utils.format_proxy(config['proxy']) == 'mock_host:80'
+    config.pop('port')
     assert utils.format_proxy(config['proxy']) == 'mock_host:80'
 
 

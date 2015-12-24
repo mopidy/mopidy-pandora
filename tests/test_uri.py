@@ -19,7 +19,6 @@ def test_factory_unsupported_type():
 
 
 def test_pandora_parse_mock_uri():
-
     uri = 'pandora:station:mock_id:mock_token'
     obj = PandoraUri._from_uri(uri)
 
@@ -29,7 +28,6 @@ def test_pandora_parse_mock_uri():
 
 
 def test_pandora_parse_unicode_mock_uri():
-
     uri = PlaylistItemUri(conftest.MOCK_STATION_ID, 'Ω≈ç√∫:˜µ≤≥÷')
     obj = PandoraUri._from_uri(uri.uri)
 
@@ -38,7 +36,6 @@ def test_pandora_parse_unicode_mock_uri():
 
 
 def test_pandora_repr_converts_to_string():
-
     uri = 'pandora:station:mock_id:'
     obj = PandoraUri._from_uri(uri)
 
@@ -47,7 +44,6 @@ def test_pandora_repr_converts_to_string():
 
 
 def test_pandora_parse_none_mock_uri():
-
     uri = PandoraUri()
     assert uri.encode(None) == ''
 
@@ -65,7 +61,6 @@ def test_pandora_parse_invalid_scheme_raises_exception():
 
 
 def test_station_uri_from_station(station_mock):
-
     station_uri = StationUri._from_station(station_mock)
 
     assert station_uri.uri == '{}:{}:{}:{}'.format(PandoraUri.SCHEME,
@@ -81,7 +76,6 @@ def test_station_uri_from_station_unsupported_type(playlist_result_mock):
 
 
 def test_station_uri_parse(station_mock):
-
     station_uri = StationUri._from_station(station_mock)
 
     obj = PandoraUri._from_uri(station_uri.uri)
@@ -96,7 +90,6 @@ def test_station_uri_parse(station_mock):
 
 
 def test_station_uri_parse_returns_correct_type():
-
     station_mock = mock.PropertyMock(spec=Station)
     station_mock.id = 'Gmock'
     station_mock.token = 'Gmock'
@@ -107,7 +100,6 @@ def test_station_uri_parse_returns_correct_type():
 
 
 def test_genre_uri_parse():
-
     mock_uri = 'pandora:genre:mock_category'
     obj = PandoraUri._from_uri(mock_uri)
 
@@ -120,7 +112,6 @@ def test_genre_uri_parse():
 
 
 def test_genre_station_uri_parse():
-
     mock_uri = 'pandora:genre_station:mock_id:mock_token'
     obj = PandoraUri._from_uri(mock_uri)
 
@@ -134,7 +125,6 @@ def test_genre_station_uri_parse():
 
 
 def test_genre_station_uri_from_station_returns_correct_type():
-
     genre_mock = mock.PropertyMock(spec=Station)
     genre_mock.id = 'mock_id'
     genre_mock.token = 'mock_token'
@@ -145,7 +135,6 @@ def test_genre_station_uri_from_station_returns_correct_type():
 
 
 def test_genre_station_uri_from_station():
-
     genre_station_mock = mock.PropertyMock(spec=Station)
     genre_station_mock.id = 'Gmock'
     genre_station_mock.token = 'Gmock'
@@ -162,7 +151,6 @@ def test_genre_station_uri_from_station():
 
 
 def test_track_uri_from_track(playlist_item_mock):
-
     track_uri = TrackUri._from_track(playlist_item_mock)
 
     assert track_uri.uri == '{}:{}:{}:{}'.format(PandoraUri.SCHEME,
@@ -178,7 +166,6 @@ def test_track_uri_from_track_unsupported_type(playlist_result_mock):
 
 
 def test_track_uri_from_track_for_ads(ad_item_mock):
-
     track_uri = TrackUri._from_track(ad_item_mock)
 
     assert track_uri.uri == '{}:{}:{}'.format(PandoraUri.SCHEME,
@@ -187,7 +174,6 @@ def test_track_uri_from_track_for_ads(ad_item_mock):
 
 
 def test_track_uri_parse(playlist_item_mock):
-
     track_uri = TrackUri._from_track(playlist_item_mock)
 
     obj = PandoraUri._from_uri(track_uri.uri)
@@ -202,7 +188,6 @@ def test_track_uri_parse(playlist_item_mock):
 
 
 def test_track_uri_is_ad(playlist_item_mock, ad_item_mock):
-
     track_uri = TrackUri._from_track(ad_item_mock)
     obj = PandoraUri._from_uri(track_uri.uri)
 
