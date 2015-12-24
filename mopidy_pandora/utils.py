@@ -1,7 +1,5 @@
 import json
 
-from mopidy import httpclient
-
 import requests
 
 
@@ -23,13 +21,13 @@ def run_async(func):
                the results after the thread has run. All other keyword arguments will be passed to the target function.
         :return: the created Thread object that the function is running in.
         """
-        queue = kwargs.get('queue', None)
-
         t = Thread(target=func, args=args, kwargs=kwargs)
-        t.start()
 
+        queue = kwargs.get('queue', None)
         if queue is not None:
             t.result_queue = queue
+
+        t.start()
         return t
 
     return async_func
@@ -39,24 +37,13 @@ def format_proxy(proxy_config):
     if not proxy_config.get('hostname'):
         return None
 
-    port = proxy_config.get('port', 80)
-    if port < 0:
+    port = proxy_config.get('port')
+    if not port or port < 0:
         port = 80
 
     template = '{hostname}:{port}'
 
     return template.format(hostname=proxy_config['hostname'], port=port)
-
-
-def get_requests_session(proxy_config, user_agent):
-    proxy = httpclient.format_proxy(proxy_config)
-    full_user_agent = httpclient.format_user_agent(user_agent)
-
-    session = requests.Session()
-    session.proxies.update({'http': proxy, 'https': proxy})
-    session.headers.update({'user-agent': full_user_agent})
-
-    return session
 
 
 class RPCClient(object):
@@ -79,7 +66,6 @@ class RPCClient(object):
         :param method: the name of the Mopidy remote procedure to be called (typically from the 'core' module.
         :param params: a dictionary of argument:value pairs to be passed directly to the remote procedure.
         :param queue: a Queue.Queue() object that the results of the thread should be stored in.
-        :return: the 'result' element of the json results list returned by the remote procedure call.
         """
         cls.id += 1
         data = {'method': method, 'jsonrpc': '2.0', 'id': cls.id}
@@ -91,5 +77,3 @@ class RPCClient(object):
                                                 headers={'Content-Type': 'application/json'}).text)
         if queue is not None:
             queue.put(json_data['result'])
-
-        return json_data['result']
