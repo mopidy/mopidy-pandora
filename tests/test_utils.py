@@ -34,7 +34,7 @@ def test_format_proxy_no_hostname():
     }
 
     assert utils.format_proxy(config['proxy']) is None
-    config.pop('hostname')
+    config['proxy'].pop('hostname')
     assert utils.format_proxy(config['proxy']) is None
 
 
@@ -47,7 +47,7 @@ def test_format_proxy_no_port():
     }
 
     assert utils.format_proxy(config['proxy']) == 'mock_host:80'
-    config.pop('port')
+    config['proxy'].pop('port')
     assert utils.format_proxy(config['proxy']) == 'mock_host:80'
 
 
@@ -94,8 +94,8 @@ def test_run_async(caplog):
 def test_run_async_queue(caplog):
     q = Queue.Queue()
     async_func('test_2_async', queue=q)
-    assert 'test_2_async' in caplog.text()
     assert q.get() == 'test_value'
+    assert 'test_2_async' in caplog.text()
 
 
 @run_async
