@@ -52,7 +52,6 @@ def test_format_proxy_no_port():
 
 
 def test_rpc_client_uses_mopidy_defaults():
-
     assert utils.RPCClient.hostname == '127.0.0.1'
     assert utils.RPCClient.port == '6680'
 

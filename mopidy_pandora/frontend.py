@@ -62,7 +62,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def __init__(self, config, core):
         super(PandoraFrontend, self).__init__()
 
-        self.config = config
+        self.config = config['pandora']
         self.auto_setup = self.config.get('auto_setup')
 
         self.setup_required = True
