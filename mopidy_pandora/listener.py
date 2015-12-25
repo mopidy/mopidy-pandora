@@ -86,7 +86,6 @@ class PandoraPlaybackListener(listener.Listener):
     def send(event, **kwargs):
         listener.send_async(PandoraPlaybackListener, event, **kwargs)
 
-    #TODO: don't need track here.
     def track_changed(self, track):
         """
         Called when the track has been changed successfully. Let's the frontend know that it should probably

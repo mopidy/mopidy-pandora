@@ -8,6 +8,8 @@ import mock
 
 from mopidy import audio, backend as backend_api, models
 
+from pandora import APITransport
+
 import pytest
 
 from mopidy_pandora import playback
@@ -55,14 +57,6 @@ def test_is_a_playback_provider(provider):
     assert isinstance(provider, backend_api.PlaybackProvider)
 
 
-def test_change_track_skips_if_no_track_uri(provider):
-    track = models.Track(uri=None)
-
-    provider.change_pandora_track = mock.PropertyMock()
-    assert provider.change_track(track) is False
-    assert not provider.change_pandora_track.called
-
-
 def test_pause_starts_double_click_timer(provider):
     with mock.patch.object(PandoraPlaybackProvider, 'get_time_position', return_value=100):
         assert provider.backend.supports_events
@@ -91,7 +85,7 @@ def test_resume_checks_for_double_click(provider):
         provider.is_double_click.assert_called_once_with()
 
 
-def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
+def test_change_track_enforces_skip_limit_if_no_track_available(provider, playlist_item_mock, caplog):
     with mock.patch.object(EventHandlingPlaybackProvider, 'is_double_click', return_value=False):
         with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=None):
             track = PandoraUri.factory(playlist_item_mock)
@@ -109,8 +103,77 @@ def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
                 else:
                     assert not provider.backend.prepare_next_track.called
 
-            assert 'Maximum track skip limit ({:d}) exceeded, stopping...'.format(
+            assert 'Maximum track skip limit ({:d}) exceeded.'.format(
                 PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
+
+
+def test_change_track_enforces_skip_limit_if_no_audi_url(provider, playlist_item_mock, caplog):
+    with mock.patch.object(EventHandlingPlaybackProvider, 'is_double_click', return_value=False):
+        with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
+            track = PandoraUri.factory(playlist_item_mock)
+
+            provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+            provider.next_tl_track = {'track': {'uri': track.uri}}
+
+            provider.backend.prepare_next_track = mock.PropertyMock()
+
+            playlist_item_mock.audio_url = None
+
+            for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
+                assert provider.change_track(track) is False
+                if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
+                    assert provider.backend.prepare_next_track.called
+                    provider.backend.prepare_next_track.reset_mock()
+                else:
+                    assert not provider.backend.prepare_next_track.called
+
+            assert 'Maximum track skip limit ({:d}) exceeded.'.format(
+                PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
+
+
+def test_change_track_enforces_skip_limit_on_request_exceptions(provider, playlist_item_mock, caplog):
+    with mock.patch.object(EventHandlingPlaybackProvider, 'is_double_click', return_value=False):
+        with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
+            with mock.patch.object(APITransport, '__call__', side_effect=conftest.request_exception_mock):
+                track = PandoraUri.factory(playlist_item_mock)
+
+                provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+                provider.next_tl_track = {'track': {'uri': track.uri}}
+
+                provider.backend.prepare_next_track = mock.PropertyMock()
+                playlist_item_mock.audio_url = 'pandora:track:mock_id:mock_token'
+
+                for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
+                    assert provider.change_track(track) is False
+                    if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
+                        assert provider.backend.prepare_next_track.called
+                        provider.backend.prepare_next_track.reset_mock()
+                    else:
+                        assert not provider.backend.prepare_next_track.called
+
+                assert 'Maximum track skip limit ({:d}) exceeded.'.format(
+                    PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
+
+
+def test_change_track_skips_if_no_track_uri(provider):
+    track = models.Track(uri=None)
+
+    provider.change_pandora_track = mock.PropertyMock()
+    assert provider.change_track(track) is False
+    assert not provider.change_pandora_track.called
+
+
+def test_change_track_skips_if_track_not_available_in_buffer(provider, playlist_item_mock, caplog):
+    with mock.patch.object(EventHandlingPlaybackProvider, 'is_double_click', return_value=False):
+        track = PandoraUri.factory(playlist_item_mock)
+
+        provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
+        provider.next_tl_track = {'track': {'uri': track.uri}}
+
+        provider.backend.prepare_next_track = mock.PropertyMock()
+
+        assert provider.change_track(track) is False
+        assert "Error changing track: failed to lookup '{}'".format(track.uri) in caplog.text()
 
 
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):

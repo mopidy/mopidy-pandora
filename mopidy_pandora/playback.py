@@ -40,22 +40,21 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         """
         try:
             pandora_track = self.backend.library.lookup_pandora_track(track.uri)
-            if not (pandora_track and pandora_track.audio_url and pandora_track.get_is_playable()):
-                # Track is not playable.
-                self._consecutive_track_skips += 1
-
-                if self._consecutive_track_skips >= self.SKIP_LIMIT:
-                    raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded, stopping...'
-                                                .format(self.SKIP_LIMIT)))
-
+            if pandora_track.get_is_playable():
+                # Success, reset track skip counter.
+                self._consecutive_track_skips = 0
+                self._trigger_track_changed(track)
+            else:
                 raise Unplayable("Track with URI '{}' is not playable".format(track.uri))
 
-        except requests.exceptions.RequestException as e:
-            raise Unplayable('Error checking if track is playable: {}'.format(encoding.locale_decode(e)))
+        except (AttributeError, Unplayable, requests.exceptions.RequestException) as e:
+            # Track is not playable.
+            self._consecutive_track_skips += 1
 
-        # Success, reset track skip counter.
-        self._consecutive_track_skips = 0
-        self._trigger_track_changed(track)
+            if self._consecutive_track_skips >= self.SKIP_LIMIT:
+                raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded.'
+                                            .format(self.SKIP_LIMIT)))
+            raise Unplayable("Cannot change to Pandora track '{}', ({}).".format(track.uri, encoding.locale_decode(e)))
 
     def change_track(self, track):
         if track.uri is None:
@@ -70,11 +69,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.error("Error changing track: failed to lookup '{}'".format(track.uri))
             return False
         except Unplayable as e:
-            logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
+            logger.error("{} Skipping to next track...".format(encoding.locale_decode(e)))
             self.backend.prepare_next_track()
             return False
         except MaxSkipLimitExceeded as e:
-            logger.error('Error changing track: ({})'.format(encoding.locale_decode(e)))
+            logger.error('{} Stopping...'.format(encoding.locale_decode(e)))
             return False
 
     def translate_uri(self, uri):
