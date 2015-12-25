@@ -65,12 +65,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     if not pandora_track.company_name or len(pandora_track.company_name) == 0:
                         pandora_track.company_name = 'Unknown'
 
+                    album = models.Album(name=pandora_track.company_name,
+                                         uri=pandora_track.click_through_url)
+
+                    if pandora_track.image_url:
+                        # Some advertisements do not have images
+                        album = album.replace(images=[pandora_track.image_url])
+
                     return[models.Track(name='Advertisement',
                                         uri=uri,
                                         artists=[models.Artist(name=pandora_track.company_name)],
-                                        album=models.Album(name=pandora_track.company_name,
-                                                           uri=pandora_track.click_through_url,
-                                                           images=[pandora_track.image_url])
+                                        album=album
                                         )
                            ]
 

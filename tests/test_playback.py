@@ -17,7 +17,7 @@ from mopidy_pandora.library import PandoraLibraryProvider
 
 from mopidy_pandora.playback import EventHandlingPlaybackProvider, PandoraPlaybackProvider
 
-from mopidy_pandora.uri import TrackUri
+from mopidy_pandora.uri import PandoraUri
 
 
 @pytest.fixture
@@ -94,7 +94,7 @@ def test_resume_checks_for_double_click(provider):
 def test_change_track_enforces_skip_limit(provider, playlist_item_mock, caplog):
     with mock.patch.object(EventHandlingPlaybackProvider, 'is_double_click', return_value=False):
         with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=None):
-            track = TrackUri._from_track(playlist_item_mock)
+            track = PandoraUri.factory(playlist_item_mock)
 
             provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
             provider.next_tl_track = {'track': {'uri': track.uri}}

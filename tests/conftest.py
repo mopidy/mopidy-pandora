@@ -186,30 +186,36 @@ def playlist_result_mock():
 @pytest.fixture(scope='session')
 def ad_metadata_result_mock():
     mock_result = {'stat': 'ok',
-                   'result': dict(title=MOCK_TRACK_NAME, companyName='Mock Company Name', audioUrlMap={
-                       'highQuality': {
-                           'bitrate': '64',
-                           'encoding': 'aacplus',
-                           'audioUrl': MOCK_TRACK_AUDIO_HIGH,
-                           'protocol': 'http'
-                       },
-                       'mediumQuality': {
-                           'bitrate': '64',
-                           'encoding': 'aacplus',
-                           'audioUrl': MOCK_TRACK_AUDIO_MED,
-                           'protocol': 'http'
-                       },
-                       'lowQuality': {
-                           'bitrate': '32',
-                           'encoding': 'aacplus',
-                           'audioUrl': MOCK_TRACK_AUDIO_LOW,
-                           'protocol': 'http'
-                       }
-                   }, adTrackingTokens={
-                       MOCK_TRACK_AD_TOKEN,
-                       MOCK_TRACK_AD_TOKEN,
-                       MOCK_TRACK_AD_TOKEN
-                   })}
+                   'result': dict(title=MOCK_TRACK_NAME,
+                                  companyName='Mock Company Name',
+                                  clickThroughUrl='mock_click_url',
+                                  imageUrl='mock_img_url',
+                                  trackGain='0.0',
+                                  audioUrlMap={
+                                      'highQuality': {
+                                          'bitrate': '64',
+                                          'encoding': 'aacplus',
+                                          'audioUrl': MOCK_TRACK_AUDIO_HIGH,
+                                          'protocol': 'http'
+                                      },
+                                      'mediumQuality': {
+                                          'bitrate': '64',
+                                          'encoding': 'aacplus',
+                                          'audioUrl': MOCK_TRACK_AUDIO_MED,
+                                          'protocol': 'http'
+                                      },
+                                      'lowQuality': {
+                                          'bitrate': '32',
+                                          'encoding': 'aacplus',
+                                          'audioUrl': MOCK_TRACK_AUDIO_LOW,
+                                          'protocol': 'http'
+                                      }
+                                  },
+                                  adTrackingTokens={
+                                      MOCK_TRACK_AD_TOKEN
+                                  }
+                                  )
+                   }
 
     return mock_result
 
