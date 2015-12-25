@@ -57,7 +57,6 @@ class PandoraBackendListener(backend.BackendListener):
     def send(event, **kwargs):
         listener.send_async(PandoraBackendListener, event, **kwargs)
 
-    # TODO:.only need uri, not full track
     def next_track_available(self, track):
         """
         Called when the backend has the next Pandora track available to be added to the tracklist.

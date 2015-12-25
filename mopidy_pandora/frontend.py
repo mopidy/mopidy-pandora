@@ -102,15 +102,13 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
 
-    # TODO: replace with index checking
     def track_changed(self, track):
-        if self.core.tracklist.get_length().get() < 2 or track != self.core.tracklist.get_tl_tracks().get()[0].track:
+        if self.core.tracklist.index().get() == self.core.tracklist.get_length().get() - 1:
             self._trigger_end_of_tracklist_reached()
 
     def next_track_available(self, track):
         self.add_track(track)
 
-    # TODO: replace param with just URI
     def add_track(self, track):
         # Add the next Pandora track
         self.core.tracklist.add(uris=[track.uri]).get()
