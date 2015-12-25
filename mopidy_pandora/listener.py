@@ -63,7 +63,7 @@ class PandoraBackendListener(backend.BackendListener):
         Called when the backend has the next Pandora track available to be added to the tracklist.
 
         :param track: the Pandora track that was fetched
-        :type track: :class:`mopidy.models.Track`
+        :type track: :class:`mopidy.models.Ref`
         """
         pass
 
@@ -95,7 +95,7 @@ class PandoraPlaybackListener(listener.Listener):
         already been played.
 
         :param track: the Pandora track that was just changed to.
-        :type track: :class:`mopidy.models.Track`
+        :type track: :class:`mopidy.models.Ref`
         """
         pass
 
