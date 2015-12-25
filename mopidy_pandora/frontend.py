@@ -43,10 +43,6 @@ def only_execute_for_pandora_uris(func):
     return check_pandora
 
 
-def is_pandora_uri(active_uri):
-    return active_uri and active_uri.startswith('pandora:')
-
-
 class PandoraFrontendFactory(pykka.ThreadingActor):
 
     def __new__(cls, config, core):
@@ -181,8 +177,10 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         try:
             self._trigger_event_triggered(event_target_uri, self._get_event(track_uri, time_position))
         except ValueError as e:
-            logger.error(("Error processing event for URI '{}': ({})"
+            logger.error(("Error processing event for URI '{}': ({}). Ignoring event..."
                           .format(event_target_uri, encoding.locale_decode(e))))
+            self.event_processed_event.set()
+            return
 
     def _get_event_target_uri(self, track_uri, time_position):
         if time_position == 0:
@@ -220,5 +218,5 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
             self.core.playback.resume()
 
     def _trigger_event_triggered(self, track_uri, event):
-        (listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.event_triggered.__name__,
+        (listener.PandoraFrontendListener.send(listener.PandoraEventHandlingFrontendListener.event_triggered.__name__,
                                                track_uri=track_uri, pandora_event=event))

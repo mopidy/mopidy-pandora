@@ -7,13 +7,24 @@ used in tests of the frontends.
 from __future__ import absolute_import, unicode_literals
 
 from mopidy import backend
-from mopidy.models import Playlist, Ref, SearchResult
+from mopidy.models import Ref, SearchResult
 
 import pykka
 
 
-def create_proxy(config=None, audio=None):
-    return DummyBackend.start(config=config, audio=audio).proxy()
+def create_proxy(cls, config=None, audio=None):
+    return cls.start(config=config, audio=audio).proxy()
+
+
+class DummyPandoraBackend(pykka.ThreadingActor, backend.Backend):
+
+    def __init__(self, config, audio):
+        super(DummyPandoraBackend, self).__init__()
+
+        self.library = DummyLibraryProvider(backend=self)
+        self.playback = DummyPlaybackProvider(audio=audio, backend=self)
+
+        self.uri_schemes = ['pandora']
 
 
 class DummyBackend(pykka.ThreadingActor, backend.Backend):
@@ -23,9 +34,8 @@ class DummyBackend(pykka.ThreadingActor, backend.Backend):
 
         self.library = DummyLibraryProvider(backend=self)
         self.playback = DummyPlaybackProvider(audio=audio, backend=self)
-        self.playlists = DummyPlaylistsProvider(backend=self)
 
-        self.uri_schemes = ['pandora']
+        self.uri_schemes = ['dummy']
 
 
 class DummyLibraryProvider(backend.LibraryProvider):
@@ -92,54 +102,3 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
 
     def get_time_position(self):
         return self._time_position
-
-
-class DummyPlaylistsProvider(backend.PlaylistsProvider):
-
-    def __init__(self, backend):
-        super(DummyPlaylistsProvider, self).__init__(backend)
-        self._playlists = []
-
-    def set_dummy_playlists(self, playlists):
-        """For tests using the dummy provider through an actor proxy."""
-        self._playlists = playlists
-
-    def as_list(self):
-        return [
-            Ref.playlist(uri=pl.uri, name=pl.name) for pl in self._playlists]
-
-    def get_items(self, uri):
-        playlist = self.lookup(uri)
-        if playlist is None:
-            return
-        return [
-            Ref.track(uri=t.uri, name=t.name) for t in playlist.tracks]
-
-    def lookup(self, uri):
-        for playlist in self._playlists:
-            if playlist.uri == uri:
-                return playlist
-
-    def refresh(self):
-        pass
-
-    def create(self, name):
-        playlist = Playlist(name=name, uri='dummy:%s' % name)
-        self._playlists.append(playlist)
-        return playlist
-
-    def delete(self, uri):
-        playlist = self.lookup(uri)
-        if playlist:
-            self._playlists.remove(playlist)
-
-    def save(self, playlist):
-        old_playlist = self.lookup(playlist.uri)
-
-        if old_playlist is not None:
-            index = self._playlists.index(old_playlist)
-            self._playlists[index] = playlist
-        else:
-            self._playlists.append(playlist)
-
-        return playlist
