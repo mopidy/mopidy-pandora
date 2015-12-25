@@ -94,14 +94,17 @@ def test_change_track_enforces_skip_limit_if_no_track_available(provider, playli
             provider.next_tl_track = {'track': {'uri': track.uri}}
 
             provider.backend.prepare_next_track = mock.PropertyMock()
+            provider._trigger_skip_limit_exceeded = mock.PropertyMock(0)
 
             for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
                 assert provider.change_track(track) is False
                 if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
                     assert provider.backend.prepare_next_track.called
                     provider.backend.prepare_next_track.reset_mock()
+                    assert not provider._trigger_skip_limit_exceeded.called
                 else:
                     assert not provider.backend.prepare_next_track.called
+                    assert provider._trigger_skip_limit_exceeded.called
 
             assert 'Maximum track skip limit ({:d}) exceeded.'.format(
                 PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
@@ -116,6 +119,7 @@ def test_change_track_enforces_skip_limit_if_no_audio_url(provider, playlist_ite
             provider.next_tl_track = {'track': {'uri': track.uri}}
 
             provider.backend.prepare_next_track = mock.PropertyMock()
+            provider._trigger_skip_limit_exceeded = mock.PropertyMock(0)
 
             playlist_item_mock.audio_url = None
 
@@ -124,8 +128,10 @@ def test_change_track_enforces_skip_limit_if_no_audio_url(provider, playlist_ite
                 if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
                     assert provider.backend.prepare_next_track.called
                     provider.backend.prepare_next_track.reset_mock()
+                    assert not provider._trigger_skip_limit_exceeded.called
                 else:
                     assert not provider.backend.prepare_next_track.called
+                    assert provider._trigger_skip_limit_exceeded.called
 
             assert 'Maximum track skip limit ({:d}) exceeded.'.format(
                 PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
@@ -141,6 +147,7 @@ def test_change_track_enforces_skip_limit_on_request_exceptions(provider, playli
                 provider.next_tl_track = {'track': {'uri': track.uri}}
 
                 provider.backend.prepare_next_track = mock.PropertyMock()
+                provider._trigger_skip_limit_exceeded = mock.PropertyMock(0)
                 playlist_item_mock.audio_url = 'pandora:track:mock_id:mock_token'
 
                 for i in range(PandoraPlaybackProvider.SKIP_LIMIT+1):
@@ -148,8 +155,10 @@ def test_change_track_enforces_skip_limit_on_request_exceptions(provider, playli
                     if i < PandoraPlaybackProvider.SKIP_LIMIT-1:
                         assert provider.backend.prepare_next_track.called
                         provider.backend.prepare_next_track.reset_mock()
+                        assert not provider._trigger_skip_limit_exceeded.called
                     else:
                         assert not provider.backend.prepare_next_track.called
+                        assert provider._trigger_skip_limit_exceeded.called
 
                 assert 'Maximum track skip limit ({:d}) exceeded.'.format(
                     PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()

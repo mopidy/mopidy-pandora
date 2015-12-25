@@ -105,13 +105,16 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def next_track_available(self, track):
         self.add_track(track)
 
+    def skip_limit_exceeded(self):
+        self.core.playback.stop()
+
     def add_track(self, track):
         # Add the next Pandora track
         self.core.tracklist.add(uris=[track.uri]).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
-        if self.core.playback.get_state() == PlaybackState.STOPPED:
+        if self.core.playback.get_state().get() == PlaybackState.STOPPED:
             # Playback stopped after previous track was unplayable. Resume playback with the freshly seeded tracklist.
-            self.core.playback.play(tl_tracks[-1])
+            self.core.playback.play(tl_tracks[-1]).get()
         if len(tl_tracks) > 2:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
             self.core.tracklist.remove({'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]}).get()
@@ -214,8 +217,8 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
     def doubleclicked(self):
         self.event_processed_event.clear()
         # Resume playback...
-        if self.core.playback.get_state() != PlaybackState.PLAYING:
-            self.core.playback.resume()
+        if self.core.playback.get_state().get() != PlaybackState.PLAYING:
+            self.core.playback.resume().get()
 
     def _trigger_event_triggered(self, track_uri, event):
         (listener.PandoraFrontendListener.send(listener.PandoraEventHandlingFrontendListener.event_triggered.__name__,

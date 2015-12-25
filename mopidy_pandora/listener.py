@@ -97,6 +97,16 @@ class PandoraPlaybackListener(listener.Listener):
         """
         pass
 
+    def skip_limit_exceeded(self):
+        """
+        Called when the playback provider  has skipped over the maximum number of permissible unplayable tracks using
+        :func:`~mopidy_pandora.pandora.PandoraPlaybackProvider.change_track`. This lets the frontend know that the
+        player should probably be stopped in order to avoid an infinite loop on the tracklist (which should still be
+        in 'repeat' mode.
+
+        """
+        pass
+
 
 class PandoraEventHandlingPlaybackListener(listener.Listener):
 

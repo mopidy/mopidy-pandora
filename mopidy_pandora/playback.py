@@ -74,6 +74,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             return False
         except MaxSkipLimitExceeded as e:
             logger.error('{} Stopping...'.format(encoding.locale_decode(e)))
+            self._trigger_skip_limit_exceeded()
             return False
 
     def translate_uri(self, uri):
@@ -81,6 +82,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def _trigger_track_changed(self, track):
         listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_changed.__name__, track=track)
+
+    def _trigger_skip_limit_exceeded(self):
+        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.skip_limit_exceeded.__name__)
 
 
 class EventHandlingPlaybackProvider(PandoraPlaybackProvider):
