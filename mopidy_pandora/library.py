@@ -99,19 +99,24 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _formatted_station_list(self, list):
         # Find QuickMix stations and move QuickMix to top
-        for i, station in enumerate(list[:]):
-            if station.is_quickmix:
-                quickmix_stations = station.quickmix_stations
-                if not station.name.endswith(' (marked with *)'):
-                    station.name += ' (marked with *)'
-                list.insert(0, list.pop(i))
-                break
 
-        # Mark QuickMix stations
-        for station in list:
-            if station.id in quickmix_stations:
-                if not station.name.endswith('*'):
-                    station.name += '*'
+        # TODO: identifying quickmix stations will only be available in pydora 1.6.3 and above.
+        #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
+        #       put this back:
+
+        # for i, station in enumerate(list[:]):
+        #     if station.is_quickmix:
+        #         quickmix_stations = station.quickmix_stations
+        #         if not station.name.endswith(' (marked with *)'):
+        #             station.name += ' (marked with *)'
+        #         list.insert(0, list.pop(i))
+        #         break
+        #
+        # # Mark QuickMix stations
+        # for station in list:
+        #     if station.id in quickmix_stations:
+        #         if not station.name.endswith('*'):
+        #             station.name += '*'
 
         return list
 
