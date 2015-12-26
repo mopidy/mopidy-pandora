@@ -151,7 +151,7 @@ def playlist_result_mock():
                            'trackToken': None,
                            'artistName': None,
                            'albumName': None,
-                           'albumArtUrl': None,
+                           'imageUrl': None,
                            'audioUrlMap': {
                                'highQuality': {
                                    'bitrate': '64',
@@ -241,7 +241,7 @@ def playlist_item_mock():
         config()).api, playlist_result_mock()['result']['items'][0])
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def ad_item_mock():
     ad_item = AdItem.from_json(get_backend(
         config()).api, ad_metadata_result_mock()['result'])

@@ -31,7 +31,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self._station = None
         self._station_iter = None
 
-        self._pandora_track_buffer = OrderedDict()
+        self._pandora_track_cache = OrderedDict()
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
@@ -65,17 +65,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     if not pandora_track.company_name or len(pandora_track.company_name) == 0:
                         pandora_track.company_name = 'Unknown'
 
-                    album = models.Album(name=pandora_track.company_name,
-                                         uri=pandora_track.click_through_url)
-
-                    if pandora_track.image_url:
-                        # Some advertisements do not have images
-                        album = album.replace(images=[pandora_track.image_url])
-
                     return[models.Track(name='Advertisement',
                                         uri=uri,
                                         artists=[models.Artist(name=pandora_track.company_name)],
-                                        album=album
+                                        album=models.Album(name=pandora_track.company_name,
+                                                           uri=pandora_track.click_through_url)
                                         )
                            ]
 
@@ -84,13 +78,33 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                                         bitrate=int(pandora_track.bitrate),
                                         artists=[models.Artist(name=pandora_track.artist_name)],
                                         album=models.Album(name=pandora_track.album_name,
-                                                           uri=pandora_track.album_detail_url,
-                                                           images=[pandora_track.album_art_url])
+                                                           uri=pandora_track.album_detail_url)
                                         )
                            ]
 
         else:
             raise ValueError('Unexpected URI type: {}'.format(uri))
+
+    def get_images(self, uris):
+        result = {}
+        for uri in uris:
+            image_uris = set()
+            try:
+                pandora_track = self.lookup_pandora_track(uri)
+                if pandora_track.is_ad is True:
+                    image_uri = pandora_track.image_url
+                else:
+                    image_uri = pandora_track.album_art_url
+                if image_uri:
+                    image_uris.update([image_uri])
+            except (TypeError, KeyError):
+                logger.error("Failed to lookup image for URI '{}'".format(uri))
+                pass
+            result[uri] = [models.Image(uri=u) for u in image_uris]
+        return result
+
+    def _cache_pandora_track(self, track, pandora_track):
+        self._pandora_track_cache[track.uri] = pandora_track
 
     def _formatted_station_list(self, list):
         # Find QuickMix stations and move QuickMix to top
@@ -161,7 +175,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 [PandoraUri.factory(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
-        return self._pandora_track_buffer[uri]
+        return self._pandora_track_cache[uri]
 
     def get_next_pandora_track(self):
         try:
@@ -184,5 +198,5 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         track = models.Ref.track(name=track_name, uri=track_uri.uri)
 
-        self._pandora_track_buffer[track.uri] = pandora_track
+        self._cache_pandora_track(track, pandora_track)
         return track
