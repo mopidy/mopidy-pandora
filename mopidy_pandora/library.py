@@ -65,17 +65,12 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     if not pandora_track.company_name or len(pandora_track.company_name) == 0:
                         pandora_track.company_name = 'Unknown'
 
-                    # TODO: image and clickthrough urls for ads will only be available in pydora 1.6.3 and above.
-                    #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
-                    #       put this back:
-                    album = models.Album(name=pandora_track.company_name)
+                    album = models.Album(name=pandora_track.company_name,
+                                         uri=pandora_track.click_through_url)
 
-                    # album = models.Album(name=pandora_track.company_name,
-                    #                      uri=pandora_track.click_through_url)
-
-                    # if pandora_track.image_url:
-                    #     # Some advertisements do not have images
-                    #     album = album.replace(images=[pandora_track.image_url])
+                    if pandora_track.image_url:
+                        # Some advertisements do not have images
+                        album = album.replace(images=[pandora_track.image_url])
 
                     return[models.Track(name='Advertisement',
                                         uri=uri,
