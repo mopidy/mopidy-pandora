@@ -169,6 +169,14 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
             # No events to process.
             return
 
+        # TODO: temporarily disabling events due to bug in Mopidy that prevents tracks from being added to the
+        # history correctly. Revert when Mopidy 1.1.2 is released.
+        logger.info('NOTICE: Event support has been disabled pending the fix '
+                    'of: https://github.com/mopidy/mopidy/issues/1352')
+
+        self.event_processed_event.set()
+        return
+
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
         assert event_target_uri
 
