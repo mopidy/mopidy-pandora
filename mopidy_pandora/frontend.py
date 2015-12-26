@@ -129,9 +129,9 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         super(EventHandlingPandoraFrontend, self).__init__(config, core)
 
         self.settings = {
-            'OPR_EVENT': config.get('on_pause_resume_click'),
-            'OPN_EVENT': config.get('on_pause_next_click'),
-            'OPP_EVENT': config.get('on_pause_previous_click')
+            'OPR_EVENT': config['pandora'].get('on_pause_resume_click'),
+            'OPN_EVENT': config['pandora'].get('on_pause_next_click'),
+            'OPP_EVENT': config['pandora'].get('on_pause_previous_click')
         }
 
         self.current_track_uri = None
