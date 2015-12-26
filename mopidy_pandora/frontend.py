@@ -134,8 +134,8 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
             'OPP_EVENT': config['pandora'].get('on_pause_previous_click')
         }
 
-        self.current_track_uri = None
-        self.next_track_uri = None
+        self.last_played_track_uri = None
+        self.upcoming_track_uri = None
 
         self.event_processed_event = threading.Event()
         self.event_processed_event.set()
@@ -146,15 +146,16 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
     @only_execute_for_pandora_uris
     def tracklist_changed(self):
 
-        if not self.event_processed_event.isSet():
-            # Delay 'tracklist_changed' events until all events have been processed.
-            self.tracklist_changed_event.clear()
-        else:
+        if self.event_processed_event.isSet():
+            # Keep track of current and next tracks so that we can determine direction of future track changes.
             current_tl_track = self.core.playback.get_current_tl_track().get()
-            self.current_track_uri = current_tl_track.track.uri
-            self.next_track_uri = self.core.tracklist.next_track(current_tl_track).get().track.uri
+            self.last_played_track_uri = current_tl_track.track.uri
+            self.upcoming_track_uri = self.core.tracklist.next_track(current_tl_track).get().track.uri
 
             self.tracklist_changed_event.set()
+        else:
+            # Delay 'tracklist_changed' events until all events have been processed.
+            self.tracklist_changed_event.clear()
 
     @only_execute_for_pandora_uris
     def track_playback_resumed(self, tl_track, time_position):
@@ -203,14 +204,14 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
             return track_uri
 
     def _get_event(self, track_uri, time_position):
-        if track_uri == self.current_track_uri:
+        if track_uri == self.last_played_track_uri:
             if time_position > 0:
                 # Resuming playback on the first track in the tracklist.
                 return self.settings['OPR_EVENT']
             else:
                 return self.settings['OPP_EVENT']
 
-        elif track_uri == self.next_track_uri:
+        elif track_uri == self.upcoming_track_uri:
             return self.settings['OPN_EVENT']
         else:
             raise ValueError('Unexpected event URI: {}'.format(track_uri))

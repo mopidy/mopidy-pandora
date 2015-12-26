@@ -159,3 +159,30 @@ class TestEventHandlingFrontend(BaseTestFrontend):
 
         assert frontend.event_processed_event.get().isSet()
         assert not frontend._trigger_event_triggered.called
+
+    def test_tracklist_changed_blocks_if_events_are_queued(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        frontend.event_processed_event.get().clear()
+        frontend.last_played_track_uri = 'dummy_uri'
+        frontend.upcoming_track_uri = 'dummy_ury'
+
+        frontend.tracklist_changed().get()
+        assert not frontend.tracklist_changed_event.get().isSet()
+        assert frontend.last_played_track_uri.get() == 'dummy_uri'
+        assert frontend.upcoming_track_uri.get() == 'dummy_ury'
+
+    def test_tracklist_changed_updates_uris_after_event_is_processed(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        frontend.event_processed_event.get().set()
+        frontend.last_played_track_uri = 'dummy_uri'
+        frontend.upcoming_track_uri = 'dummy_ury'
+
+        frontend.tracklist_changed().get()
+        assert frontend.tracklist_changed_event.get().isSet()
+        current_track_uri = self.core.playback.get_current_tl_track().get()
+        assert frontend.last_played_track_uri.get() == current_track_uri.track.uri
+        assert frontend.upcoming_track_uri.get() == self.core.tracklist.next_track(current_track_uri).get().track.uri
