@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import unittest
-
 import conftest
 
 import mock
@@ -64,7 +62,6 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     assert 'Failed to lookup \'{}\''.format(track_uri.uri) in caplog.text()
 
 
-@unittest.skip("Wait for pydora 1.6.3")
 def test_browse_directory_uri(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
 
@@ -93,7 +90,6 @@ def test_browse_directory_uri(config):
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][1])).uri
 
 
-@unittest.skip("Wait for pydora 1.6.3")
 def test_browse_directory_sort_za(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
 
@@ -108,7 +104,6 @@ def test_browse_directory_sort_za(config):
         assert results[3].name == conftest.MOCK_STATION_NAME + ' 2'
 
 
-@unittest.skip("Wait for pydora 1.6.3")
 def test_browse_directory_sort_date(config):
     with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
 
