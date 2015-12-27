@@ -61,36 +61,33 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 logger.error("Failed to lookup '{}'".format(uri))
                 return []
             else:
+                track_kwargs = {'uri': uri}
+                (album_kwargs, artist_kwargs) = {}, {}
+
+                # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
+                #       updated to make use of the newer LibraryController.get_images()
+                images = self.get_images([uri])[uri]
+                if len(images) > 0:
+                    album_kwargs = {'images': [image.uri for image in images]}
+
                 if type(pandora_uri) is AdItemUri:
-                    if not pandora_track.company_name or len(pandora_track.company_name) == 0:
-                        pandora_track.company_name = 'Unknown'
-
-                    track = models.Track(name='Advertisement',
-                                         uri=uri,
-                                         artists=[models.Artist(name=pandora_track.company_name)],
-                                         album=models.Album(name=pandora_track.company_name,
-                                                            uri=pandora_track.click_through_url)
-                                         )
-
+                    track_kwargs['name'] = 'Advertisement'
+                    artist_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
+                    album_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
+                    album_kwargs['uri'] = pandora_track.click_through_url
                 else:
-                    track = models.Track(name=pandora_track.song_name,
-                                         uri=uri,
-                                         length=pandora_track.track_length * 1000,
-                                         bitrate=int(pandora_track.bitrate),
-                                         artists=[models.Artist(name=pandora_track.artist_name)],
-                                         album=models.Album(name=pandora_track.album_name,
-                                                            uri=pandora_track.album_detail_url)
-                                         )
+                    track_kwargs['name'] = pandora_track.song_name
+                    track_kwargs['length'] = pandora_track.track_length * 1000
+                    track_kwargs['bitrate'] = int(pandora_track.bitrate)
+                    artist_kwargs['name'] = pandora_track.artist_name
+                    album_kwargs['name'] = pandora_track.album_name
+                    album_kwargs['uri'] = pandora_track.album_detail_url
         else:
-            raise ValueError('Unexpected URI type: {}'.format(uri))
+            raise ValueError("Unexpected type to perform track lookup: {}".format(pandora_uri.uri_type))
 
-        # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
-        #       updated to make use of the newer LibraryController.get_images()
-        images = self.get_images([uri])[uri]
-        if len(images) > 0:
-            album = track.album.replace(images=[images[0].uri])
-            track = track.replace(album=album)
-        return [track]
+        track_kwargs['artists'] = [models.Artist(**artist_kwargs)]
+        track_kwargs['album'] = models.Album(**album_kwargs)
+        return [models.Track(**track_kwargs)]
 
     def get_images(self, uris):
         result = {}

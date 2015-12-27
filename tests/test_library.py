@@ -20,7 +20,6 @@ from tests.conftest import get_station_list_mock
 
 
 def test_get_images_for_ad_without_images(config, ad_item_mock):
-
     backend = conftest.get_backend(config)
 
     ad_uri = PandoraUri.factory('pandora:ad:' + conftest.MOCK_TRACK_AD_TOKEN)
@@ -31,7 +30,6 @@ def test_get_images_for_ad_without_images(config, ad_item_mock):
 
 
 def test_get_images_for_ad_with_images(config, ad_item_mock):
-
     backend = conftest.get_backend(config)
 
     ad_uri = PandoraUri.factory('pandora:ad:' + conftest.MOCK_TRACK_AD_TOKEN)
@@ -42,7 +40,6 @@ def test_get_images_for_ad_with_images(config, ad_item_mock):
 
 
 def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
-
     backend = conftest.get_backend(config)
 
     track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
@@ -52,7 +49,6 @@ def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
 
 
 def test_get_images_for_track_without_images(config, playlist_item_mock):
-
     backend = conftest.get_backend(config)
 
     track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
@@ -63,7 +59,6 @@ def test_get_images_for_track_without_images(config, playlist_item_mock):
 
 
 def test_get_images_for_track_with_images(config, playlist_item_mock):
-
     backend = conftest.get_backend(config)
 
     track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
@@ -73,11 +68,32 @@ def test_get_images_for_track_with_images(config, playlist_item_mock):
     assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url
 
 
-def test_lookup_of_invalid_uri(config, caplog):
+def test_lookup_of_invalid_uri(config):
     with pytest.raises(NotImplementedError):
         backend = conftest.get_backend(config)
 
         backend.library.lookup('pandora:invalid')
+
+
+def test_lookup_of_invalid_uri_type(config, caplog):
+    with pytest.raises(ValueError):
+        backend = conftest.get_backend(config)
+
+        backend.library.lookup('pandora:station:dummy_id:dummy_token')
+        assert 'Unexpected type to perform track lookup: station' in caplog.text()
+
+
+def test_lookup_of_ad_uri(config, ad_item_mock):
+    backend = conftest.get_backend(config)
+
+    track_uri = PlaylistItemUri._from_track(ad_item_mock)
+    backend.library._pandora_track_cache[track_uri.uri] = ad_item_mock
+
+    results = backend.library.lookup(track_uri.uri)
+    assert len(results) == 1
+
+    track = results[0]
+    assert track.uri == track_uri.uri
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):
