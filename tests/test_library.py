@@ -30,6 +30,7 @@ def test_get_images_for_ad_without_images(config, ad_item_mock):
     results = backend.library.get_images([ad_uri.uri])
     assert len(results[ad_uri.uri]) == 0
 
+
 @unittest.skip("Wait for pydora 1.6.3")
 def test_get_images_for_ad_with_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
