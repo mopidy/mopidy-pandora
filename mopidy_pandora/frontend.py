@@ -102,7 +102,11 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             self._trigger_end_of_tracklist_reached()
 
     def next_track_available(self, track):
-        self.add_track(track)
+        if track:
+            self.add_track(track)
+        else:
+            logger.warning('No more Pandora tracks available to play.')
+            self.core.playback.stop()
 
     def skip_limit_exceeded(self):
         self.core.playback.stop()

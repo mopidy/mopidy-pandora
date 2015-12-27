@@ -64,9 +64,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         self.prepare_next_track()
 
     def prepare_next_track(self):
-        next_track = self.library.get_next_pandora_track()
-        if next_track:
-            self._trigger_next_track_available(next_track)
+        self._trigger_next_track_available(self.library.get_next_pandora_track())
 
     def event_triggered(self, track_uri, pandora_event):
         self.process_event(track_uri, pandora_event)
