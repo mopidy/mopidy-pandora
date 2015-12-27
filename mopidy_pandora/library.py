@@ -4,17 +4,12 @@ from collections import OrderedDict
 
 from mopidy import backend, models
 
-from mopidy.internal import encoding
-
 from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
-import requests
-
 from mopidy_pandora import utils
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
-
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +53,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 pandora_track = self.lookup_pandora_track(uri)
             except KeyError:
-                logger.error("Failed to lookup '{}'".format(uri))
+                logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
                 return []
             else:
                 track_kwargs = {'uri': uri}
@@ -71,8 +66,14 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
                 if type(pandora_uri) is AdItemUri:
                     track_kwargs['name'] = 'Advertisement'
-                    artist_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
-                    album_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
+
+                    if not pandora_track.title:
+                        pandora_track.title = '(Title not specified)'
+                    artist_kwargs['name'] = pandora_track.title
+
+                    if not pandora_track.company_name:
+                        pandora_track.company_name = '(Company name not specified)'
+                    album_kwargs['name'] = pandora_track.company_name
                     # TODO: image and clickthrough urls for ads will only be available in pydora 1.6.3 and above.
                     #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
                     #       put this back:
@@ -85,7 +86,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     album_kwargs['name'] = pandora_track.album_name
                     album_kwargs['uri'] = pandora_track.album_detail_url
         else:
-            raise ValueError("Unexpected type to perform track lookup: {}".format(pandora_uri.uri_type))
+            raise ValueError('Unexpected type to perform Pandora track lookup: {}.'.format(pandora_uri.uri_type))
 
         track_kwargs['artists'] = [models.Artist(**artist_kwargs)]
         track_kwargs['album'] = models.Album(**album_kwargs)
@@ -108,7 +109,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 if image_uri:
                     image_uris.update([image_uri])
             except (TypeError, KeyError):
-                logger.error("Failed to lookup image for URI '{}'".format(uri))
+                logger.exception("Failed to lookup image for Pandora URI '{}'.".format(uri))
                 pass
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
@@ -195,13 +196,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def get_next_pandora_track(self):
         try:
             pandora_track = self._station_iter.next()
-        except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
-            return None
-        except StopIteration:
-            # TODO: workaround for https://github.com/mcrute/pydora/issues/36
-            logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
-                self._station.name))
+        # except requests.exceptions.RequestException as e:
+        #     logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
+        #     return None
+        # except StopIteration:
+        #     # TODO: workaround for https://github.com/mcrute/pydora/issues/36
+        #     logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
+        #         self._station.name))
+        #     return None
+        except Exception:
+            # TODO: Remove this catch-all exception once we've figured out how to deal with all of them
+            logger.exception('Error retrieving next Pandora track.')
             return None
 
         track_uri = PandoraUri.factory(pandora_track)

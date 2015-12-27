@@ -1,7 +1,6 @@
 import logging
 
 from mopidy import backend, core
-from mopidy.internal import encoding
 
 from pandora.errors import PandoraException
 
@@ -58,8 +57,8 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             self.api.get_station_list()
             # Prefetch genre category list
             self.api.get_genre_stations()
-        except requests.exceptions.RequestException as e:
-            logger.error('Error logging in to Pandora: {}'.format(encoding.locale_decode(e)))
+        except requests.exceptions.RequestException:
+            logger.exception('Error logging in to Pandora.')
 
     def end_of_tracklist_reached(self):
         self.prepare_next_track()
@@ -75,12 +74,12 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def process_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)
         try:
-            logger.info("Triggering event '{}' for song: '{}'".format(pandora_event,
+            logger.info("Triggering event '{}' for Pandora song: '{}'.".format(pandora_event,
                         self.library.lookup_pandora_track(track_uri).song_name))
             func(track_uri)
             self._trigger_event_processed()
-        except PandoraException as e:
-            logger.error('Error calling event: {}'.format(encoding.locale_decode(e)))
+        except PandoraException:
+            logger.exception('Error calling Pandora event: {}.'.format(pandora_event))
             return False
 
     def thumbs_up(self, track_uri):

@@ -30,7 +30,6 @@ def test_get_images_for_ad_without_images(config, ad_item_mock):
     results = backend.library.get_images([ad_uri.uri])
     assert len(results[ad_uri.uri]) == 0
 
-
 @unittest.skip("Wait for pydora 1.6.3")
 def test_get_images_for_ad_with_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
@@ -48,7 +47,7 @@ def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
     track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 0
-    assert "Failed to lookup image for URI '{}'".format(track_uri.uri) in caplog.text()
+    assert "Failed to lookup image for Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
 
 
 def test_get_images_for_track_without_images(config, playlist_item_mock):
@@ -83,7 +82,7 @@ def test_lookup_of_invalid_uri_type(config, caplog):
         backend = conftest.get_backend(config)
 
         backend.library.lookup('pandora:station:dummy_id:dummy_token')
-        assert 'Unexpected type to perform track lookup: station' in caplog.text()
+        assert 'Unexpected type to perform Pandora track lookup: station.' in caplog.text()
 
 
 def test_lookup_of_ad_uri(config, ad_item_mock):
@@ -97,6 +96,24 @@ def test_lookup_of_ad_uri(config, ad_item_mock):
 
     track = results[0]
     assert track.uri == track_uri.uri
+
+
+def test_lookup_of_ad_uri_defaults_missing_values(config, ad_item_mock):
+    backend = conftest.get_backend(config)
+
+    ad_item_mock.title = ''
+    ad_item_mock.company_name = None
+
+    track_uri = PlaylistItemUri._from_track(ad_item_mock)
+    backend.library._pandora_track_cache[track_uri.uri] = ad_item_mock
+
+    results = backend.library.lookup(track_uri.uri)
+    assert len(results) == 1
+
+    track = results[0]
+    assert track.name == 'Advertisement'
+    assert '(Title not specified)' in next(iter(track.artists)).name
+    assert track.album.name == '(Company name not specified)'
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):
@@ -119,7 +136,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     results = backend.library.lookup(track_uri.uri)
 
     assert len(results) == 0
-    assert 'Failed to lookup \'{}\''.format(track_uri.uri) in caplog.text()
+    assert "Failed to lookup Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
 
 
 @unittest.skip("Wait for pydora 1.6.3")

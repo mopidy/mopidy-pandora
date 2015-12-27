@@ -2,7 +2,6 @@ import logging
 import time
 
 from mopidy import backend
-from mopidy.internal import encoding
 
 import requests
 
@@ -45,7 +44,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 self._consecutive_track_skips = 0
                 self._trigger_track_changed(track)
             else:
-                raise Unplayable("Track with URI '{}' is not playable".format(track.uri))
+                raise Unplayable("Track with URI '{}' is not playable.".format(track.uri))
 
         except (AttributeError, Unplayable, requests.exceptions.RequestException) as e:
             # Track is not playable.
@@ -54,11 +53,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             if self._consecutive_track_skips >= self.SKIP_LIMIT:
                 raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded.'
                                             .format(self.SKIP_LIMIT)))
-            raise Unplayable("Cannot change to Pandora track '{}', ({}).".format(track.uri, encoding.locale_decode(e)))
+            raise Unplayable("Cannot change to Pandora track '{}', ({}).".format(track.uri, e))
 
     def change_track(self, track):
         if track.uri is None:
-            logger.warning("No URI for track '{}'. Track cannot be played.".format(track))
+            logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
 
         try:
@@ -66,14 +65,14 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             return super(PandoraPlaybackProvider, self).change_track(track)
 
         except KeyError:
-            logger.error("Error changing track: failed to lookup '{}'".format(track.uri))
+            logger.exception("Error changing Pandora track: failed to lookup '{}'.".format(track.uri))
             return False
-        except Unplayable as e:
-            logger.error("{} Skipping to next track...".format(encoding.locale_decode(e)))
+        except Unplayable:
+            logger.exception('Skipping to next Pandora track...')
             self.backend.prepare_next_track()
             return False
-        except MaxSkipLimitExceeded as e:
-            logger.error('{} Stopping...'.format(encoding.locale_decode(e)))
+        except MaxSkipLimitExceeded:
+            logger.exception('Stopping Playback of Pandora track...')
             self._trigger_skip_limit_exceeded()
             return False
 

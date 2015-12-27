@@ -98,7 +98,7 @@ def test_get_station_list_handles_request_exception(config, caplog):
     assert backend.api.get_station_list() == []
 
     # Check that request exceptions are caught and logged
-    assert 'Error retrieving station list' in caplog.text()
+    assert 'Error retrieving Pandora station list.' in caplog.text()
 
 
 def test_get_station(config):

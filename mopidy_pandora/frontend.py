@@ -3,7 +3,6 @@ import threading
 
 from mopidy import core
 from mopidy.audio import PlaybackState
-from mopidy.internal import encoding
 
 import pykka
 
@@ -170,27 +169,18 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
             # No events to process.
             return
 
-        # TODO: temporarily disabling events due to bug in Mopidy that prevents tracks from being added to the
-        # history correctly. Revert when Mopidy 1.1.2 is released.
-        logger.info('NOTICE: Event support has been disabled pending the fix '
-                    'of: https://github.com/mopidy/mopidy/issues/1352')
-
-        self.event_processed_event.set()
-        return
-
         event_target_uri = self._get_event_target_uri(track_uri, time_position)
         assert event_target_uri
 
         if type(PandoraUri.factory(event_target_uri)) is AdItemUri:
-            logger.info('Ignoring doubleclick event for advertisement')
+            logger.info('Ignoring doubleclick event for Pandora advertisement...')
             self.event_processed_event.set()
             return
 
         try:
             self._trigger_event_triggered(event_target_uri, self._get_event(track_uri, time_position))
-        except ValueError as e:
-            logger.error(("Error processing event for URI '{}': ({}). Ignoring event..."
-                          .format(event_target_uri, encoding.locale_decode(e))))
+        except ValueError:
+            logger.exception("Error processing Pandora event for URI '{}'. Ignoring event...".format(event_target_uri))
             self.event_processed_event.set()
             return
 

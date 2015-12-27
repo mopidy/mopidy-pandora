@@ -3,8 +3,6 @@ import time
 
 from cachetools import TTLCache
 
-from mopidy.internal import encoding
-
 import pandora
 from pandora.clientbuilder import APITransport, DEFAULT_API_HOST, Encryptor, SettingsDictBuilder
 
@@ -58,8 +56,8 @@ class MopidyAPIClient(pandora.APIClient):
                 list = super(MopidyAPIClient, self).get_station_list()
                 self._station_list_cache[time.time()] = list
 
-        except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving station list: {}'.format(encoding.locale_decode(e)))
+        except requests.exceptions.RequestException:
+            logger.exception('Error retrieving Pandora station list.')
             return list
 
         try:
@@ -85,8 +83,8 @@ class MopidyAPIClient(pandora.APIClient):
 
                 self._genre_stations_cache[time.time()] = super(MopidyAPIClient, self).get_genre_stations()
 
-        except requests.exceptions.RequestException as e:
-            logger.error('Error retrieving genre stations: {}'.format(encoding.locale_decode(e)))
+        except requests.exceptions.RequestException:
+            logger.exception('Error retrieving Pandora genre stations.')
             return list
 
         try:
