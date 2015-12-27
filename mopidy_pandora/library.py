@@ -63,7 +63,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             else:
                 track_kwargs = {'uri': uri}
                 (album_kwargs, artist_kwargs) = {}, {}
-
                 # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
                 #       updated to make use of the newer LibraryController.get_images()
                 images = self.get_images([uri])[uri]
