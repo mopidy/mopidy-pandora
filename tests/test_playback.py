@@ -177,7 +177,7 @@ def test_change_track_fetches_next_track_if_unplayable(provider, playlist_item_m
             assert provider.change_track(track) is False
             assert provider.backend.prepare_next_track.called
 
-            assert 'Skipping to next Pandora track...' in caplog.text()
+            assert 'Cannot change to Pandora track' in caplog.text()
 
 
 def test_change_track_skips_if_no_track_uri(provider):
