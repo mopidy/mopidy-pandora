@@ -1,7 +1,8 @@
 import logging
 
-from collections import OrderedDict
 import traceback
+
+from collections import OrderedDict
 
 from mopidy import backend, models
 
@@ -10,8 +11,6 @@ from mopidy.internal import encoding
 from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
-
-import requests
 
 from mopidy_pandora import utils
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
