@@ -96,6 +96,24 @@ def test_lookup_of_ad_uri(config, ad_item_mock):
     assert track.uri == track_uri.uri
 
 
+def test_lookup_of_ad_uri_defaults_missing_values(config, ad_item_mock):
+    backend = conftest.get_backend(config)
+
+    ad_item_mock.title = ''
+    ad_item_mock.company_name = None
+
+    track_uri = PlaylistItemUri._from_track(ad_item_mock)
+    backend.library._pandora_track_cache[track_uri.uri] = ad_item_mock
+
+    results = backend.library.lookup(track_uri.uri)
+    assert len(results) == 1
+
+    track = results[0]
+    assert track.name == 'Advertisement'
+    assert '(Title not specified)' in next(iter(track.artists)).name
+    assert track.album.name == '(Company name not specified)'
+
+
 def test_lookup_of_track_uri(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 

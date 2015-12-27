@@ -1,6 +1,7 @@
 import logging
 
 from collections import OrderedDict
+import traceback
 
 from mopidy import backend, models
 
@@ -14,7 +15,6 @@ import requests
 
 from mopidy_pandora import utils
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
-
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +71,15 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
                 if type(pandora_uri) is AdItemUri:
                     track_kwargs['name'] = 'Advertisement'
-                    artist_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
-                    album_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
+
+                    if not pandora_track.title:
+                        pandora_track.title = '(Title not specified)'
+                    artist_kwargs['name'] = pandora_track.title
+
+                    if not pandora_track.company_name:
+                        pandora_track.company_name = '(Company name not specified)'
+                    album_kwargs['name'] = pandora_track.company_name
+
                     album_kwargs['uri'] = pandora_track.click_through_url
                 else:
                     track_kwargs['name'] = pandora_track.song_name
@@ -183,13 +190,18 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def get_next_pandora_track(self):
         try:
             pandora_track = self._station_iter.next()
-        except requests.exceptions.RequestException as e:
+        # except requests.exceptions.RequestException as e:
+        #     logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
+        #     return None
+        # except StopIteration:
+        #     # TODO: workaround for https://github.com/mcrute/pydora/issues/36
+        #     logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
+        #         self._station.name))
+        #     return None
+        except Exception as e:
+            # TODO: Remove this catch-all exception once we've figured out how to deal with all of them
             logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
-            return None
-        except StopIteration:
-            # TODO: workaround for https://github.com/mcrute/pydora/issues/36
-            logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
-                self._station.name))
+            logger.error('TRACEBACK INFO: {}'.format(traceback.format_exc()))
             return None
 
         track_uri = PandoraUri.factory(pandora_track)
