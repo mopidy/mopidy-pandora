@@ -45,7 +45,7 @@ def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
     track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 0
-    assert "Failed to lookup image for URI '{}'".format(track_uri.uri) in caplog.text()
+    assert "Failed to lookup image for Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
 
 
 def test_get_images_for_track_without_images(config, playlist_item_mock):
@@ -80,7 +80,7 @@ def test_lookup_of_invalid_uri_type(config, caplog):
         backend = conftest.get_backend(config)
 
         backend.library.lookup('pandora:station:dummy_id:dummy_token')
-        assert 'Unexpected type to perform track lookup: station' in caplog.text()
+        assert 'Unexpected type to perform Pandora track lookup: station.' in caplog.text()
 
 
 def test_lookup_of_ad_uri(config, ad_item_mock):
@@ -134,7 +134,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     results = backend.library.lookup(track_uri.uri)
 
     assert len(results) == 0
-    assert 'Failed to lookup \'{}\''.format(track_uri.uri) in caplog.text()
+    assert "Failed to lookup Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
 
 
 def test_browse_directory_uri(config):

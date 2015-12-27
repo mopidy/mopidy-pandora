@@ -57,7 +57,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def change_track(self, track):
         if track.uri is None:
-            logger.warning("No URI for track '{}'. Track cannot be played.".format(track))
+            logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
 
         try:

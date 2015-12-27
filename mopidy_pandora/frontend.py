@@ -173,7 +173,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         assert event_target_uri
 
         if type(PandoraUri.factory(event_target_uri)) is AdItemUri:
-            logger.info('Ignoring doubleclick event for advertisement')
+            logger.info('Ignoring doubleclick event for Pandora advertisement...')
             self.event_processed_event.set()
             return
 

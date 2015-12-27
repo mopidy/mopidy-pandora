@@ -79,7 +79,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             func(track_uri)
             self._trigger_event_processed()
         except PandoraException:
-            logger.exception('Error calling Pandora event: {}'.format(pandora_event))
+            logger.exception('Error calling Pandora event: {}.'.format(pandora_event))
             return False
 
     def thumbs_up(self, track_uri):

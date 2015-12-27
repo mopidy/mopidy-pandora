@@ -53,7 +53,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 pandora_track = self.lookup_pandora_track(uri)
             except KeyError:
-                logger.error("Failed to lookup '{}'".format(uri))
+                logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
                 return []
             else:
                 track_kwargs = {'uri': uri}
@@ -84,7 +84,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     album_kwargs['name'] = pandora_track.album_name
                     album_kwargs['uri'] = pandora_track.album_detail_url
         else:
-            raise ValueError("Unexpected type to perform track lookup: {}".format(pandora_uri.uri_type))
+            raise ValueError('Unexpected type to perform Pandora track lookup: {}.'.format(pandora_uri.uri_type))
 
         track_kwargs['artists'] = [models.Artist(**artist_kwargs)]
         track_kwargs['album'] = models.Album(**album_kwargs)
@@ -103,7 +103,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 if image_uri:
                     image_uris.update([image_uri])
             except (TypeError, KeyError):
-                logger.error("Failed to lookup image for URI '{}'".format(uri))
+                logger.exception("Failed to lookup image for Pandora URI '{}'.".format(uri))
                 pass
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
