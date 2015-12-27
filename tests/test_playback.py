@@ -177,7 +177,7 @@ def test_change_track_fetches_next_track_if_unplayable(provider, playlist_item_m
             assert provider.change_track(track) is False
             assert provider.backend.prepare_next_track.called
 
-            assert 'Skipping to next track...' in caplog.text()
+            assert 'Skipping to next Pandora track...' in caplog.text()
 
 
 def test_change_track_skips_if_no_track_uri(provider):
@@ -198,7 +198,7 @@ def test_change_track_skips_if_track_not_available_in_buffer(provider, playlist_
         provider.backend.prepare_next_track = mock.PropertyMock()
 
         assert provider.change_track(track) is False
-        assert "Error changing track: failed to lookup '{}'".format(track.uri) in caplog.text()
+        assert "Error changing Pandora track: failed to lookup '{}'.".format(track.uri) in caplog.text()
 
 
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):

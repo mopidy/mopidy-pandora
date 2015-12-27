@@ -3,7 +3,6 @@ import threading
 
 from mopidy import core
 from mopidy.audio import PlaybackState
-from mopidy.internal import encoding
 
 import pykka
 
@@ -180,9 +179,8 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
 
         try:
             self._trigger_event_triggered(event_target_uri, self._get_event(track_uri, time_position))
-        except ValueError as e:
-            logger.error(("Error processing event for URI '{}': ({}). Ignoring event..."
-                          .format(event_target_uri, encoding.locale_decode(e))))
+        except ValueError:
+            logger.exception("Error processing Pandora event for URI '{}'. Ignoring event...".format(event_target_uri))
             self.event_processed_event.set()
             return
 

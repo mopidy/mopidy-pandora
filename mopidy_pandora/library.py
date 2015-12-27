@@ -1,12 +1,8 @@
 import logging
 
-import traceback
-
 from collections import OrderedDict
 
 from mopidy import backend, models
-
-from mopidy.internal import encoding
 
 from pandora.models.pandora import Station
 
@@ -197,10 +193,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         #     logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
         #         self._station.name))
         #     return None
-        except Exception as e:
+        except Exception:
             # TODO: Remove this catch-all exception once we've figured out how to deal with all of them
-            logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
-            logger.error('TRACEBACK INFO: {}'.format(traceback.format_exc()))
+            logger.exception('Error retrieving next Pandora track.')
             return None
 
         track_uri = PandoraUri.factory(pandora_track)
