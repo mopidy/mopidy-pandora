@@ -74,10 +74,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     if not pandora_track.company_name:
                         pandora_track.company_name = '(Company name not specified)'
                     album_kwargs['name'] = pandora_track.company_name
-                    # TODO: image and clickthrough urls for ads will only be available in pydora 1.6.3 and above.
-                    #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
-                    #       put this back:
-                    # album_kwargs['uri'] = pandora_track.click_through_url
+
+                    album_kwargs['uri'] = pandora_track.click_through_url
                 else:
                     track_kwargs['name'] = pandora_track.song_name
                     track_kwargs['length'] = pandora_track.track_length * 1000
@@ -99,11 +97,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 pandora_track = self.lookup_pandora_track(uri)
                 if pandora_track.is_ad is True:
-                    # TODO: image and clickthrough urls for ads will only be available in pydora 1.6.3 and above.
-                    #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
-                    #       put this back:
-                    # image_uri = pandora_track.image_url
-                    image_uri = None
+                    image_uri = pandora_track.image_url
                 else:
                     image_uri = pandora_track.album_art_url
                 if image_uri:
@@ -119,24 +113,19 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _formatted_station_list(self, list):
         # Find QuickMix stations and move QuickMix to top
+        for i, station in enumerate(list[:]):
+            if station.is_quickmix:
+                quickmix_stations = station.quickmix_stations
+                if not station.name.endswith(' (marked with *)'):
+                    station.name += ' (marked with *)'
+                list.insert(0, list.pop(i))
+                break
 
-        # TODO: identifying quickmix stations will only be available in pydora 1.6.3 and above.
-        #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
-        #       put this back:
-
-        # for i, station in enumerate(list[:]):
-        #     if station.is_quickmix:
-        #         quickmix_stations = station.quickmix_stations
-        #         if not station.name.endswith(' (marked with *)'):
-        #             station.name += ' (marked with *)'
-        #         list.insert(0, list.pop(i))
-        #         break
-        #
-        # # Mark QuickMix stations
-        # for station in list:
-        #     if station.id in quickmix_stations:
-        #         if not station.name.endswith('*'):
-        #             station.name += '*'
+        # Mark QuickMix stations
+        for station in list:
+            if station.id in quickmix_stations:
+                if not station.name.endswith('*'):
+                    station.name += '*'
 
         return list
 
