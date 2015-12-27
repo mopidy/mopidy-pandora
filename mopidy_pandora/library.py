@@ -31,7 +31,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self._station = None
         self._station_iter = None
 
-        self._pandora_track_buffer = OrderedDict()
+        self._pandora_track_cache = OrderedDict()
         super(PandoraLibraryProvider, self).__init__(backend)
 
     def browse(self, uri):
@@ -61,41 +61,60 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 logger.error("Failed to lookup '{}'".format(uri))
                 return []
             else:
-                if type(pandora_uri) is AdItemUri:
-                    if not pandora_track.company_name or len(pandora_track.company_name) == 0:
-                        pandora_track.company_name = 'Unknown'
+                track_kwargs = {'uri': uri}
+                (album_kwargs, artist_kwargs) = {}, {}
+                # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
+                #       updated to make use of the newer LibraryController.get_images()
+                images = self.get_images([uri])[uri]
+                if len(images) > 0:
+                    album_kwargs = {'images': [image.uri for image in images]}
 
+                if type(pandora_uri) is AdItemUri:
+                    track_kwargs['name'] = 'Advertisement'
+                    artist_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
+                    album_kwargs['name'] = getattr(pandora_track, 'company_name', 'Advertisement')
                     # TODO: image and clickthrough urls for ads will only be available in pydora 1.6.3 and above.
                     #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
                     #       put this back:
-                    album = models.Album(name=pandora_track.company_name)
-
-                    # album = models.Album(name=pandora_track.company_name,
-                    #                      uri=pandora_track.click_through_url)
-
-                    # if pandora_track.image_url:
-                    #     # Some advertisements do not have images
-                    #     album = album.replace(images=[pandora_track.image_url])
-
-                    return[models.Track(name='Advertisement',
-                                        uri=uri,
-                                        artists=[models.Artist(name=pandora_track.company_name)],
-                                        album=album
-                                        )
-                           ]
-
+                    # album_kwargs['uri'] = pandora_track.click_through_url
                 else:
-                    return[models.Track(name=pandora_track.song_name, uri=uri, length=pandora_track.track_length * 1000,
-                                        bitrate=int(pandora_track.bitrate),
-                                        artists=[models.Artist(name=pandora_track.artist_name)],
-                                        album=models.Album(name=pandora_track.album_name,
-                                                           uri=pandora_track.album_detail_url,
-                                                           images=[pandora_track.album_art_url])
-                                        )
-                           ]
-
+                    track_kwargs['name'] = pandora_track.song_name
+                    track_kwargs['length'] = pandora_track.track_length * 1000
+                    track_kwargs['bitrate'] = int(pandora_track.bitrate)
+                    artist_kwargs['name'] = pandora_track.artist_name
+                    album_kwargs['name'] = pandora_track.album_name
+                    album_kwargs['uri'] = pandora_track.album_detail_url
         else:
-            raise ValueError('Unexpected URI type: {}'.format(uri))
+            raise ValueError("Unexpected type to perform track lookup: {}".format(pandora_uri.uri_type))
+
+        track_kwargs['artists'] = [models.Artist(**artist_kwargs)]
+        track_kwargs['album'] = models.Album(**album_kwargs)
+        return [models.Track(**track_kwargs)]
+
+    def get_images(self, uris):
+        result = {}
+        for uri in uris:
+            image_uris = set()
+            try:
+                pandora_track = self.lookup_pandora_track(uri)
+                if pandora_track.is_ad is True:
+                    # TODO: image and clickthrough urls for ads will only be available in pydora 1.6.3 and above.
+                    #       Wait for https://github.com/mcrute/pydora/pull/37/files to be merged and then
+                    #       put this back:
+                    # image_uri = pandora_track.image_url
+                    image_uri = None
+                else:
+                    image_uri = pandora_track.album_art_url
+                if image_uri:
+                    image_uris.update([image_uri])
+            except (TypeError, KeyError):
+                logger.error("Failed to lookup image for URI '{}'".format(uri))
+                pass
+            result[uri] = [models.Image(uri=u) for u in image_uris]
+        return result
+
+    def _cache_pandora_track(self, track, pandora_track):
+        self._pandora_track_cache[track.uri] = pandora_track
 
     def _formatted_station_list(self, list):
         # Find QuickMix stations and move QuickMix to top
@@ -171,7 +190,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 [PandoraUri.factory(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
-        return self._pandora_track_buffer[uri]
+        return self._pandora_track_cache[uri]
 
     def get_next_pandora_track(self):
         try:
@@ -194,5 +213,5 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         track = models.Ref.track(name=track_name, uri=track_uri.uri)
 
-        self._pandora_track_buffer[track.uri] = pandora_track
+        self._cache_pandora_track(track, pandora_track)
         return track

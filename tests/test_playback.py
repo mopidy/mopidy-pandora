@@ -204,7 +204,7 @@ def test_change_track_skips_if_track_not_available_in_buffer(provider, playlist_
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
 
     test_uri = 'pandora:track:test_station_id:test_token'
-    provider.backend.library._pandora_track_buffer[test_uri] = playlist_item_mock
+    provider.backend.library._pandora_track_cache[test_uri] = playlist_item_mock
 
     assert provider.translate_uri(test_uri) == conftest.MOCK_TRACK_AUDIO_HIGH
 
