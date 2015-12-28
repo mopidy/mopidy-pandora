@@ -42,7 +42,7 @@ def test_get_images_for_ad_with_images(config, ad_item_mock):
 def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
     backend = conftest.get_backend(config)
 
-    track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
+    track_uri = PandoraUri.factory('pandora:track:mock_id:mock_token')
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 0
     assert "Failed to lookup image for Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
@@ -51,7 +51,7 @@ def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
 def test_get_images_for_track_without_images(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
-    track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
+    track_uri = PandoraUri.factory('pandora:track:mock_id:mock_token')
     playlist_item_mock.album_art_url = None
     backend.library._pandora_track_cache[track_uri.uri] = playlist_item_mock
     results = backend.library.get_images([track_uri.uri])
@@ -61,7 +61,7 @@ def test_get_images_for_track_without_images(config, playlist_item_mock):
 def test_get_images_for_track_with_images(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
-    track_uri = PandoraUri.factory('pandora:track:dummy_id:dummy_token')
+    track_uri = PandoraUri.factory('pandora:track:mock_id:mock_token')
     backend.library._pandora_track_cache[track_uri.uri] = playlist_item_mock
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 1
@@ -79,7 +79,7 @@ def test_lookup_of_invalid_uri_type(config, caplog):
     with pytest.raises(ValueError):
         backend = conftest.get_backend(config)
 
-        backend.library.lookup('pandora:station:dummy_id:dummy_token')
+        backend.library.lookup('pandora:station:mock_id:mock_token')
         assert 'Unexpected type to perform Pandora track lookup: station.' in caplog.text()
 
 

@@ -51,14 +51,14 @@ class BaseTestFrontend(unittest.TestCase):
         self.tracks = [
             Track(uri='pandora:track:mock_id1:mock_token1', length=40000),          # Regular track
             Track(uri='pandora:ad:mock_id2', length=40000),                         # Advertisement
-            Track(uri='dummy:track:mock_id3:mock_token3', length=40000),            # Not a pandora track
+            Track(uri='mock:track:mock_id3:mock_token3', length=40000),            # Not a pandora track
             Track(uri='pandora:track:mock_id4:mock_token4', length=40000),
             Track(uri='pandora:track:mock_id5:mock_token5', length=None),           # No duration
         ]
 
         self.uris = [
             'pandora:track:mock_id1:mock_token1', 'pandora:ad:mock_id2',
-            'dummy:track:mock_id3:mock_token3', 'pandora:track:mock_id4:mock_token4',
+            'mock:track:mock_id3:mock_token3', 'pandora:track:mock_id4:mock_token4',
             'pandora:track:mock_id5:mock_token5']
 
         def lookup(uris):
@@ -142,7 +142,7 @@ class TestEventHandlingFrontend(BaseTestFrontend):
 
         frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
         frontend._trigger_event_triggered = mock.PropertyMock()
-        frontend._get_event = mock.PropertyMock(side_effect=ValueError('dummy_error'))
+        frontend._get_event = mock.PropertyMock(side_effect=ValueError('mock_error'))
         frontend.event_processed_event.get().clear()
         frontend.track_playback_resumed(self.tl_tracks[0], 100).get()
 
@@ -165,21 +165,21 @@ class TestEventHandlingFrontend(BaseTestFrontend):
 
         frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
         frontend.event_processed_event.get().clear()
-        frontend.last_played_track_uri = 'dummy_uri'
-        frontend.upcoming_track_uri = 'dummy_ury'
+        frontend.last_played_track_uri = 'mock_uri'
+        frontend.upcoming_track_uri = 'mock_ury'
 
         frontend.tracklist_changed().get()
         assert not frontend.tracklist_changed_event.get().isSet()
-        assert frontend.last_played_track_uri.get() == 'dummy_uri'
-        assert frontend.upcoming_track_uri.get() == 'dummy_ury'
+        assert frontend.last_played_track_uri.get() == 'mock_uri'
+        assert frontend.upcoming_track_uri.get() == 'mock_ury'
 
     def test_tracklist_changed_updates_uris_after_event_is_processed(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
 
         frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
         frontend.event_processed_event.get().set()
-        frontend.last_played_track_uri = 'dummy_uri'
-        frontend.upcoming_track_uri = 'dummy_ury'
+        frontend.last_played_track_uri = 'mock_uri'
+        frontend.upcoming_track_uri = 'mock_ury'
 
         frontend.tracklist_changed().get()
         assert frontend.tracklist_changed_event.get().isSet()

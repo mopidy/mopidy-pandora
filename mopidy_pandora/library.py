@@ -154,6 +154,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if self._station is None or (pandora_uri.station_id != self._station.id):
 
             if type(pandora_uri) is GenreStationUri:
+                # TODO: Check if station exists before creating?
                 pandora_uri = self._create_station_for_genre(pandora_uri.token)
 
             self._station = self.backend.api.get_station(pandora_uri.station_id)

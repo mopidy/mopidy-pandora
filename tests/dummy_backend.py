@@ -35,11 +35,11 @@ class DummyBackend(pykka.ThreadingActor, backend.Backend):
         self.library = DummyLibraryProvider(backend=self)
         self.playback = DummyPlaybackProvider(audio=audio, backend=self)
 
-        self.uri_schemes = ['dummy']
+        self.uri_schemes = ['mock']
 
 
 class DummyLibraryProvider(backend.LibraryProvider):
-    root_directory = Ref.directory(uri='dummy:/', name='dummy')
+    root_directory = Ref.directory(uri='mock:/', name='mock')
 
     def __init__(self, *args, **kwargs):
         super(DummyLibraryProvider, self).__init__(*args, **kwargs)
@@ -78,7 +78,7 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
         return True
 
     def play(self):
-        return self._uri and self._uri != 'dummy:error'
+        return self._uri and self._uri != 'mock:error'
 
     def change_track(self, track):
         """Pass a track with URI 'dummy:error' to force failure"""

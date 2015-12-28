@@ -46,14 +46,16 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             else:
                 raise Unplayable("Track with URI '{}' is not playable.".format(track.uri))
 
-        except (AttributeError, requests.exceptions.RequestException) as e:
+        except (AttributeError, requests.exceptions.RequestException, Unplayable) as e:
             logger.warning('Error changing Pandora track: {}, ({})'.format(pandora_track, e))
             # Track is not playable.
             self._consecutive_track_skips += 1
 
             if self._consecutive_track_skips >= self.SKIP_LIMIT:
+                self._trigger_skip_limit_exceeded()
                 raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded.'
                                             .format(self.SKIP_LIMIT)))
+            self._trigger_track_unplayable(track)
             raise Unplayable("Cannot change to Pandora track '{}', ({}:{}).".format(track.uri,
                                                                                     type(e).__name__, e.args))
 
@@ -68,13 +70,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         except KeyError:
             logger.exception("Error changing Pandora track: failed to lookup '{}'.".format(track.uri))
             return False
-        except Unplayable as e:
+        except (MaxSkipLimitExceeded, Unplayable) as e:
             logger.warning(e)
-            self.backend.prepare_next_track()
-            return False
-        except MaxSkipLimitExceeded as e:
-            logger.warning(e)
-            self._trigger_skip_limit_exceeded()
             return False
 
     def translate_uri(self, uri):
@@ -82,6 +79,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
     def _trigger_track_changed(self, track):
         listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_changed.__name__, track=track)
+
+    def _trigger_track_unplayable(self, track):
+        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_unplayable.__name__, track=track)
 
     def _trigger_skip_limit_exceeded(self):
         listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.skip_limit_exceeded.__name__)

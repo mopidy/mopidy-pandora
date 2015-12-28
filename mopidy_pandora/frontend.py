@@ -97,13 +97,28 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
 
-    def track_changed(self, track):
-        if self.core.tracklist.index().get() == self.core.tracklist.get_length().get() - 1:
-            self._trigger_end_of_tracklist_reached()
-
-    def next_track_available(self, track):
+    def end_of_tracklist_reached(self, track=None):
         if track:
-            self.add_track(track)
+            tl_track = self.core.tracklist.filter({'uri': [track.uri]}).get()[0]
+            index = self.core.tracklist.index(tl_track).get()
+        else:
+            index = self.core.tracklist.index().get()
+
+        return index == self.core.tracklist.get_length().get() - 1
+
+    def track_changed(self, track):
+        if self.end_of_tracklist_reached(track):
+            self._trigger_end_of_tracklist_reached(auto_play=False)
+
+    def track_unplayable(self, track):
+        if self.end_of_tracklist_reached(track):
+            self.core.playback.stop()
+            self._trigger_end_of_tracklist_reached(auto_play=True)
+        self.core.tracklist.remove({'uri': [track.uri]}).get()
+
+    def next_track_available(self, track, auto_play=False):
+        if track:
+            self.add_track(track, auto_play)
         else:
             logger.warning('No more Pandora tracks available to play.')
             self.core.playback.stop()
@@ -111,19 +126,19 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def skip_limit_exceeded(self):
         self.core.playback.stop()
 
-    def add_track(self, track):
+    def add_track(self, track, auto_play=False):
         # Add the next Pandora track
         self.core.tracklist.add(uris=[track.uri]).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
-        if self.core.playback.get_state().get() == PlaybackState.STOPPED:
-            # Playback stopped after previous track was unplayable. Resume playback with the freshly seeded tracklist.
-            self.core.playback.play(tl_tracks[-1]).get()
         if len(tl_tracks) > 2:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
             self.core.tracklist.remove({'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-2)]}).get()
+        if auto_play:
+            self.core.playback.play(tl_tracks[-1]).get()
 
-    def _trigger_end_of_tracklist_reached(self):
-        listener.PandoraFrontendListener.send(listener.PandoraFrontendListener.end_of_tracklist_reached.__name__)
+    def _trigger_end_of_tracklist_reached(self, auto_play=False):
+        listener.PandoraFrontendListener.send(
+            listener.PandoraFrontendListener.end_of_tracklist_reached.__name__, auto_play=auto_play)
 
 
 class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlingPlaybackListener):

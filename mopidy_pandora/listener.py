@@ -14,10 +14,11 @@ class PandoraFrontendListener(listener.Listener):
     def send(event, **kwargs):
         listener.send_async(PandoraFrontendListener, event, **kwargs)
 
-    def end_of_tracklist_reached(self):
+    def end_of_tracklist_reached(self, auto_play=False):
         """
         Called whenever the tracklist contains only one track, or the last track in the tracklist is being played.
-
+        :param auto_play: specifies if the next track should be played as soon as it is added to the tracklist.
+        :type auto_play: boolean
         """
         pass
 
@@ -57,12 +58,14 @@ class PandoraBackendListener(backend.BackendListener):
     def send(event, **kwargs):
         listener.send_async(PandoraBackendListener, event, **kwargs)
 
-    def next_track_available(self, track):
+    def next_track_available(self, track, auto_play=False):
         """
         Called when the backend has the next Pandora track available to be added to the tracklist.
 
         :param track: the Pandora track that was fetched
         :type track: :class:`mopidy.models.Ref`
+        :param auto_play: specifies if the track should be played as soon as it is added to the tracklist.
+        :type auto_play: boolean
         """
         pass
 
@@ -93,6 +96,16 @@ class PandoraPlaybackListener(listener.Listener):
         already been played.
 
         :param track: the Pandora track that was just changed to.
+        :type track: :class:`mopidy.models.Ref`
+        """
+        pass
+
+    def track_unplayable(self, track):
+        """
+        Called when the track is not playable. Let's the frontend know that it should probably remove this track
+        from the tracklist and try to replace it with the next track that Pandora provides.
+
+        :param track: the unplayable Pandora track.
         :type track: :class:`mopidy.models.Ref`
         """
         pass
