@@ -5,7 +5,7 @@ import conftest
 
 from mock import mock
 
-from pandora.models.pandora import Station
+from pandora.models.pandora import GenreStation, Station
 
 import pytest
 
@@ -16,6 +16,18 @@ def test_factory_unsupported_type():
     with pytest.raises(NotImplementedError):
 
         PandoraUri.factory(0)
+
+
+def test_factory_returns_correct_station_uri_types():
+        station_mock = mock.PropertyMock(spec=GenreStation)
+        station_mock.id = 'Gmock'
+        station_mock.token = 'Gmock'
+        assert type(PandoraUri.factory(station_mock)) is GenreStationUri
+
+        station_mock = mock.PropertyMock(spec=Station)
+        station_mock.id = 'mock_id'
+        station_mock.token = 'mock_token'
+        assert type(PandoraUri.factory(station_mock)) is StationUri
 
 
 def test_pandora_parse_mock_uri():
@@ -90,7 +102,7 @@ def test_station_uri_parse(station_mock):
 
 
 def test_station_uri_parse_returns_correct_type():
-    station_mock = mock.PropertyMock(spec=Station)
+    station_mock = mock.PropertyMock(spec=GenreStation)
     station_mock.id = 'Gmock'
     station_mock.token = 'Gmock'
 
@@ -129,13 +141,19 @@ def test_genre_station_uri_from_station_returns_correct_type():
     genre_mock.id = 'mock_id'
     genre_mock.token = 'mock_token'
 
-    obj = GenreStationUri._from_station(genre_mock)
+    obj = StationUri._from_station(genre_mock)
 
     assert type(obj) is StationUri
 
+    assert obj.uri_type == 'station'
+    assert obj.station_id == 'mock_id'
+    assert obj.token == 'mock_token'
 
-def test_genre_station_uri_from_station():
-    genre_station_mock = mock.PropertyMock(spec=Station)
+    assert obj.uri == 'pandora:station:mock_id:mock_token'
+
+
+def test_genre_station_uri_from_genre_station_returns_correct_type():
+    genre_station_mock = mock.PropertyMock(spec=GenreStation)
     genre_station_mock.id = 'Gmock'
     genre_station_mock.token = 'Gmock'
 

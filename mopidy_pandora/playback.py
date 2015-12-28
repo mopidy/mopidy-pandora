@@ -47,7 +47,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 raise Unplayable("Track with URI '{}' is not playable.".format(track.uri))
 
         except (AttributeError, requests.exceptions.RequestException) as e:
-            logger.warning('Error changing Pandora track: {}, ({})'.format(track, e))
+            logger.warning('Error changing Pandora track: {}, ({})'.format(pandora_track, e))
             # Track is not playable.
             self._consecutive_track_skips += 1
 
@@ -61,7 +61,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
-
         try:
             self.change_pandora_track(track)
             return super(PandoraPlaybackProvider, self).change_track(track)
@@ -70,11 +69,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.exception("Error changing Pandora track: failed to lookup '{}'.".format(track.uri))
             return False
         except Unplayable as e:
-            logger.error(e)
+            logger.warning(e)
             self.backend.prepare_next_track()
             return False
         except MaxSkipLimitExceeded as e:
-            logger.error(e)
+            logger.warning(e)
             self._trigger_skip_limit_exceeded()
             return False
 

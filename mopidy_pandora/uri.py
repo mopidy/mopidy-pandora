@@ -1,7 +1,7 @@
 import logging
 import urllib
 
-from pandora.models.pandora import AdItem, PlaylistItem, Station
+from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class PandoraUri(object):
     def factory(cls, obj):
         if isinstance(obj, basestring):
             return PandoraUri._from_uri(obj)
-        elif isinstance(obj, Station):
+        elif isinstance(obj, Station) or isinstance(obj, GenreStation):
             return PandoraUri._from_station(obj)
         elif isinstance(obj, PlaylistItem) or isinstance(obj, AdItem):
             return PandoraUri._from_track(obj)
@@ -73,7 +73,7 @@ class PandoraUri(object):
 
     @classmethod
     def _from_station(cls, station):
-        if isinstance(station, Station):
+        if isinstance(station, Station) or isinstance(station, GenreStation):
             if station.id.startswith('G') and station.id == station.token:
                 return GenreStationUri(station.id, station.token)
             return StationUri(station.id, station.token)
