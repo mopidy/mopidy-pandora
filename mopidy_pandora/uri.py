@@ -122,6 +122,13 @@ class StationUri(PandoraUri):
 class GenreStationUri(StationUri):
     uri_type = 'genre_station'
 
+    def __init__(self, station_id, token):
+        # Check that this really is a Genre station ass opposed to a regular station.
+        # Genre station IDs always start with 'G'.
+        assert station_id.startswith('G')
+        assert station_id == token
+        super(GenreStationUri, self).__init__(station_id, token)
+
 
 class TrackUri(PandoraUri):
     uri_type = 'track'

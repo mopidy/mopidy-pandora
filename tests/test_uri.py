@@ -124,14 +124,14 @@ def test_genre_uri_parse():
 
 
 def test_genre_station_uri_parse():
-    mock_uri = 'pandora:genre_station:mock_id:mock_token'
+    mock_uri = 'pandora:genre_station:Gmock:Gmock'
     obj = PandoraUri._from_uri(mock_uri)
 
     assert type(obj) is GenreStationUri
 
     assert obj.uri_type == 'genre_station'
-    assert obj.station_id == 'mock_id'
-    assert obj.token == 'mock_token'
+    assert obj.station_id == 'Gmock'
+    assert obj.token == 'Gmock'
 
     assert obj.uri == mock_uri
 
