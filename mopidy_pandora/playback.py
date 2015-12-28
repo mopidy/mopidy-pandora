@@ -47,14 +47,10 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 raise Unplayable("Track with URI '{}' is not playable.".format(track.uri))
 
         except (AttributeError, requests.exceptions.RequestException, Unplayable) as e:
-            logger.warning('Error changing Pandora track: {}, ({})'.format(pandora_track, e))
+            logger.warning('Error changing Pandora track: {}, ({})'.format(track, e))
             # Track is not playable.
             self._consecutive_track_skips += 1
-
-            if self._consecutive_track_skips >= self.SKIP_LIMIT:
-                self._trigger_skip_limit_exceeded()
-                raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded.'
-                                            .format(self.SKIP_LIMIT)))
+            self.check_skip_limit()
             self._trigger_track_unplayable(track)
             raise Unplayable("Cannot change to Pandora track '{}', ({}:{}).".format(track.uri,
                                                                                     type(e).__name__, e.args))
@@ -64,6 +60,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
         try:
+            self.check_skip_limit()
             self.change_pandora_track(track)
             return super(PandoraPlaybackProvider, self).change_track(track)
 
@@ -73,6 +70,12 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         except (MaxSkipLimitExceeded, Unplayable) as e:
             logger.warning(e)
             return False
+
+    def check_skip_limit(self):
+        if self._consecutive_track_skips >= self.SKIP_LIMIT:
+            self._trigger_skip_limit_exceeded()
+            raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded.'
+                                        .format(self.SKIP_LIMIT)))
 
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
