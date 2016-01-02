@@ -72,7 +72,12 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def process_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)
         try:
-            logger.info("Triggering event '{}' for URI: '{}'.".format(pandora_event, track_uri))
+            if pandora_event == 'delete_station':
+                logger.info("Triggering event '{}' for Pandora station with ID: '{}'."
+                            .format(pandora_event, PandoraUri.factory(track_uri).station_id))
+            else:
+                logger.info("Triggering event '{}' for Pandora song: '{}'."
+                            .format(pandora_event,self.library.lookup_pandora_track(track_uri).song_name))
             func(track_uri)
             self._trigger_event_processed(track_uri, pandora_event)
         except PandoraException:
