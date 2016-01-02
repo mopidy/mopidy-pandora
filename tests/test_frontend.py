@@ -112,8 +112,8 @@ class TestFrontend(BaseTestFrontend):
 
         frontend = PandoraFrontend.start(conftest.config(), self.core).proxy()
         frontend.track_playback_started(self.tracks[0]).get()
-        assert self.core.tracklist.get_repeat().get() is True
-        assert self.core.tracklist.get_consume().get() is False
+        assert self.core.tracklist.get_repeat().get() is False
+        assert self.core.tracklist.get_consume().get() is True
         assert self.core.tracklist.get_random().get() is False
         assert self.core.tracklist.get_single().get() is False
 

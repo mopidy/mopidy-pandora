@@ -72,10 +72,9 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def process_event(self, track_uri, pandora_event):
         func = getattr(self, pandora_event)
         try:
-            logger.info("Triggering event '{}' for Pandora song: '{}'.".format(pandora_event,
-                        self.library.lookup_pandora_track(track_uri).song_name))
+            logger.info("Triggering event '{}' for URI: '{}'.".format(pandora_event, track_uri))
             func(track_uri)
-            self._trigger_event_processed()
+            self._trigger_event_processed(track_uri, pandora_event)
         except PandoraException:
             logger.exception('Error calling Pandora event: {}.'.format(pandora_event))
             return False
@@ -95,9 +94,17 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def add_song_bookmark(self, track_uri):
         return self.api.add_song_bookmark(PandoraUri.factory(track_uri).token)
 
+    def delete_station(self, track_uri):
+        r = self.api.delete_station(PandoraUri.factory(track_uri).station_id)
+        # Invalidate the cache so that it is refreshed on the next request
+        self.api._station_list_cache.popitem()
+        self.library.browse(self.library.root_directory.uri)
+        return r
+
     def _trigger_next_track_available(self, track, auto_play=False):
         (listener.PandoraBackendListener.send(listener.PandoraBackendListener.next_track_available.__name__,
                                               track=track, auto_play=auto_play))
 
-    def _trigger_event_processed(self):
-        listener.PandoraBackendListener.send(listener.PandoraBackendListener.event_processed.__name__)
+    def _trigger_event_processed(self, track_uri, pandora_event):
+        listener.PandoraBackendListener.send(listener.PandoraBackendListener.event_processed.__name__,
+                                             track_uri=track_uri, pandora_event=pandora_event)

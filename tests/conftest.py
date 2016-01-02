@@ -15,7 +15,7 @@ from mopidy_pandora import backend
 MOCK_STATION_TYPE = 'station'
 MOCK_STATION_NAME = 'Mock Station'
 MOCK_STATION_ID = '0000000000000000001'
-MOCK_STATION_TOKEN = '0000000000000000010'
+MOCK_STATION_TOKEN = '0000000000000000001'
 MOCK_STATION_DETAIL_URL = 'http://mockup.com/station/detail_url?...'
 MOCK_STATION_ART_URL = 'http://mockup.com/station/art_url?...'
 
@@ -68,6 +68,7 @@ def config():
             'on_pause_resume_click': 'thumbs_up',
             'on_pause_next_click': 'thumbs_down',
             'on_pause_previous_click': 'sleep',
+            'on_pause_stop_click': 'delete_station',
         }
     }
 

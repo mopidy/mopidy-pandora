@@ -36,6 +36,7 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('on_pause_resume_click = thumbs_up', config)
         self.assertIn('on_pause_next_click = thumbs_down', config)
         self.assertIn('on_pause_previous_click = sleep', config)
+        self.assertIn('on_pause_stop_click = delete_station', config)
 
     def test_get_config_schema(self):
         ext = Extension()
@@ -60,6 +61,7 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('on_pause_resume_click', schema)
         self.assertIn('on_pause_next_click', schema)
         self.assertIn('on_pause_previous_click', schema)
+        self.assertIn('on_pause_stop_click', schema)
 
     def test_setup(self):
         registry = mock.Mock()

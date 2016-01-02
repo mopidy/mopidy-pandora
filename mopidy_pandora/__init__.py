@@ -38,9 +38,30 @@ class Extension(ext.Extension):
         schema['cache_time_to_live'] = config.Integer(minimum=0)
         schema['event_support_enabled'] = config.Boolean()
         schema['double_click_interval'] = config.String()
-        schema['on_pause_resume_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['on_pause_next_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
-        schema['on_pause_previous_click'] = config.String(choices=['thumbs_up', 'thumbs_down', 'sleep'])
+        schema['on_pause_resume_click'] = config.String(choices=['thumbs_up',
+                                                                 'thumbs_down',
+                                                                 'sleep',
+                                                                 'add_artist_bookmark',
+                                                                 'add_song_bookmark',
+                                                                 'delete_station'])
+        schema['on_pause_next_click'] = config.String(choices=['thumbs_up',
+                                                               'thumbs_down',
+                                                               'sleep',
+                                                               'add_artist_bookmark',
+                                                               'add_song_bookmark',
+                                                               'delete_station'])
+        schema['on_pause_previous_click'] = config.String(choices=['thumbs_up',
+                                                                   'thumbs_down',
+                                                                   'sleep',
+                                                                   'add_artist_bookmark',
+                                                                   'add_song_bookmark',
+                                                                   'delete_station'])
+        schema['on_pause_stop_click'] = config.String(choices=['thumbs_up',
+                                                               'thumbs_down',
+                                                               'sleep',
+                                                               'add_artist_bookmark',
+                                                               'add_song_bookmark',
+                                                               'delete_station'])
         return schema
 
     def setup(self, registry):

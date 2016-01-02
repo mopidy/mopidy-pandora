@@ -133,6 +133,12 @@ class EventHandlingPlaybackProvider(PandoraPlaybackProvider):
 
         return super(EventHandlingPlaybackProvider, self).pause()
 
+    def stop(self):
+        if self.is_double_click():
+            self._trigger_doubleclicked()
+
+        return super(EventHandlingPlaybackProvider, self).stop()
+
     def _trigger_doubleclicked(self):
         self.set_click_time(0)
         listener.PandoraEventHandlingPlaybackListener.send(

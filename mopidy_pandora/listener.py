@@ -69,10 +69,14 @@ class PandoraBackendListener(backend.BackendListener):
         """
         pass
 
-    def event_processed(self):
+    def event_processed(self, track_uri, pandora_event):
         """
-        Called when the backend has successfully processed the event for the track. This lets the frontend know
-        that it can process any tracklist changed events that were queued while the Pandora event was being processed.
+        Called when the backend has successfully processed the event for the given URI.
+        :param track_uri: the URI of the track that the event was applied to.
+        :type track_uri: string
+        :param pandora_event: the Pandora event that was called. Needs to correspond with the name of one of
+                              the event handling methods defined in `:class:mopidy_pandora.backend.PandoraBackend`
+        :type pandora_event: string
 
         """
         pass

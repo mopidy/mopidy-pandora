@@ -27,7 +27,7 @@ Dependencies
 - Requires a free (ad supported) Pandora account or a Pandora One subscription (provides ad-free playback and higher
   quality 192 Kbps audio stream).
 
-- ``pydora`` >= 1.6.3. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
+- ``pydora`` >= 1.6.4. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
 - ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
@@ -81,7 +81,7 @@ The following configuration values are available:
   stations in alphabetical order.
 
 - ``pandora/auto_setup``: If Mopidy-Pandora should automatically configure the Mopidy player for best compatibility
-  with the Pandora radio stream. Defaults to ``true`` and turns ``repeat`` on and ``consume``, ``random``, and
+  with the Pandora radio stream. Defaults to ``true`` and turns ``consume`` on and ``repeat``, ``random``, and
   ``single`` modes off.
 
 - ``pandora/cache_time_to_live``: specifies how long station and genre lists should be cached for between refreshes,
@@ -101,9 +101,10 @@ pause/play/previous/next buttons.
   Defaults to ``thumbs_down``.
 - ``pandora/on_pause_previous_click``: click pause and then previous in quick succession. Calls event and restarts the
   current song. Defaults to ``sleep``.
+- ``pandora/on_pause_stop_click``: click pause and then stop in quick succession. Calls event. Defaults to ``delete_station``.
 
-The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``, and
-``add_song_bookmark``.
+The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``,
+``add_song_bookmark``, and ``delete_station``.
 
 Usage
 =====
@@ -136,7 +137,8 @@ v0.2.0 (UNRELEASED)
   length, bitrate etc.).
 - Simulate dynamic tracklist (workaround for `#2 <https://github.com/rectalogic/mopidy-pandora/issues/2)>`_)
 - Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
-  your profile. At the moment there is no way to remove stations from within Mopidy-Pandora.
+  your profile.
+- Add ability to delete a station by setting one of the doubleclick event parameters to ``delete_station``.
 - Move 'QuickMix' to the top of the station list. Stations that will be played as part of QuickMix are marked with an
   asterisk (*).
 - Scrobbling tracks to Last.fm is now supported.
@@ -144,9 +146,6 @@ v0.2.0 (UNRELEASED)
   parameter ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
 - Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
 - Now plays advertisements which should prevent non-Pandora One accounts from being locked after extended use.
-- **Event support does not work at the moment** (see `#35 <https://github.com/rectalogic/mopidy-pandora/issues/35>`_),
-  so it has been disabled by default. In the interim, you can patch Mopidy 1.1.1 with `#1356 <https://github.com/mopidy/mopidy/pull/1356>`_
-  if you want to keep using events until the fix is available.
 
 v0.1.7 (Oct 31, 2015)
 ---------------------
