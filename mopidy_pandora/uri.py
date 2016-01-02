@@ -85,7 +85,7 @@ class PandoraUri(object):
         if isinstance(track, PlaylistItem):
             return PlaylistItemUri(track.station_id, track.track_token)
         elif isinstance(track, AdItem):
-            return AdItemUri(track.station_id)
+            return AdItemUri(track.station_id, track.ad_token)
         else:
             raise NotImplementedError("Unsupported playlist item type '{}'".format(track))
 
@@ -151,12 +151,13 @@ class PlaylistItemUri(TrackUri):
 class AdItemUri(TrackUri):
     uri_type = 'ad'
 
-    def __init__(self, station_id):
+    def __init__(self, station_id, ad_token):
         super(AdItemUri, self).__init__(self.uri_type)
         self.station_id = station_id
+        self.ad_token = ad_token
 
     def __repr__(self):
-        return '{}:{station_id}'.format(
+        return '{}:{station_id}:{ad_token}'.format(
             super(AdItemUri, self).__repr__(),
             **self.encoded_attributes
         )

@@ -50,14 +50,14 @@ class BaseTestFrontend(unittest.TestCase):
 
         self.tracks = [
             Track(uri='pandora:track:mock_id1:mock_token1', length=40000),          # Regular track
-            Track(uri='pandora:ad:mock_id2', length=40000),                         # Advertisement
-            Track(uri='mock:track:mock_id3:mock_token3', length=40000),            # Not a pandora track
+            Track(uri='pandora:ad:mock_id2:mock_token2', length=40000),             # Advertisement
+            Track(uri='mock:track:mock_id3:mock_token3', length=40000),             # Not a pandora track
             Track(uri='pandora:track:mock_id4:mock_token4', length=40000),
             Track(uri='pandora:track:mock_id5:mock_token5', length=None),           # No duration
         ]
 
         self.uris = [
-            'pandora:track:mock_id1:mock_token1', 'pandora:ad:mock_id2',
+            'pandora:track:mock_id1:mock_token1', 'pandora:ad:mock_id2:mock_token2',
             'mock:track:mock_id3:mock_token3', 'pandora:track:mock_id4:mock_token4',
             'pandora:track:mock_id5:mock_token5']
 

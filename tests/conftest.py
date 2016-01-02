@@ -253,6 +253,7 @@ def ad_item_mock():
     ad_item = AdItem.from_json(get_backend(
         config()).api, ad_metadata_result_mock()['result'])
     ad_item.station_id = MOCK_STATION_ID
+    ad_item.ad_token = MOCK_TRACK_AD_TOKEN
     return ad_item
 
 

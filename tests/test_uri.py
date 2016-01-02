@@ -17,6 +17,18 @@ def test_factory_unsupported_type():
 
         PandoraUri.factory(0)
 
+def test_ad_uri_parse():
+    mock_uri = 'pandora:ad:id_mock:ad_token_mock'
+    obj = PandoraUri._from_uri(mock_uri)
+
+    assert type(obj) is AdItemUri
+
+    assert obj.uri_type == 'ad'
+    assert obj.station_id == 'id_mock'
+    assert obj.ad_token == 'ad_token_mock'
+
+    assert obj.uri == mock_uri
+
 
 def test_factory_returns_correct_station_uri_types():
         station_mock = mock.PropertyMock(spec=GenreStation)
@@ -186,9 +198,9 @@ def test_track_uri_from_track_unsupported_type(playlist_result_mock):
 def test_track_uri_from_track_for_ads(ad_item_mock):
     track_uri = TrackUri._from_track(ad_item_mock)
 
-    assert track_uri.uri == '{}:{}:{}'.format(PandoraUri.SCHEME,
+    assert track_uri.uri == '{}:{}:{}:{}'.format(PandoraUri.SCHEME,
                                               track_uri.encode(conftest.MOCK_AD_TYPE),
-                                              conftest.MOCK_STATION_ID)
+                                              conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN)
 
 
 def test_track_uri_parse(playlist_item_mock):

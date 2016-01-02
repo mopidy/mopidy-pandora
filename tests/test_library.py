@@ -22,7 +22,7 @@ from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
 def test_get_images_for_ad_without_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
 
-    ad_uri = PandoraUri.factory('pandora:ad:' + conftest.MOCK_TRACK_AD_TOKEN)
+    ad_uri = PandoraUri.factory('pandora:ad:{}:{}'.format(conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN))
     ad_item_mock.image_url = None
     backend.library._pandora_track_cache[ad_uri.uri] = ad_item_mock
     results = backend.library.get_images([ad_uri.uri])
@@ -32,7 +32,7 @@ def test_get_images_for_ad_without_images(config, ad_item_mock):
 def test_get_images_for_ad_with_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
 
-    ad_uri = PandoraUri.factory('pandora:ad:' + conftest.MOCK_TRACK_AD_TOKEN)
+    ad_uri = PandoraUri.factory('pandora:ad:{}:{}'.format(conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN))
     backend.library._pandora_track_cache[ad_uri.uri] = ad_item_mock
     results = backend.library.get_images([ad_uri.uri])
     assert len(results[ad_uri.uri]) == 1
