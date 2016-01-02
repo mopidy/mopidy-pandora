@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import time
+
 import conftest
 
 import mock
@@ -7,7 +9,7 @@ import mock
 from mopidy import models
 
 from pandora import APIClient
-from pandora.models.pandora import Station
+from pandora.models.pandora import Station, StationList
 
 import pytest
 
@@ -15,8 +17,6 @@ from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
 from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
-
-from tests.conftest import get_station_list_mock
 
 
 def test_get_images_for_ad_without_images(config, ad_item_mock):
@@ -138,7 +138,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
 
 
 def test_browse_directory_uri(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
 
         backend = conftest.get_backend(config)
         results = backend.library.browse(backend.library.root_directory.uri)
@@ -166,7 +166,7 @@ def test_browse_directory_uri(config):
 
 
 def test_browse_directory_sort_za(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
 
         config['pandora']['sort_order'] = 'A-Z'
         backend = conftest.get_backend(config)
@@ -180,7 +180,7 @@ def test_browse_directory_sort_za(config):
 
 
 def test_browse_directory_sort_date(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
 
         config['pandora']['sort_order'] = 'date'
         backend = conftest.get_backend(config)
@@ -216,16 +216,19 @@ def test_browse_genre_station_uri(config, genre_station_mock):
     with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
         with mock.patch.object(APIClient, 'create_station',
                                mock.Mock(return_value=conftest.station_result_mock()['result'])) as create_station_mock:
+            with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+                with mock.patch.object(MopidyAPIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
 
-            backend = conftest.get_backend(config)
-            genre_uri = GenreUri._from_station(genre_station_mock)
-            backend.api._station_list_cache['1'] = 'cache_item_mock'
-            assert backend.api._station_list_cache.currsize == 1
+                    backend = conftest.get_backend(config)
+                    genre_uri = GenreUri._from_station(genre_station_mock)
+                    t = time.time()
+                    backend.api._station_list_cache[t] = mock.Mock(spec=StationList)
 
-            results = backend.library.browse(genre_uri.uri)
-            assert len(results) == 1
-            assert backend.api._station_list_cache.currsize == 0
-            assert create_station_mock.called
+                    results = backend.library.browse(genre_uri.uri)
+                    assert len(results) == 1
+                    assert backend.api._station_list_cache.currsize == 1
+                    assert t not in backend.api._station_list_cache.keys()
+                    assert create_station_mock.called
 
 
 def test_browse_station_uri(config, station_mock):

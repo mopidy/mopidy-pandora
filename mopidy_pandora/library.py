@@ -165,8 +165,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         json_result = self.backend.api.create_station(search_token=genre_token)
         new_station = Station.from_json(self.backend.api, json_result)
 
-        # Invalidate the cache so that it is refreshed on the next request
-        self.backend.api._station_list_cache.clear()
+        self.refresh()
 
         return PandoraUri.factory(new_station)
 
@@ -209,3 +208,10 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         self._cache_pandora_track(track, pandora_track)
         return track
+
+    def refresh(self, uri=None):
+        if not uri or uri == self.root_directory.uri:
+            self.backend.api.get_station_list(force_refresh=True)
+            self.backend.api.get_genre_stations(force_refresh=True)
+        elif uri == self.genre_directory:
+            self.backend.api.get_genre_stations(force_refresh=True)

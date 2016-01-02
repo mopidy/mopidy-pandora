@@ -298,12 +298,12 @@ def station_list_result_mock():
 
 
 @pytest.fixture
-def get_station_list_mock(self):
+def get_station_list_mock(self, force_refresh=False):
     return StationList.from_json(get_backend(config()).api, station_list_result_mock())
 
 
 @pytest.fixture
-def get_genre_stations_mock(self):
+def get_genre_stations_mock(self, force_refresh=False):
     return GenreStationList.from_json(get_backend(config()).api, genre_stations_result_mock())
 
 

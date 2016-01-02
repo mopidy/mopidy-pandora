@@ -11,14 +11,12 @@ from pandora.models.pandora import StationList
 
 import pytest
 
-
-from tests.conftest import get_backend
-from tests.conftest import get_station_list_mock
+from mopidy_pandora.client import MopidyAPIClient
 
 
 def test_get_station_list(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
-        backend = get_backend(config)
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+        backend = conftest.get_backend(config)
 
         station_list = backend.api.get_station_list()
 
@@ -29,8 +27,8 @@ def test_get_station_list(config):
 
 
 def test_get_station_list_populates_cache(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
-        backend = get_backend(config)
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+        backend = conftest.get_backend(config)
 
         assert backend.api._station_list_cache.currsize == 0
 
@@ -39,10 +37,10 @@ def test_get_station_list_populates_cache(config):
 
 
 def test_get_station_list_changed_cached(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
         # Ensure that the cache is re-used between calls
         with mock.patch.object(StationList, 'has_changed', return_value=True):
-            backend = get_backend(config)
+            backend = conftest.get_backend(config)
 
             cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
             mock_cached_result = {'stat': 'ok',
@@ -65,10 +63,10 @@ def test_get_station_list_changed_cached(config):
 
 
 def test_get_station_list_changed_refreshed(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
         # Ensure that the cache is invalidated if 'force_refresh' is True
         with mock.patch.object(StationList, 'has_changed', return_value=True):
-            backend = get_backend(config)
+            backend = conftest.get_backend(config)
 
             cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
             mock_cached_result = {'stat': 'ok',
@@ -88,12 +86,12 @@ def test_get_station_list_changed_refreshed(config):
 
             backend.api.get_station_list(force_refresh=True)
             assert backend.api.get_station_list().checksum == conftest.MOCK_STATION_LIST_CHECKSUM
-            assert len(backend.api._station_list_cache.itervalues().next()) == \
-                len(conftest.station_list_result_mock()['stations'])
+            assert (len(backend.api._station_list_cache.itervalues().next()) ==
+                    len(conftest.station_list_result_mock()['stations']))
 
 
 def test_get_station_list_handles_request_exception(config, caplog):
-    backend = get_backend(config, True)
+    backend = conftest.get_backend(config, True)
 
     assert backend.api.get_station_list() == []
 
@@ -102,10 +100,10 @@ def test_get_station_list_handles_request_exception(config, caplog):
 
 
 def test_get_station(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
         # Make sure we re-use the cached station list between calls
         with mock.patch.object(StationList, 'has_changed', return_value=False):
-            backend = get_backend(config)
+            backend = conftest.get_backend(config)
 
             backend.api.get_station_list()
 
@@ -117,23 +115,26 @@ def test_get_station(config):
 
 
 def test_get_invalid_station(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
         # Check that a call to the Pandora server is triggered if station is
         # not found in the cache
         with pytest.raises(conftest.TransportCallTestNotImplemented):
 
-            backend = get_backend(config)
+            backend = conftest.get_backend(config)
 
             backend.api.get_station('9999999999999999999')
 
 
 def test_create_genre_station_invalidates_cache(config):
-    backend = get_backend(config)
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+        with mock.patch.object(MopidyAPIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+            backend = conftest.get_backend(config)
 
-    backend.api.create_station = mock.PropertyMock(return_value=conftest.station_result_mock()['result'])
-    backend.api._station_list_cache[time.time()] = 'test_value'
-    assert backend.api._station_list_cache.currsize == 1
+            backend.api.create_station = mock.PropertyMock(return_value=conftest.station_result_mock()['result'])
+            t = time.time()
+            backend.api._station_list_cache[t] = mock.Mock(spec=StationList)
+            assert t in backend.api._station_list_cache.keys()
 
-    backend.library._create_station_for_genre('test_token')
-
-    assert backend.api._station_list_cache.currsize == 0
+            backend.library._create_station_for_genre('test_token')
+            assert t not in backend.api._station_list_cache.keys()
+            assert backend.api._station_list_cache.currsize == 1
