@@ -215,3 +215,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             self.backend.api.get_genre_stations(force_refresh=True)
         elif uri == self.genre_directory:
             self.backend.api.get_genre_stations(force_refresh=True)
+        else:
+            pandora_uri = PandoraUri.factory(uri)
+            if type(pandora_uri) is StationUri:
+                self._station = self.backend.api.get_station(pandora_uri.station_id)
+                self._station_iter = iterate_forever(self._station.get_playlist)
