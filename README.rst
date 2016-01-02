@@ -24,8 +24,8 @@ Mopidy-Pandora
 Dependencies
 ============
 
-- Requires a free (ad supported) Pandora account or a Pandora One subscription (provides ad-free playback and higher
-  quality 192 Kbps audio stream).
+- Requires a free, ad supported.  Pandora account or a Pandora One subscription (which provides ad-free playback and a
+  higher quality 192 Kbps audio stream).
 
 - ``pydora`` >= 1.6.4. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
@@ -135,7 +135,7 @@ v0.2.0 (UNRELEASED)
 
 - Now displays all of the correct track information during playback (e.g. song and artist names, album covers, track
   length, bitrate etc.).
-- Simulate dynamic tracklist (workaround for `#2 <https://github.com/rectalogic/mopidy-pandora/issues/2)>`_)
+- Simulate dynamic tracklist (workaround for `#2 <https://github.com/rectalogic/mopidy-pandora/issues/2>`_)
 - Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
   your profile.
 - Add ability to delete a station by setting one of the doubleclick event parameters to ``delete_station``.
