@@ -4,7 +4,7 @@ import json
 
 from mock import Mock
 
-from pandora.models.pandora import AdItem, Playlist, PlaylistItem, Station, StationList
+from pandora.models.pandora import AdItem, GenreStation, GenreStationList, Playlist, PlaylistItem, Station, StationList
 
 import pytest
 
@@ -85,6 +85,12 @@ def get_backend(config, simulate_request_exceptions=False):
 
     obj._event_loop = Mock()
     return obj
+
+
+@pytest.fixture(scope='session')
+def genre_station_mock(simulate_request_exceptions=False):
+    return GenreStation.from_json(get_backend(config(), simulate_request_exceptions).api,
+                                  genre_stations_result_mock()['categories'][0]['stations'][0])
 
 
 @pytest.fixture(scope='session')
@@ -256,6 +262,23 @@ def get_ad_item_mock(self, token):
 
 
 @pytest.fixture(scope='session')
+def genre_stations_result_mock():
+    mock_result = {'stat': 'ok',
+                   'result': {
+                       'categories': [{
+                           'stations': [{
+                               'stationToken': 'G100',
+                               'stationName': 'Genre mock',
+                               'stationId': 'G100'
+                           }],
+                           'categoryName': 'Category mock'
+                       }],
+                   }}
+
+    return mock_result['result']
+
+
+@pytest.fixture(scope='session')
 def station_list_result_mock():
     mock_result = {'stat': 'ok',
                    'result': {'stations': [
@@ -277,6 +300,11 @@ def station_list_result_mock():
 @pytest.fixture
 def get_station_list_mock(self):
     return StationList.from_json(get_backend(config()).api, station_list_result_mock())
+
+
+@pytest.fixture
+def get_genre_stations_mock(self):
+    return GenreStationList.from_json(get_backend(config()).api, genre_stations_result_mock())
 
 
 @pytest.fixture(scope='session')

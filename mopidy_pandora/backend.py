@@ -97,7 +97,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
     def delete_station(self, track_uri):
         r = self.api.delete_station(PandoraUri.factory(track_uri).station_id)
         # Invalidate the cache so that it is refreshed on the next request
-        self.api._station_list_cache.popitem()
+        self.api._station_list_cache.clear()
         self.library.browse(self.library.root_directory.uri)
         return r
 

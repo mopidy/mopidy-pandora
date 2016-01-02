@@ -14,7 +14,7 @@ import pytest
 from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
-from mopidy_pandora.uri import PandoraUri, PlaylistItemUri, StationUri
+from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
 
 from tests.conftest import get_station_list_mock
 
@@ -191,6 +191,41 @@ def test_browse_directory_sort_date(config):
         assert results[1].name.startswith('QuickMix')
         assert results[2].name == conftest.MOCK_STATION_NAME + ' 2'
         assert results[3].name == conftest.MOCK_STATION_NAME + ' 1'
+
+
+def test_browse_genres(config):
+    with mock.patch.object(MopidyAPIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+
+        backend = conftest.get_backend(config)
+        results = backend.library.browse(backend.library.genre_directory.uri)
+        assert len(results) == 1
+        assert results[0].name == 'Category mock'
+
+
+def test_browse_genre_category(config):
+    with mock.patch.object(MopidyAPIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+
+        backend = conftest.get_backend(config)
+        category_uri = 'pandora:genre:Category mock'
+        results = backend.library.browse(category_uri)
+        assert len(results) == 1
+        assert results[0].name == 'Genre mock'
+
+
+def test_browse_genre_station_uri(config, genre_station_mock):
+    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(APIClient, 'create_station',
+                               mock.Mock(return_value=conftest.station_result_mock()['result'])) as create_station_mock:
+
+            backend = conftest.get_backend(config)
+            genre_uri = GenreUri._from_station(genre_station_mock)
+            backend.api._station_list_cache['1'] = 'cache_item_mock'
+            assert backend.api._station_list_cache.currsize == 1
+
+            results = backend.library.browse(genre_uri.uri)
+            assert len(results) == 1
+            assert backend.api._station_list_cache.currsize == 0
+            assert create_station_mock.called
 
 
 def test_browse_station_uri(config, station_mock):
