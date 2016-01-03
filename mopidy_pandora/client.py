@@ -49,7 +49,6 @@ class MopidyAPIClient(pandora.APIClient):
         self._genre_stations_cache = TTLCache(1, cache_ttl)
 
     def get_station_list(self, force_refresh=False):
-
         list = []
         try:
             if (self._station_list_cache.currsize == 0 or
@@ -69,7 +68,6 @@ class MopidyAPIClient(pandora.APIClient):
             return list
 
     def get_station(self, station_token):
-
         try:
             return self.get_station_list()[station_token]
         except TypeError:
@@ -77,13 +75,13 @@ class MopidyAPIClient(pandora.APIClient):
             return super(MopidyAPIClient, self).get_station(station_token)
 
     def get_genre_stations(self, force_refresh=False):
-
         list = []
         try:
             if (self._genre_stations_cache.currsize == 0 or
                     (force_refresh and self._genre_stations_cache.itervalues().next().has_changed())):
 
-                self._genre_stations_cache[time.time()] = super(MopidyAPIClient, self).get_genre_stations()
+                list = super(MopidyAPIClient, self).get_genre_stations()
+                self._genre_stations_cache[time.time()] = list
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora genre stations.')

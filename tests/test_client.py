@@ -5,13 +5,81 @@ import time
 import mock
 
 from pandora import APIClient
-from pandora.models.pandora import StationList
+from pandora.models.pandora import GenreStationList, StationList
 
 import pytest
 
 from mopidy_pandora.client import MopidyAPIClient
 
 from . import conftest
+
+
+def test_get_genre_stations(config):
+    with mock.patch.object(APIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+        backend = conftest.get_backend(config)
+
+        genre_stations = backend.api.get_genre_stations()
+
+        assert len(genre_stations) == len(conftest.genre_stations_result_mock()['categories'])
+        assert 'Category mock' in genre_stations.keys()
+
+
+def test_get_genre_stations_handles_request_exception(config, caplog):
+    backend = conftest.get_backend(config, True)
+
+    assert backend.api.get_genre_stations() == []
+
+    # Check that request exceptions are caught and logged
+    assert 'Error retrieving Pandora genre stations.' in caplog.text()
+
+
+def test_get_genre_stations_populates_cache(config):
+    with mock.patch.object(APIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+        backend = conftest.get_backend(config)
+
+        assert backend.api._genre_stations_cache.currsize == 0
+
+        backend.api.get_genre_stations()
+        assert backend.api._genre_stations_cache.currsize == 1
+
+
+def test_get_genre_stations_changed_cached(config):
+    with mock.patch.object(APIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+        # Ensure that the cache is re-used between calls
+        backend = conftest.get_backend(config)
+
+        cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
+        mock_cached_result = {'stat': 'ok',
+                              'result': {
+                                  'categories': [{
+                                      'stations': [{
+                                          'stationToken': 'G200',
+                                          'stationName': 'Genre mock2',
+                                          'stationId': 'G200'
+                                      }],
+                                      'categoryName': 'Category mock2'
+                                  }],
+                              }}
+
+        station_list = GenreStationList.from_json(APIClient, mock_cached_result['result'])
+        station_list.checksum = cached_checksum
+        backend.api._genre_stations_cache[time.time()] = station_list
+
+        assert backend.api.get_genre_stations().checksum == cached_checksum
+        assert len(backend.api._genre_stations_cache.itervalues().next()) == len(GenreStationList.from_json(
+            APIClient, mock_cached_result['result']))
+
+
+def test_get_genre_stations_cache_disabled(config):
+    with mock.patch.object(APIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
+        cache_config = config
+        cache_config['pandora']['cache_time_to_live'] = 0
+        backend = conftest.get_backend(cache_config)
+
+        assert backend.api._genre_stations_cache.currsize == 0
+
+        assert len(backend.api.get_genre_stations()) == 1
+        assert backend.api._genre_stations_cache.currsize == 0
 
 
 def test_get_station_list(config):
@@ -39,27 +107,37 @@ def test_get_station_list_populates_cache(config):
 def test_get_station_list_changed_cached(config):
     with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
         # Ensure that the cache is re-used between calls
-        with mock.patch.object(StationList, 'has_changed', return_value=True):
-            backend = conftest.get_backend(config)
+        backend = conftest.get_backend(config)
 
-            cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
-            mock_cached_result = {'stat': 'ok',
-                                  'result': {
-                                      'stations': [
-                                            {'stationId': conftest.MOCK_STATION_ID,
-                                             'stationToken': conftest.MOCK_STATION_TOKEN,
-                                             'stationName': conftest.MOCK_STATION_NAME
-                                             }, ],
-                                      'checksum': cached_checksum
-                                  }}
+        cached_checksum = 'zz00aa00aa00aa00aa00aa00aa00aa99'
+        mock_cached_result = {'stat': 'ok',
+                              'result': {
+                                  'stations': [
+                                        {'stationId': conftest.MOCK_STATION_ID,
+                                         'stationToken': conftest.MOCK_STATION_TOKEN,
+                                         'stationName': conftest.MOCK_STATION_NAME
+                                         }, ],
+                                  'checksum': cached_checksum
+                              }}
 
-            backend.api._station_list_cache[time.time()] = StationList.from_json(
-                APIClient, mock_cached_result['result'])
+        backend.api._station_list_cache[time.time()] = StationList.from_json(
+            APIClient, mock_cached_result['result'])
 
-            backend.api.get_station_list()
-            assert backend.api.get_station_list().checksum == cached_checksum
-            assert len(backend.api._station_list_cache.itervalues().next()) == len(StationList.from_json(
-                APIClient, mock_cached_result['result']))
+        assert backend.api.get_station_list().checksum == cached_checksum
+        assert len(backend.api._station_list_cache.itervalues().next()) == len(StationList.from_json(
+            APIClient, mock_cached_result['result']))
+
+
+def test_get_station_list_cache_disabled(config):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+        cache_config = config
+        cache_config['pandora']['cache_time_to_live'] = 0
+        backend = conftest.get_backend(cache_config)
+
+        assert backend.api._station_list_cache.currsize == 0
+
+        assert len(backend.api.get_station_list()) == 3
+        assert backend.api._station_list_cache.currsize == 0
 
 
 def test_get_station_list_changed_refreshed(config):
@@ -84,8 +162,7 @@ def test_get_station_list_changed_refreshed(config):
 
             assert backend.api.get_station_list().checksum == cached_checksum
 
-            backend.api.get_station_list(force_refresh=True)
-            assert backend.api.get_station_list().checksum == conftest.MOCK_STATION_LIST_CHECKSUM
+            assert backend.api.get_station_list(force_refresh=True).checksum == conftest.MOCK_STATION_LIST_CHECKSUM
             assert (len(backend.api._station_list_cache.itervalues().next()) ==
                     len(conftest.station_list_result_mock()['stations']))
 
