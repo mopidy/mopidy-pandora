@@ -137,21 +137,21 @@ class TestEventHandlingFrontend(BaseTestFrontend):
 
         assert not frontend._trigger_event_triggered.called
 
-    # def test_pause_starts_double_click_timer(self):
-    #     self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-    #
-    #     frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-    #     assert frontend.get_click_time().get() == 0
-    #     frontend.track_playback_paused(mock.Mock(), 100).get()
-    #     assert frontend.get_click_time().get() > 0
-    #
-    # def test_pause_does_not_start_timer_at_track_start(self):
-    #     self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-    #
-    #     frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-    #     assert frontend.get_click_time().get() == 0
-    #     frontend.track_playback_paused(mock.Mock(), 0).get()
-    #     assert frontend.get_click_time().get() == 0
+    def test_pause_starts_double_click_timer(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        assert frontend.get_click_time().get() == 0
+        frontend.track_playback_paused(mock.Mock(), 100).get()
+        assert frontend.get_click_time().get() > 0
+
+    def test_pause_does_not_start_timer_at_track_start(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        assert frontend.get_click_time().get() == 0
+        frontend.track_playback_paused(mock.Mock(), 0).get()
+        assert frontend.get_click_time().get() == 0
 
     def test_process_events_handles_exception(self):
         with mock.patch.object(EventHandlingPandoraFrontend, '_get_event_targets',
