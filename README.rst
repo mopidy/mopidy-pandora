@@ -92,7 +92,7 @@ The following configuration values are available:
 It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
 pause/play/previous/next buttons.
 
-- ``pandora/event_support_enabled``: setting this to ``false`` will disable all event triggers entirely.
+- ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers.
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval (in seconds) will
   trigger an event. Defaults to ``2.00`` seconds.
 - ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults

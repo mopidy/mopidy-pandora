@@ -23,7 +23,9 @@ from tests.dummy_backend import DummyBackend, DummyPandoraBackend
 class TestPandoraFrontendFactory(unittest.TestCase):
 
     def test_events_supported_returns_event_handler_frontend(self):
-        frontend = PandoraFrontendFactory(conftest.config(), mock.PropertyMock())
+        config = conftest.config()
+        config['pandora']['event_support_enabled'] = True
+        frontend = PandoraFrontendFactory(config, mock.PropertyMock())
 
         assert type(frontend) is EventHandlingPandoraFrontend
 
