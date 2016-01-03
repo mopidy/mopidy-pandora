@@ -12,7 +12,7 @@ from mopidy_pandora import listener, utils
 
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
-from mopidy_pandora.playback import EventHandlingPlaybackProvider, PandoraPlaybackProvider
+from mopidy_pandora.playback import PandoraPlaybackProvider
 from mopidy_pandora.uri import PandoraUri  # noqa: I101
 
 
@@ -39,14 +39,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
 
         self.api = MopidySettingsDictBuilder(settings, client_class=MopidyAPIClient).build()
         self.library = PandoraLibraryProvider(backend=self, sort_order=self.config.get('sort_order'))
-
-        self.supports_events = False
-        if self.config.get('event_support_enabled'):
-            self.supports_events = True
-            self.playback = EventHandlingPlaybackProvider(audio, self)
-        else:
-            self.playback = PandoraPlaybackProvider(audio, self)
-
+        self.playback = PandoraPlaybackProvider(audio, self)
         self.uri_schemes = [PandoraUri.SCHEME]
 
     @utils.run_async
@@ -100,15 +93,18 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         return self.api.add_song_bookmark(PandoraUri.factory(track_uri).token)
 
     def delete_station(self, track_uri):
-        r = self.api.delete_station(PandoraUri.factory(track_uri).station_id)
+        # As of version 5 of the Pandora API, station IDs and tokens are always equivalent.
+        # We're using this assumption as we don't have the station token available for deleting the station.
+        # Detect if any Pandora API changes ever breaks this assumption in the future.
+        assert PandoraUri.factory(track_uri).station_id == self.library._station.token
+
+        r = self.api.delete_station(self.library._station.token)
         self.library.refresh()
         self.library.browse(self.library.root_directory.uri)
         return r
 
     def _trigger_next_track_available(self, track, auto_play=False):
-        (listener.PandoraBackendListener.send(listener.PandoraBackendListener.next_track_available.__name__,
-                                              track=track, auto_play=auto_play))
+        (listener.PandoraBackendListener.send('next_track_available', track=track, auto_play=auto_play))
 
     def _trigger_event_processed(self, track_uri, pandora_event):
-        listener.PandoraBackendListener.send(listener.PandoraBackendListener.event_processed.__name__,
-                                             track_uri=track_uri, pandora_event=pandora_event)
+        listener.PandoraBackendListener.send('event_processed', track_uri=track_uri, pandora_event=pandora_event)

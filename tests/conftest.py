@@ -45,8 +45,8 @@ def config():
             'port': '6680'
         },
         'proxy': {
-            'hostname': 'mock_host',
-            'port': 'mock_port'
+            'hostname': 'host_mock',
+            'port': 'port_mock'
         },
         'pandora': {
             'enabled': True,
@@ -195,8 +195,8 @@ def ad_metadata_result_mock():
     mock_result = {'stat': 'ok',
                    'result': dict(title=MOCK_TRACK_NAME,
                                   companyName='Mock Company Name',
-                                  clickThroughUrl='mock_click_url',
-                                  imageUrl='mock_img_url',
+                                  clickThroughUrl='click_url_mock',
+                                  imageUrl='img_url_mock',
                                   trackGain='0.0',
                                   audioUrlMap={
                                       'highQuality': {

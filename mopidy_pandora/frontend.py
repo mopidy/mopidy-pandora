@@ -1,5 +1,6 @@
 import logging
-import threading
+
+import time
 
 from mopidy import core
 from mopidy.audio import PlaybackState
@@ -140,8 +141,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             self.core.playback.play(tl_tracks[-1]).get()
 
     def _trigger_end_of_tracklist_reached(self, auto_play=False):
-        listener.PandoraFrontendListener.send(
-            listener.PandoraFrontendListener.end_of_tracklist_reached.__name__, auto_play=auto_play)
+        listener.PandoraFrontendListener.send('end_of_tracklist_reached', auto_play=auto_play)
 
 
 class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlingPlaybackListener):
@@ -150,108 +150,89 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         super(EventHandlingPandoraFrontend, self).__init__(config, core)
 
         self.settings = {
-            'OPR_EVENT': config['pandora'].get('on_pause_resume_click'),
-            'OPN_EVENT': config['pandora'].get('on_pause_next_click'),
-            'OPP_EVENT': config['pandora'].get('on_pause_previous_click'),
-            'OPS_EVENT': config['pandora'].get('on_pause_stop_click')
+            'resume': config['pandora'].get('on_pause_resume_click'),
+            'change_track_next': config['pandora'].get('on_pause_next_click'),
+            'change_track_previous': config['pandora'].get('on_pause_previous_click'),
+            'stop': config['pandora'].get('on_pause_stop_click')
         }
 
-        self.last_played_track_uri = None
-        self.upcoming_track_uri = None
-
-        self.event_processed_event = threading.Event()
-        self.event_processed_event.set()
-
-        self.tracklist_changed_event = threading.Event()
-        self.tracklist_changed_event.set()
+        self.double_click_interval = float(config['pandora'].get('double_click_interval'))
+        self._click_time = 0
 
     @only_execute_for_pandora_uris
-    def tracklist_changed(self):
-
-        if self.event_processed_event.isSet():
-            # Keep track of current and next tracks so that we can determine direction of future track changes.
-            current_tl_track = self.core.playback.get_current_tl_track().get()
-            self.last_played_track_uri = current_tl_track.track.uri
-            self.upcoming_track_uri = self.core.tracklist.next_track(current_tl_track).get().track.uri
-
-            self.tracklist_changed_event.set()
-        else:
-            # Delay 'tracklist_changed' events until all events have been processed.
-            self.tracklist_changed_event.clear()
-
-    @only_execute_for_pandora_uris
-    def track_playback_ended(self, tl_track, time_position):
-        super(EventHandlingPandoraFrontend, self).track_playback_ended(tl_track, time_position)
-
-        self._process_events(tl_track.track.uri, time_position, action=self.track_playback_ended.__name__)
+    def track_playback_paused(self, tl_track, time_position):
+        super(EventHandlingPandoraFrontend, self).track_playback_paused(tl_track, time_position)
+        if time_position > 0:
+            self.set_click_time()
 
     @only_execute_for_pandora_uris
     def track_playback_resumed(self, tl_track, time_position):
         super(EventHandlingPandoraFrontend, self).track_playback_resumed(tl_track, time_position)
+        self.check_doubleclicked(action='resume')
 
-        self._process_events(tl_track.track.uri, time_position, action=self.track_playback_resumed.__name__)
+    def track_changed(self, track):
+        super(EventHandlingPandoraFrontend, self).track_changed(track)
+        self.check_doubleclicked(action='change_track')
 
-    def _process_events(self, track_uri, time_position, action=None):
-
-        # Check if there are any events that still require processing.
-        if self.event_processed_event.isSet():
-            # No events to process.
-            return
-
-        event_target_uri = self._get_event_target_uri(track_uri, time_position)
-        assert event_target_uri
-
-        if type(PandoraUri.factory(event_target_uri)) is AdItemUri:
-            logger.info('Ignoring doubleclick event for Pandora advertisement...')
-            self.event_processed_event.set()
-            return
-
-        try:
-            self._trigger_event_triggered(event_target_uri, self._get_event(track_uri, time_position, action=action))
-        except ValueError:
-            logger.exception("Error processing Pandora event for URI '{}'. Ignoring event...".format(event_target_uri))
-            self.event_processed_event.set()
-            return
-
-    def _get_event_target_uri(self, track_uri, time_position):
-        if time_position == 0:
-            # Track was just changed, trigger the event for the previously played track.
-            history = self.core.history.get_history().get()
-            return history[1][1].uri
+    def set_click_time(self, click_time=None):
+        if click_time is None:
+            self._click_time = time.time()
         else:
-            # Trigger the event for the track that is playing currently.
-            return track_uri
+            self._click_time = click_time
 
-    def _get_event(self, track_uri, time_position, action=None):
-        if action == self.track_playback_resumed.__name__ and track_uri == self.last_played_track_uri:
-            if time_position > 0:
-                # Resuming playback on the first track in the tracklist.
-                return self.settings['OPR_EVENT']
-            else:
-                return self.settings['OPP_EVENT']
+    def get_click_time(self):
+        return self._click_time
 
-        elif action == self.track_playback_resumed.__name__ and track_uri == self.upcoming_track_uri:
-            return self.settings['OPN_EVENT']
-        elif action == self.track_playback_ended.__name__:
-            return self.settings['OPS_EVENT']
-        else:
-            raise ValueError('Unexpected event URI: {}'.format(track_uri))
+    def check_doubleclicked(self, action=None):
+        if self._is_double_click():
+            self._process_event(action=action)
 
     def event_processed(self, track_uri, pandora_event):
-        self.event_processed_event.set()
         if pandora_event == 'delete_station':
             self.core.tracklist.clear()
-        else:
-            if not self.tracklist_changed_event.isSet():
-                # Do any 'tracklist_changed' updates that are pending.
-                self.tracklist_changed()
 
-    def doubleclicked(self):
-        self.event_processed_event.clear()
-        # Resume playback...
-        if self.core.playback.get_state().get() != PlaybackState.PLAYING:
-            self.core.playback.resume().get()
+    def _is_double_click(self):
+        double_clicked = self._click_time > 0 and time.time() - self._click_time < self.double_click_interval
+        self.set_click_time(0)
+
+        return double_clicked
+
+    def _process_event(self, action=None):
+        try:
+            event_target_uri, event_target_action = self._get_event_targets(action=action)
+
+            if type(PandoraUri.factory(event_target_uri)) is AdItemUri:
+                logger.info('Ignoring doubleclick event for Pandora advertisement...')
+                return
+
+            self._trigger_event_triggered(event_target_uri, event_target_action)
+            # Resume playback...
+            if action in ['stop', 'change_track'] and self.core.playback.get_state().get() != PlaybackState.PLAYING:
+                self.core.playback.resume().get()
+        except ValueError:
+            logger.exception("Error processing Pandora event '{}', ignoring...".format(action))
+            return
+
+    def _get_event_targets(self, action=None):
+        current_track_uri = self.core.playback.get_current_tl_track().get().track.uri
+
+        if action == 'change_track':
+            previous_track_uri = self.core.history.get_history().get()[1][1].uri
+            if current_track_uri == previous_track_uri:
+                # Replaying last played track, user clicked 'previous'.
+                action = self.settings['change_track_previous']
+            else:
+                # Track not in recent tracklist history, user clicked 'next'.
+                action = self.settings['change_track_next']
+
+            return previous_track_uri, action
+
+        elif action in ['resume', 'stop']:
+            return current_track_uri, self.settings[action]
+
+        raise ValueError('Unexpected event: {}'.format(action))
 
     def _trigger_event_triggered(self, track_uri, event):
-        (listener.PandoraFrontendListener.send(listener.PandoraEventHandlingFrontendListener.event_triggered.__name__,
-                                               track_uri=track_uri, pandora_event=event))
+        (listener.PandoraEventHandlingFrontendListener.send('event_triggered',
+                                                            track_uri=track_uri,
+                                                            pandora_event=event))

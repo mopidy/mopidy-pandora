@@ -108,10 +108,10 @@ def test_get_station(config):
             backend.api.get_station_list()
 
             assert backend.api.get_station(
-                conftest.MOCK_STATION_ID).name == conftest.MOCK_STATION_NAME + ' 1'
+                conftest.MOCK_STATION_TOKEN).name == conftest.MOCK_STATION_NAME + ' 1'
 
             assert backend.api.get_station(
-                conftest.MOCK_STATION_ID.replace('1', '2')).name == conftest.MOCK_STATION_NAME + ' 2'
+                conftest.MOCK_STATION_TOKEN.replace('1', '2')).name == conftest.MOCK_STATION_NAME + ' 2'
 
 
 def test_get_invalid_station(config):

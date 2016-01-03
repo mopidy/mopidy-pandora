@@ -1,5 +1,4 @@
 import logging
-import time
 
 from mopidy import backend
 
@@ -81,68 +80,13 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
     def _trigger_track_changed(self, track):
-        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_changed.__name__, track=track)
+        listener.PandoraPlaybackListener.send('track_changed', track=track)
 
     def _trigger_track_unplayable(self, track):
-        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.track_unplayable.__name__, track=track)
+        listener.PandoraPlaybackListener.send('track_unplayable', track=track)
 
     def _trigger_skip_limit_exceeded(self):
-        listener.PandoraPlaybackListener.send(listener.PandoraPlaybackListener.skip_limit_exceeded.__name__)
-
-
-class EventHandlingPlaybackProvider(PandoraPlaybackProvider):
-    def __init__(self, audio, backend):
-        super(EventHandlingPlaybackProvider, self).__init__(audio, backend)
-
-        self.double_click_interval = float(backend.config.get('double_click_interval'))
-        self._click_time = 0
-
-    def set_click_time(self, click_time=None):
-        if click_time is None:
-            self._click_time = time.time()
-        else:
-            self._click_time = click_time
-
-    def get_click_time(self):
-        return self._click_time
-
-    def is_double_click(self):
-        double_clicked = self._click_time > 0 and time.time() - self._click_time < self.double_click_interval
-
-        if not double_clicked:
-            self.set_click_time(0)
-
-        return double_clicked
-
-    def change_track(self, track):
-
-        if self.is_double_click():
-            self._trigger_doubleclicked()
-
-        return super(EventHandlingPlaybackProvider, self).change_track(track)
-
-    def resume(self):
-        if self.is_double_click() and self.get_time_position() > 0:
-            self._trigger_doubleclicked()
-
-        return super(EventHandlingPlaybackProvider, self).resume()
-
-    def pause(self):
-        if self.get_time_position() > 0:
-            self.set_click_time()
-
-        return super(EventHandlingPlaybackProvider, self).pause()
-
-    def stop(self):
-        if self.is_double_click():
-            self._trigger_doubleclicked()
-
-        return super(EventHandlingPlaybackProvider, self).stop()
-
-    def _trigger_doubleclicked(self):
-        self.set_click_time(0)
-        listener.PandoraEventHandlingPlaybackListener.send(
-            listener.PandoraEventHandlingPlaybackListener.doubleclicked.__name__)
+        listener.PandoraPlaybackListener.send('skip_limit_exceeded')
 
 
 class MaxSkipLimitExceeded(Exception):

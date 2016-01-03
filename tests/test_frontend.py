@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+import time
+
 import unittest
 
 from mock import mock
@@ -131,58 +133,54 @@ class TestEventHandlingFrontend(BaseTestFrontend):
 
         frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
         frontend._trigger_event_triggered = mock.PropertyMock()
-        frontend.event_processed_event.get().clear()
-        frontend.track_playback_resumed(self.tl_tracks[1], 100).get()
+        frontend.check_doubleclicked(action='resume').get()
 
-        assert frontend.event_processed_event.get().isSet()
         assert not frontend._trigger_event_triggered.called
+
+    def test_pause_starts_double_click_timer(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        assert frontend.get_click_time().get() == 0
+        frontend.track_playback_paused(mock.Mock(), 100).get()
+        assert frontend.get_click_time().get() > 0
+
+    def test_pause_does_not_start_timer_at_track_start(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        assert frontend.get_click_time().get() == 0
+        frontend.track_playback_paused(mock.Mock(), 0).get()
+        assert frontend.get_click_time().get() == 0
 
     def test_process_events_handles_exception(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        with mock.patch.object(EventHandlingPandoraFrontend, '_get_event_targets',
+                               mock.PropertyMock(return_value=None, side_effect=ValueError('error_mock'))):
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
 
-        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        frontend._trigger_event_triggered = mock.PropertyMock()
-        frontend._get_event = mock.PropertyMock(side_effect=ValueError('mock_error'))
-        frontend.event_processed_event.get().clear()
-        frontend.track_playback_resumed(self.tl_tracks[0], 100).get()
+            frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+            frontend._trigger_event_triggered = mock.PropertyMock()
+            frontend.check_doubleclicked(action='resume').get()
 
-        assert frontend.event_processed_event.get().isSet()
         assert not frontend._trigger_event_triggered.called
 
-    def test_process_events_does_nothing_if_no_events_are_queued(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+    def test_is_double_click(self):
 
-        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        frontend._trigger_event_triggered = mock.PropertyMock()
-        frontend.event_processed_event.get().set()
-        frontend.track_playback_resumed(self.tl_tracks[0], 100).get()
+        frontend = EventHandlingPandoraFrontend(conftest.config(), self.core)
+        frontend.set_click_time()
+        assert frontend._is_double_click()
+        assert frontend.get_click_time() == 0
 
-        assert frontend.event_processed_event.get().isSet()
-        assert not frontend._trigger_event_triggered.called
+        time.sleep(float(frontend.double_click_interval) + 0.1)
+        assert frontend._is_double_click() is False
 
-    def test_tracklist_changed_blocks_if_events_are_queued(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+    def test_is_double_click_resets_click_time(self):
 
-        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        frontend.event_processed_event.get().clear()
-        frontend.last_played_track_uri = 'mock_uri'
-        frontend.upcoming_track_uri = 'mock_ury'
+        frontend = EventHandlingPandoraFrontend(conftest.config(), self.core)
+        frontend.set_click_time()
+        assert frontend._is_double_click()
 
-        frontend.tracklist_changed().get()
-        assert not frontend.tracklist_changed_event.get().isSet()
-        assert frontend.last_played_track_uri.get() == 'mock_uri'
-        assert frontend.upcoming_track_uri.get() == 'mock_ury'
+        time.sleep(float(frontend.double_click_interval) + 0.1)
+        assert frontend._is_double_click() is False
 
-    def test_tracklist_changed_updates_uris_after_event_is_processed(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-
-        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        frontend.event_processed_event.get().set()
-        frontend.last_played_track_uri = 'mock_uri'
-        frontend.upcoming_track_uri = 'mock_ury'
-
-        frontend.tracklist_changed().get()
-        assert frontend.tracklist_changed_event.get().isSet()
-        current_track_uri = self.core.playback.get_current_tl_track().get()
-        assert frontend.last_played_track_uri.get() == current_track_uri.track.uri
-        assert frontend.upcoming_track_uri.get() == self.core.tracklist.next_track(current_track_uri).get().track.uri
+        assert frontend.get_click_time() == 0

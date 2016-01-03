@@ -136,9 +136,12 @@ class PandoraEventHandlingPlaybackListener(listener.Listener):
     def send(event, **kwargs):
         listener.send_async(PandoraEventHandlingPlaybackListener, event, **kwargs)
 
-    def doubleclicked(self):
+    def check_doubleclicked(self, action=None):
         """
-        Called when the user performed a doubleclick action (i.e. pause/back, pause/resume, pause, next).
+        Called to check if a doubleclick action was performed on one of the playback actions (i.e. pause/back,
+        pause/resume, pause, next).
 
+        :param action: The playback action that occurred.
+        :type action: string
         """
         pass

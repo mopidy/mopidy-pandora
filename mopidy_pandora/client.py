@@ -66,13 +66,13 @@ class MopidyAPIClient(pandora.APIClient):
             # Cache disabled
             return list
 
-    def get_station(self, station_id):
+    def get_station(self, station_token):
 
         try:
-            return self.get_station_list()[station_id]
+            return self.get_station_list()[station_token]
         except TypeError:
-            # Could not find station_id in cached list, try retrieving from Pandora server.
-            return super(MopidyAPIClient, self).get_station(station_id)
+            # Could not find station_token in cached list, try retrieving from Pandora server.
+            return super(MopidyAPIClient, self).get_station(station_token)
 
     def get_genre_stations(self, force_refresh=False):
 
