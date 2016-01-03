@@ -2,8 +2,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import time
 
-from . import conftest
-
 import mock
 
 from mopidy import models
@@ -17,6 +15,8 @@ from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider
 
 from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
+
+from . import conftest
 
 
 def test_get_images_for_ad_without_images(config, ad_item_mock):

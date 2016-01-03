@@ -1,8 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from . import conftest
-
 from mock import mock
 
 from pandora.models.pandora import GenreStation, Station
@@ -10,6 +8,8 @@ from pandora.models.pandora import GenreStation, Station
 import pytest
 
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, PlaylistItemUri, StationUri, TrackUri
+
+from . import conftest
 
 
 def test_factory_unsupported_type():

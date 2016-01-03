@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 import urllib
+
 from mopidy import compat
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station

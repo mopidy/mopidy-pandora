@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from . import conftest
-
 import mock
 
 from mopidy import audio, models
@@ -18,6 +16,8 @@ from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import PandoraPlaybackProvider
 
 from mopidy_pandora.uri import PandoraUri
+
+from . import conftest
 
 
 @pytest.fixture

@@ -2,8 +2,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import time
 
-from . import conftest
-
 import mock
 
 from pandora import APIClient
@@ -12,6 +10,8 @@ from pandora.models.pandora import StationList
 import pytest
 
 from mopidy_pandora.client import MopidyAPIClient
+
+from . import conftest
 
 
 def test_get_station_list(config):
