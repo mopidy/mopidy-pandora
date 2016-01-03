@@ -53,10 +53,10 @@ def test_pandora_parse_mock_uri():
 
 
 def test_pandora_parse_unicode_mock_uri():
-    uri = PlaylistItemUri(conftest.MOCK_STATION_ID, 'Ω≈ç√∫˜µ≤≥÷')
-    obj = PandoraUri._from_uri('pandora:track:{}:{}'.format(conftest.MOCK_STATION_ID, 'Ω≈ç√∫˜µ≤≥÷'))
+    uri = PlaylistItemUri(conftest.MOCK_STATION_ID, 'Ω≈ç√∫:˜µ≤≥÷')
+    obj = PandoraUri._from_uri(uri.uri)
 
-    assert type(obj) is PlaylistItemUri
+    assert isinstance(obj, PandoraUri)
     assert obj.uri == uri.uri
 
 

@@ -1,9 +1,7 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
 import logging
 import urllib
-
-from mopidy import compat
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
 
@@ -17,6 +15,7 @@ class _PandoraUriMeta(type):
             cls.TYPES[cls.uri_type] = cls
 
 
+# TODO: Make this class work with unicode_literals.
 class PandoraUri(object):
     __metaclass__ = _PandoraUriMeta
     TYPES = {}
@@ -28,9 +27,6 @@ class PandoraUri(object):
     def __repr__(self):
         return '{}:{uri_type}'.format(self.SCHEME, **self.__dict__)
 
-    def __str__(self):
-        return '{}:{uri_type}'.format(self.SCHEME, **self.encoded_attributes)
-
     @property
     def encoded_attributes(self):
         encoded_dict = {}
@@ -41,27 +37,23 @@ class PandoraUri(object):
 
     @property
     def uri(self):
-        return str(self)
+        return repr(self)
 
     @classmethod
     def encode(cls, value):
         if value is None:
             value = ''
-        if isinstance(value, compat.text_type):
-            value = value.encode('utf-8')
-        value = urllib.quote(value)
-        return value
+        if not isinstance(value, basestring):
+            value = str(value)
+        return urllib.quote(value.encode('utf8'))
 
     @classmethod
     def decode(cls, value):
-        try:
-            return urllib.unquote(compat.text_type(value))
-        except UnicodeError:
-            return urllib.unquote(bytes(value).decode('utf-8'))
+        return urllib.unquote(value).decode('utf8')
 
     @classmethod
     def factory(cls, obj):
-        if isinstance(obj, compat.text_type) or isinstance(obj, compat.string_types):
+        if isinstance(obj, basestring):
             return PandoraUri._from_uri(obj)
         elif isinstance(obj, Station) or isinstance(obj, GenreStation):
             return PandoraUri._from_station(obj)
@@ -110,12 +102,6 @@ class GenreUri(PandoraUri):
     def __repr__(self):
         return '{}:{category_name}'.format(
             super(GenreUri, self).__repr__(),
-            **self.__dict__
-        )
-
-    def __str__(self):
-        return '{}:{category_name}'.format(
-            super(GenreUri, self).__str__(),
             **self.encoded_attributes
         )
 
@@ -131,12 +117,6 @@ class StationUri(PandoraUri):
     def __repr__(self):
         return '{}:{station_id}:{token}'.format(
             super(StationUri, self).__repr__(),
-            **self.__dict__
-        )
-
-    def __str__(self):
-        return '{}:{station_id}:{token}'.format(
-            super(StationUri, self).__str__(),
             **self.encoded_attributes
         )
 
@@ -166,12 +146,6 @@ class PlaylistItemUri(TrackUri):
     def __repr__(self):
         return '{}:{station_id}:{token}'.format(
             super(PlaylistItemUri, self).__repr__(),
-            **self.__dict__
-        )
-
-    def __str__(self):
-        return '{}:{station_id}:{token}'.format(
-            super(PlaylistItemUri, self).__str__(),
             **self.encoded_attributes
         )
 
@@ -187,11 +161,5 @@ class AdItemUri(TrackUri):
     def __repr__(self):
         return '{}:{station_id}:{ad_token}'.format(
             super(AdItemUri, self).__repr__(),
-            **self.__dict__
-        )
-
-    def __str__(self):
-        return '{}:{station_id}:{ad_token}'.format(
-            super(AdItemUri, self).__str__(),
             **self.encoded_attributes
         )
