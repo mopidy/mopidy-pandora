@@ -4,7 +4,7 @@ This backend implements the backend API in the simplest way possible.  It is
 used in tests of the frontends.
 """
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from mopidy import backend
 from mopidy.models import Ref, SearchResult

@@ -1,4 +1,7 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging
+import threading
 
 import time
 
@@ -9,7 +12,7 @@ import pykka
 
 from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
-
+from mopidy_pandora.utils import run_async
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +162,20 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         self.double_click_interval = float(config['pandora'].get('double_click_interval'))
         self._click_time = 0
 
+        self.track_changed_event = threading.Event()
+        self.track_changed_event.set()
+
+    @only_execute_for_pandora_uris
+    def track_playback_ended(self, tl_track, time_position):
+        super(EventHandlingPandoraFrontend, self).track_playback_ended(tl_track, time_position)
+        self.check_doubleclicked(action='stop')
+
+    @run_async
+    def _wait_for_track_change(self):
+        self.track_changed_event.clear()
+        if not self.track_changed_event.wait(timeout=self.double_click_interval):
+            self._process_event(action='stop')
+
     @only_execute_for_pandora_uris
     def track_playback_paused(self, tl_track, time_position):
         super(EventHandlingPandoraFrontend, self).track_playback_paused(tl_track, time_position)
@@ -171,6 +188,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         self.check_doubleclicked(action='resume')
 
     def track_changed(self, track):
+        self.track_changed_event.set()
         super(EventHandlingPandoraFrontend, self).track_changed(track)
         self.check_doubleclicked(action='change_track')
 
@@ -185,20 +203,21 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
 
     def check_doubleclicked(self, action=None):
         if self._is_double_click():
-            self._process_event(action=action)
+            if action == 'stop':
+                self._wait_for_track_change()
+            else:
+                self._process_event(action=action)
 
     def event_processed(self, track_uri, pandora_event):
         if pandora_event == 'delete_station':
             self.core.tracklist.clear()
 
     def _is_double_click(self):
-        double_clicked = self._click_time > 0 and time.time() - self._click_time < self.double_click_interval
-        self.set_click_time(0)
-
-        return double_clicked
+        return self._click_time > 0 and time.time() - self._click_time < self.double_click_interval
 
     def _process_event(self, action=None):
         try:
+            self.set_click_time(0)
             event_target_uri, event_target_action = self._get_event_targets(action=action)
 
             if type(PandoraUri.factory(event_target_uri)) is AdItemUri:

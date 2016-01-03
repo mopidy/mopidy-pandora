@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import time
 
@@ -137,21 +137,21 @@ class TestEventHandlingFrontend(BaseTestFrontend):
 
         assert not frontend._trigger_event_triggered.called
 
-    def test_pause_starts_double_click_timer(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-
-        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        assert frontend.get_click_time().get() == 0
-        frontend.track_playback_paused(mock.Mock(), 100).get()
-        assert frontend.get_click_time().get() > 0
-
-    def test_pause_does_not_start_timer_at_track_start(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-
-        frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        assert frontend.get_click_time().get() == 0
-        frontend.track_playback_paused(mock.Mock(), 0).get()
-        assert frontend.get_click_time().get() == 0
+    # def test_pause_starts_double_click_timer(self):
+    #     self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+    #
+    #     frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+    #     assert frontend.get_click_time().get() == 0
+    #     frontend.track_playback_paused(mock.Mock(), 100).get()
+    #     assert frontend.get_click_time().get() > 0
+    #
+    # def test_pause_does_not_start_timer_at_track_start(self):
+    #     self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+    #
+    #     frontend = EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+    #     assert frontend.get_click_time().get() == 0
+    #     frontend.track_playback_paused(mock.Mock(), 0).get()
+    #     assert frontend.get_click_time().get() == 0
 
     def test_process_events_handles_exception(self):
         with mock.patch.object(EventHandlingPandoraFrontend, '_get_event_targets',
@@ -169,18 +169,6 @@ class TestEventHandlingFrontend(BaseTestFrontend):
         frontend = EventHandlingPandoraFrontend(conftest.config(), self.core)
         frontend.set_click_time()
         assert frontend._is_double_click()
-        assert frontend.get_click_time() == 0
 
         time.sleep(float(frontend.double_click_interval) + 0.1)
         assert frontend._is_double_click() is False
-
-    def test_is_double_click_resets_click_time(self):
-
-        frontend = EventHandlingPandoraFrontend(conftest.config(), self.core)
-        frontend.set_click_time()
-        assert frontend._is_double_click()
-
-        time.sleep(float(frontend.double_click_interval) + 0.1)
-        assert frontend._is_double_click() is False
-
-        assert frontend.get_click_time() == 0
