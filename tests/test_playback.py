@@ -11,7 +11,7 @@ import pytest
 from mopidy_pandora import playback
 
 from mopidy_pandora.backend import MopidyAPIClient
-from mopidy_pandora.library import PandoraLibraryProvider
+from mopidy_pandora.library import PandoraLibraryProvider, TrackCacheItem
 
 from mopidy_pandora.playback import PandoraPlaybackProvider
 
@@ -151,7 +151,8 @@ def test_change_track_skips_if_track_not_available_in_buffer(provider, playlist_
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
 
     test_uri = 'pandora:track:test_station_id:test_token'
-    provider.backend.library._pandora_track_cache[test_uri] = playlist_item_mock
+    provider.backend.library.pandora_track_cache[test_uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                            playlist_item_mock)
 
     assert provider.translate_uri(test_uri) == conftest.MOCK_TRACK_AUDIO_HIGH
 

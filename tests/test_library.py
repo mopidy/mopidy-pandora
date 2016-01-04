@@ -12,7 +12,7 @@ from pandora.models.pandora import Station, StationList
 import pytest
 
 from mopidy_pandora.client import MopidyAPIClient
-from mopidy_pandora.library import PandoraLibraryProvider
+from mopidy_pandora.library import PandoraLibraryProvider, TrackCacheItem
 
 from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
 
@@ -24,7 +24,7 @@ def test_get_images_for_ad_without_images(config, ad_item_mock):
 
     ad_uri = PandoraUri.factory('pandora:ad:{}:{}'.format(conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN))
     ad_item_mock.image_url = None
-    backend.library._pandora_track_cache[ad_uri.uri] = ad_item_mock
+    backend.library.pandora_track_cache[ad_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track), ad_item_mock)
     results = backend.library.get_images([ad_uri.uri])
     assert len(results[ad_uri.uri]) == 0
 
@@ -33,7 +33,7 @@ def test_get_images_for_ad_with_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
 
     ad_uri = PandoraUri.factory('pandora:ad:{}:{}'.format(conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN))
-    backend.library._pandora_track_cache[ad_uri.uri] = ad_item_mock
+    backend.library.pandora_track_cache[ad_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track), ad_item_mock)
     results = backend.library.get_images([ad_uri.uri])
     assert len(results[ad_uri.uri]) == 1
     assert results[ad_uri.uri][0].uri == ad_item_mock.image_url
@@ -53,7 +53,8 @@ def test_get_images_for_track_without_images(config, playlist_item_mock):
 
     track_uri = PandoraUri.factory('pandora:track:mock_id:mock_token')
     playlist_item_mock.album_art_url = None
-    backend.library._pandora_track_cache[track_uri.uri] = playlist_item_mock
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                        playlist_item_mock)
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 0
 
@@ -62,7 +63,8 @@ def test_get_images_for_track_with_images(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
     track_uri = PandoraUri.factory('pandora:track:mock_id:mock_token')
-    backend.library._pandora_track_cache[track_uri.uri] = playlist_item_mock
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                        playlist_item_mock)
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 1
     assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url
@@ -87,7 +89,7 @@ def test_lookup_of_ad_uri(config, ad_item_mock):
     backend = conftest.get_backend(config)
 
     track_uri = PlaylistItemUri._from_track(ad_item_mock)
-    backend.library._pandora_track_cache[track_uri.uri] = ad_item_mock
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track), ad_item_mock)
 
     results = backend.library.lookup(track_uri.uri)
     assert len(results) == 1
@@ -103,7 +105,7 @@ def test_lookup_of_ad_uri_defaults_missing_values(config, ad_item_mock):
     ad_item_mock.company_name = None
 
     track_uri = PlaylistItemUri._from_track(ad_item_mock)
-    backend.library._pandora_track_cache[track_uri.uri] = ad_item_mock
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track), ad_item_mock)
 
     results = backend.library.lookup(track_uri.uri)
     assert len(results) == 1
@@ -118,7 +120,8 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
     track_uri = PlaylistItemUri._from_track(playlist_item_mock)
-    backend.library._pandora_track_cache[track_uri.uri] = playlist_item_mock
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                        playlist_item_mock)
 
     results = backend.library.lookup(track_uri.uri)
     assert len(results) == 1
@@ -222,12 +225,12 @@ def test_browse_genre_station_uri(config, genre_station_mock):
                     backend = conftest.get_backend(config)
                     genre_uri = GenreUri._from_station(genre_station_mock)
                     t = time.time()
-                    backend.api._station_list_cache[t] = mock.Mock(spec=StationList)
+                    backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
 
                     results = backend.library.browse(genre_uri.uri)
                     assert len(results) == 1
-                    assert backend.api._station_list_cache.currsize == 1
-                    assert t not in list(backend.api._station_list_cache)
+                    assert backend.api.station_list_cache.currsize == 1
+                    assert t not in list(backend.api.station_list_cache)
                     assert create_station_mock.called
 
 

@@ -53,13 +53,13 @@ def test_on_start_pre_fetches_lists(config):
         backend.api.login = mock.PropertyMock()
         backend.api.get_genre_stations = mock.PropertyMock()
 
-        assert backend.api._station_list_cache.currsize == 0
-        assert backend.api._genre_stations_cache.currsize == 0
+        assert backend.api.station_list_cache.currsize == 0
+        assert backend.api.genre_stations_cache.currsize == 0
 
         t = backend.on_start()
         t.join()
 
-        assert backend.api._station_list_cache.currsize == 1
+        assert backend.api.station_list_cache.currsize == 1
         assert backend.api.get_genre_stations.called
 
 

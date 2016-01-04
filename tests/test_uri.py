@@ -33,8 +33,8 @@ def test_ad_uri_parse():
 
 def test_factory_returns_correct_station_uri_types():
         station_mock = mock.PropertyMock(spec=GenreStation)
-        station_mock.id = 'Gmock'
-        station_mock.token = 'Gmock'
+        station_mock.id = 'G100'
+        station_mock.token = 'G100'
         assert type(PandoraUri.factory(station_mock)) is GenreStationUri
 
         station_mock = mock.PropertyMock(spec=Station)
@@ -116,8 +116,8 @@ def test_station_uri_parse(station_mock):
 
 def test_station_uri_parse_returns_correct_type():
     station_mock = mock.PropertyMock(spec=GenreStation)
-    station_mock.id = 'Gmock'
-    station_mock.token = 'Gmock'
+    station_mock.id = 'G100'
+    station_mock.token = 'G100'
 
     obj = StationUri._from_station(station_mock)
 
@@ -137,14 +137,14 @@ def test_genre_uri_parse():
 
 
 def test_genre_station_uri_parse():
-    mock_uri = 'pandora:genre_station:Gmock:Gmock'
+    mock_uri = 'pandora:genre_station:G100:G100'
     obj = PandoraUri._from_uri(mock_uri)
 
     assert type(obj) is GenreStationUri
 
     assert obj.uri_type == 'genre_station'
-    assert obj.station_id == 'Gmock'
-    assert obj.token == 'Gmock'
+    assert obj.station_id == 'G100'
+    assert obj.token == 'G100'
 
     assert obj.uri == mock_uri
 
@@ -167,18 +167,18 @@ def test_genre_station_uri_from_station_returns_correct_type():
 
 def test_genre_station_uri_from_genre_station_returns_correct_type():
     genre_station_mock = mock.PropertyMock(spec=GenreStation)
-    genre_station_mock.id = 'Gmock'
-    genre_station_mock.token = 'Gmock'
+    genre_station_mock.id = 'G100'
+    genre_station_mock.token = 'G100'
 
     obj = GenreStationUri._from_station(genre_station_mock)
 
     assert type(obj) is GenreStationUri
 
     assert obj.uri_type == 'genre_station'
-    assert obj.station_id == 'Gmock'
-    assert obj.token == 'Gmock'
+    assert obj.station_id == 'G100'
+    assert obj.token == 'G100'
 
-    assert obj.uri == 'pandora:genre_station:Gmock:Gmock'
+    assert obj.uri == 'pandora:genre_station:G100:G100'
 
 
 def test_track_uri_from_track(playlist_item_mock):

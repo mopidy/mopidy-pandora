@@ -14,9 +14,11 @@ class PandoraFrontendListener(listener.Listener):
     def send(event, **kwargs):
         listener.send_async(PandoraFrontendListener, event, **kwargs)
 
-    def end_of_tracklist_reached(self, auto_play=False):
+    def end_of_tracklist_reached(self, station_id, auto_play=False):
         """
         Called whenever the tracklist contains only one track, or the last track in the tracklist is being played.
+        :param station_id: the ID of the station that is currently being played in the tracklist
+        :type station_id: string
         :param auto_play: specifies if the next track should be played as soon as it is added to the tracklist.
         :type auto_play: boolean
         """

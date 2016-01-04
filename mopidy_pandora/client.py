@@ -45,24 +45,24 @@ class MopidyAPIClient(pandora.APIClient):
         super(MopidyAPIClient, self).__init__(transport, partner_user, partner_password, device,
                                               default_audio_quality)
 
-        self._station_list_cache = TTLCache(1, cache_ttl)
-        self._genre_stations_cache = TTLCache(1, cache_ttl)
+        self.station_list_cache = TTLCache(1, cache_ttl)
+        self.genre_stations_cache = TTLCache(1, cache_ttl)
 
     def get_station_list(self, force_refresh=False):
         list = []
         try:
-            if (self._station_list_cache.currsize == 0 or
-                    (force_refresh and next(iter(self._station_list_cache.values())).has_changed())):
+            if (self.station_list_cache.currsize == 0 or
+                    (force_refresh and next(iter(self.station_list_cache.values())).has_changed())):
 
                 list = super(MopidyAPIClient, self).get_station_list()
-                self._station_list_cache[time.time()] = list
+                self.station_list_cache[time.time()] = list
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora station list.')
             return list
 
         try:
-            return self._station_list_cache.values()[0]
+            return self.station_list_cache.values()[0]
         except IndexError:
             # Cache disabled
             return list
@@ -77,18 +77,18 @@ class MopidyAPIClient(pandora.APIClient):
     def get_genre_stations(self, force_refresh=False):
         list = []
         try:
-            if (self._genre_stations_cache.currsize == 0 or
-                    (force_refresh and next(iter(self._genre_stations_cache.values())).has_changed())):
+            if (self.genre_stations_cache.currsize == 0 or
+                    (force_refresh and next(iter(self.genre_stations_cache.values())).has_changed())):
 
                 list = super(MopidyAPIClient, self).get_genre_stations()
-                self._genre_stations_cache[time.time()] = list
+                self.genre_stations_cache[time.time()] = list
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora genre stations.')
             return list
 
         try:
-            return self._genre_stations_cache.values()[0]
+            return self.genre_stations_cache.values()[0]
         except IndexError:
             # Cache disabled
             return list

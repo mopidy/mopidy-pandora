@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
-from mopidy import compat
+from mopidy import compat, models
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
 
@@ -56,12 +56,16 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     def factory(cls, obj):
         if isinstance(obj, basestring):
             return PandoraUri._from_uri(obj)
+        if isinstance(obj, models.Ref):
+            return PandoraUri._from_uri(obj.uri)
+        if isinstance(obj, models.Track):
+            return PandoraUri._from_uri(obj.uri)
         elif isinstance(obj, Station) or isinstance(obj, GenreStation):
             return PandoraUri._from_station(obj)
         elif isinstance(obj, PlaylistItem) or isinstance(obj, AdItem):
             return PandoraUri._from_track(obj)
         else:
-            raise NotImplementedError("Unsupported URI object type '{}'".format(obj))
+            raise NotImplementedError("Unsupported URI object type '{}'".format(type(obj)))
 
     @classmethod
     def _from_uri(cls, uri):
@@ -77,7 +81,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     @classmethod
     def _from_station(cls, station):
         if isinstance(station, Station) or isinstance(station, GenreStation):
-            if station.id.startswith('G') and station.id == station.token:
+            if len(station.id) == 4 and station.id.startswith('G') and station.id == station.token:
                 return GenreStationUri(station.id, station.token)
             return StationUri(station.id, station.token)
         else:
