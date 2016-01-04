@@ -95,12 +95,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         return self.api.add_song_bookmark(PandoraUri.factory(track_uri).token)
 
     def delete_station(self, track_uri):
-        # As of version 5 of the Pandora API, station IDs and tokens are always equivalent.
-        # We're using this assumption as we don't have the station token available for deleting the station.
-        # Detect if any Pandora API changes ever breaks this assumption in the future.
-        assert PandoraUri.factory(track_uri).station_id == self.library._station.token
-
-        r = self.api.delete_station(self.library._station.token)
+        r = self.api.delete_station(PandoraUri.factory(track_uri).station_id)
         self.library.refresh()
         self.library.browse(self.library.root_directory.uri)
         return r

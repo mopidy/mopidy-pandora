@@ -144,6 +144,10 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 stations.sort(key=lambda x: x.name, reverse=False)
 
             for station in self._formatted_station_list(stations):
+                # As of version 5 of the Pandora API, station IDs and tokens are always equivalent.
+                # We're using this assumption as we don't have the station token available for deleting the station.
+                # Detect if any Pandora API changes ever breaks this assumption in the future.
+                assert station.token == station.id
                 station_directories.append(
                     models.Ref.directory(name=station.name, uri=PandoraUri.factory(station).uri))
 
@@ -160,7 +164,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         new_station = Station.from_json(self.backend.api, json_result)
 
         self.refresh()
-
         return PandoraUri.factory(new_station)
 
     def _browse_genre_categories(self):
@@ -176,8 +179,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return self.pandora_track_cache[uri].pandora_track
 
     def get_station_cache_item(self, station_id):
-        if len(station_id) == 4 and station_id.startswith('G'):
+        if GenreStationUri.pattern.match(station_id):
             pandora_uri = self._create_station_for_genre(station_id)
+            station_id = pandora_uri.station_id
 
         station = self.backend.api.get_station(station_id)
         station_iter = iterate_forever(station.get_playlist)

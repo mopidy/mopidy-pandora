@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
+import re
+
 from mopidy import compat, models
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
@@ -81,7 +83,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     @classmethod
     def _from_station(cls, station):
         if isinstance(station, Station) or isinstance(station, GenreStation):
-            if len(station.id) == 4 and station.id.startswith('G') and station.id == station.token:
+            if GenreStationUri.pattern.match(station.id) and station.id == station.token:
                 return GenreStationUri(station.id, station.token)
             return StationUri(station.id, station.token)
         else:
@@ -128,12 +130,14 @@ class StationUri(PandoraUri):
 
 class GenreStationUri(StationUri):
     uri_type = 'genre_station'
+    pattern = re.compile('^([G])(\d*)$')
 
     def __init__(self, station_id, token):
         # Check that this really is a Genre station as opposed to a regular station.
         # Genre station IDs and tokens always start with 'G'.
-        assert station_id.startswith('G')
-        assert token.startswith('G')
+
+        assert GenreStationUri.pattern.match(station_id)
+        assert GenreStationUri.pattern.match(token)
         super(GenreStationUri, self).__init__(station_id, token)
 
 

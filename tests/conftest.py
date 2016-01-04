@@ -284,13 +284,13 @@ def station_list_result_mock():
     mock_result = {'stat': 'ok',
                    'result': {'stations': [
                        {'stationId': MOCK_STATION_ID.replace('1', '2'),
-                        'stationToken': MOCK_STATION_TOKEN.replace('010', '100'),
+                        'stationToken': MOCK_STATION_TOKEN.replace('1', '2'),
                         'stationName': MOCK_STATION_NAME + ' 2'},
                        {'stationId': MOCK_STATION_ID,
                         'stationToken': MOCK_STATION_TOKEN,
                         'stationName': MOCK_STATION_NAME + ' 1'},
                        {'stationId': MOCK_STATION_ID.replace('1', '3'),
-                        'stationToken': MOCK_STATION_TOKEN.replace('0010', '1000'),
+                        'stationToken': MOCK_STATION_TOKEN.replace('1', '3'),
                         'stationName': 'QuickMix', 'isQuickMix': True},
                    ], 'checksum': MOCK_STATION_LIST_CHECKSUM},
                    }
