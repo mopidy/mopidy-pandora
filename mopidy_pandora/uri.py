@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 import urllib
+
 from mopidy import compat
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
@@ -16,7 +17,6 @@ class _PandoraUriMeta(type):
             cls.TYPES[cls.uri_type] = cls
 
 
-# TODO: Make this class work with unicode_literals.
 class PandoraUri(object):
     __metaclass__ = _PandoraUriMeta
     TYPES = {}
