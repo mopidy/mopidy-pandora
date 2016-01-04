@@ -1,7 +1,8 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
 import urllib
+from mopidy import compat
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
 
@@ -31,7 +32,7 @@ class PandoraUri(object):
     def encoded_attributes(self):
         encoded_dict = {}
         for k, v in self.__dict__.items():
-            encoded_dict[k] = PandoraUri.encode(v)
+            encoded_dict[k] = urllib.quote(PandoraUri.encode(v))
 
         return encoded_dict
 
@@ -43,13 +44,9 @@ class PandoraUri(object):
     def encode(cls, value):
         if value is None:
             value = ''
-        if not isinstance(value, basestring):
-            value = str(value)
-        return urllib.quote(value.encode('utf8'))
-
-    @classmethod
-    def decode(cls, value):
-        return urllib.unquote(value).decode('utf8')
+        if isinstance(value, compat.text_type):
+            value = value.encode('utf-8')
+        return value
 
     @classmethod
     def factory(cls, obj):
@@ -64,7 +61,7 @@ class PandoraUri(object):
 
     @classmethod
     def _from_uri(cls, uri):
-        parts = [cls.decode(p) for p in uri.split(':')]
+        parts = [urllib.unquote(cls.encode(p)) for p in uri.split(':')]
         if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
             raise NotImplementedError('Not a Pandora URI: {}'.format(uri))
         uri_cls = cls.TYPES.get(parts[1])
