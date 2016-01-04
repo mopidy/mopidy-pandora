@@ -1,6 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import Queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 import json
 
@@ -69,7 +72,7 @@ def test_do_rpc():
     response_mock.text = '{"result": "result_mock"}'
     requests.request = mock.PropertyMock(return_value=response_mock)
 
-    q = Queue.Queue()
+    q = queue.Queue()
     utils.RPCClient._do_rpc('method_mock',
                             params={'param_mock_1': 'value_mock_1', 'param_mock_2': 'value_mock_2'},
                             queue=q)
@@ -94,7 +97,7 @@ def test_run_async(caplog):
 
 
 def test_run_async_queue(caplog):
-    q = Queue.Queue()
+    q = queue.Queue()
     async_func('test_2_async', queue=q)
     assert q.get() == 'test_value'
     assert 'test_2_async' in caplog.text()

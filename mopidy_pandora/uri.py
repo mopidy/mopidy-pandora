@@ -1,13 +1,18 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
-import urllib
 
 from mopidy import compat
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
 
+from requests.utils import quote, unquote
+
 logger = logging.getLogger(__name__)
+
+
+def with_metaclass(meta, *bases):
+    return meta(str('NewBase'), bases, {})
 
 
 class _PandoraUriMeta(type):
@@ -17,8 +22,7 @@ class _PandoraUriMeta(type):
             cls.TYPES[cls.uri_type] = cls
 
 
-class PandoraUri(object):
-    __metaclass__ = _PandoraUriMeta
+class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     TYPES = {}
     SCHEME = 'pandora'
 
@@ -31,8 +35,8 @@ class PandoraUri(object):
     @property
     def encoded_attributes(self):
         encoded_dict = {}
-        for k, v in self.__dict__.items():
-            encoded_dict[k] = urllib.quote(PandoraUri.encode(v))
+        for k, v in list(self.__dict__.items()):
+            encoded_dict[k] = quote(PandoraUri.encode(v))
 
         return encoded_dict
 
@@ -61,7 +65,7 @@ class PandoraUri(object):
 
     @classmethod
     def _from_uri(cls, uri):
-        parts = [urllib.unquote(cls.encode(p)) for p in uri.split(':')]
+        parts = [unquote(cls.encode(p)) for p in uri.split(':')]
         if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
             raise NotImplementedError('Not a Pandora URI: {}'.format(uri))
         uri_cls = cls.TYPES.get(parts[1])

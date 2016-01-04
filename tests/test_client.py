@@ -21,7 +21,7 @@ def test_get_genre_stations(config):
         genre_stations = backend.api.get_genre_stations()
 
         assert len(genre_stations) == len(conftest.genre_stations_result_mock()['categories'])
-        assert 'Category mock' in genre_stations.keys()
+        assert 'Category mock' in list(genre_stations)
 
 
 def test_get_genre_stations_handles_request_exception(config, caplog):
@@ -66,7 +66,7 @@ def test_get_genre_stations_changed_cached(config):
         backend.api._genre_stations_cache[time.time()] = station_list
 
         assert backend.api.get_genre_stations().checksum == cached_checksum
-        assert len(next(backend.api._genre_stations_cache.itervalues())) == len(GenreStationList.from_json(
+        assert len(backend.api._genre_stations_cache.values()[0]) == len(GenreStationList.from_json(
             APIClient, mock_cached_result['result']))
 
 
@@ -124,7 +124,7 @@ def test_get_station_list_changed_cached(config):
             APIClient, mock_cached_result['result'])
 
         assert backend.api.get_station_list().checksum == cached_checksum
-        assert len(next(backend.api._station_list_cache.itervalues())) == len(StationList.from_json(
+        assert len(backend.api._station_list_cache.values()[0]) == len(StationList.from_json(
             APIClient, mock_cached_result['result']))
 
 
@@ -163,7 +163,7 @@ def test_get_station_list_changed_refreshed(config):
             assert backend.api.get_station_list().checksum == cached_checksum
 
             assert backend.api.get_station_list(force_refresh=True).checksum == conftest.MOCK_STATION_LIST_CHECKSUM
-            assert (len(next(backend.api._station_list_cache.itervalues())) ==
+            assert (len(backend.api._station_list_cache.values()[0]) ==
                     len(conftest.station_list_result_mock()['stations']))
 
 
@@ -210,8 +210,8 @@ def test_create_genre_station_invalidates_cache(config):
             backend.api.create_station = mock.PropertyMock(return_value=conftest.station_result_mock()['result'])
             t = time.time()
             backend.api._station_list_cache[t] = mock.Mock(spec=StationList)
-            assert t in backend.api._station_list_cache.keys()
+            assert t in list(backend.api._station_list_cache)
 
             backend.library._create_station_for_genre('test_token')
-            assert t not in backend.api._station_list_cache.keys()
+            assert t not in list(backend.api._station_list_cache)
             assert backend.api._station_list_cache.currsize == 1

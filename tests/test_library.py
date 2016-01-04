@@ -227,7 +227,7 @@ def test_browse_genre_station_uri(config, genre_station_mock):
                     results = backend.library.browse(genre_uri.uri)
                     assert len(results) == 1
                     assert backend.api._station_list_cache.currsize == 1
-                    assert t not in backend.api._station_list_cache.keys()
+                    assert t not in list(backend.api._station_list_cache)
                     assert create_station_mock.called
 
 

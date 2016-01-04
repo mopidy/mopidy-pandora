@@ -52,7 +52,7 @@ class MopidyAPIClient(pandora.APIClient):
         list = []
         try:
             if (self._station_list_cache.currsize == 0 or
-                    (force_refresh and next(self._station_list_cache.itervalues()).has_changed())):
+                    (force_refresh and next(iter(self._station_list_cache.values())).has_changed())):
 
                 list = super(MopidyAPIClient, self).get_station_list()
                 self._station_list_cache[time.time()] = list
@@ -62,8 +62,8 @@ class MopidyAPIClient(pandora.APIClient):
             return list
 
         try:
-            return next(self._station_list_cache.itervalues())
-        except StopIteration:
+            return self._station_list_cache.values()[0]
+        except IndexError:
             # Cache disabled
             return list
 
@@ -78,7 +78,7 @@ class MopidyAPIClient(pandora.APIClient):
         list = []
         try:
             if (self._genre_stations_cache.currsize == 0 or
-                    (force_refresh and next(self._genre_stations_cache.itervalues()).has_changed())):
+                    (force_refresh and next(iter(self._genre_stations_cache.values())).has_changed())):
 
                 list = super(MopidyAPIClient, self).get_genre_stations()
                 self._genre_stations_cache[time.time()] = list
@@ -88,7 +88,7 @@ class MopidyAPIClient(pandora.APIClient):
             return list
 
         try:
-            return next(self._genre_stations_cache.itervalues())
-        except StopIteration:
+            return self._genre_stations_cache.values()[0]
+        except IndexError:
             # Cache disabled
             return list
