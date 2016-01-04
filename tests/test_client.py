@@ -66,7 +66,7 @@ def test_get_genre_stations_changed_cached(config):
         backend.api._genre_stations_cache[time.time()] = station_list
 
         assert backend.api.get_genre_stations().checksum == cached_checksum
-        assert len(backend.api._genre_stations_cache.itervalues().next()) == len(GenreStationList.from_json(
+        assert len(next(backend.api._genre_stations_cache.itervalues())) == len(GenreStationList.from_json(
             APIClient, mock_cached_result['result']))
 
 
@@ -124,7 +124,7 @@ def test_get_station_list_changed_cached(config):
             APIClient, mock_cached_result['result'])
 
         assert backend.api.get_station_list().checksum == cached_checksum
-        assert len(backend.api._station_list_cache.itervalues().next()) == len(StationList.from_json(
+        assert len(next(backend.api._station_list_cache.itervalues())) == len(StationList.from_json(
             APIClient, mock_cached_result['result']))
 
 
@@ -163,7 +163,7 @@ def test_get_station_list_changed_refreshed(config):
             assert backend.api.get_station_list().checksum == cached_checksum
 
             assert backend.api.get_station_list(force_refresh=True).checksum == conftest.MOCK_STATION_LIST_CHECKSUM
-            assert (len(backend.api._station_list_cache.itervalues().next()) ==
+            assert (len(next(backend.api._station_list_cache.itervalues())) ==
                     len(conftest.station_list_result_mock()['stations']))
 
 

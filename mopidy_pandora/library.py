@@ -185,7 +185,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def get_next_pandora_track(self):
         try:
-            pandora_track = self._station_iter.next()
+            pandora_track = next(self._station_iter)
         # except requests.exceptions.RequestException as e:
         #     logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
         #     return None
