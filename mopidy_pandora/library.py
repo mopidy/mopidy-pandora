@@ -200,7 +200,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             track_name = pandora_track.song_name
 
         track = models.Ref.track(name=track_name, uri=track_uri.uri)
-
         self.pandora_track_cache[track_uri.uri] = TrackCacheItem(track, pandora_track)
         return track
 

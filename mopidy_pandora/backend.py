@@ -56,7 +56,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
             logger.exception('Error logging in to Pandora.')
 
     def end_of_tracklist_reached(self, station_id=None, auto_play=False):
-        self.prepare_next_track(station_id, auto_play=auto_play)
+        self.prepare_next_track(station_id, auto_play)
 
     def prepare_next_track(self, station_id, auto_play=False):
         self._trigger_next_track_available(self.library.get_next_pandora_track(station_id), auto_play)
@@ -75,6 +75,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
                             .format(pandora_event, self.library.lookup_pandora_track(track_uri).song_name))
             func(track_uri)
             self._trigger_event_processed(track_uri, pandora_event)
+            return True
         except PandoraException:
             logger.exception('Error calling Pandora event: {}.'.format(pandora_event))
             return False

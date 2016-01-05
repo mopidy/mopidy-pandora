@@ -70,6 +70,47 @@ def test_get_images_for_track_with_images(config, playlist_item_mock):
     assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url
 
 
+def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
+    backend = conftest.get_backend(config)
+
+    station_mock = mock.Mock(spec=Station)
+    station_mock.id = 'id_token_mock'
+    station_mock.id = 'id_token_mock'
+    backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([playlist_item_mock]))
+
+    track = backend.library.get_next_pandora_track('id_token_mock')
+    assert track.uri == PandoraUri.factory(playlist_item_mock).uri
+    assert backend.library.pandora_track_cache[track.uri].track_ref == track
+    assert backend.library.pandora_track_cache[track.uri].pandora_track == playlist_item_mock
+
+
+def test_get_next_pandora_track_handles_no_more_tracks_available(config, caplog):
+    backend = conftest.get_backend(config)
+
+    station_mock = mock.Mock(spec=Station)
+    station_mock.id = 'id_token_mock'
+    station_mock.id = 'id_token_mock'
+    backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([]))
+
+    track = backend.library.get_next_pandora_track('id_token_mock')
+    assert track is None
+    assert 'Error retrieving next Pandora track.' in caplog.text()
+
+
+def test_get_next_pandora_track_renames_advertisements(config, station_mock):
+    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(Station, 'get_playlist', mock.Mock()) as get_playlist_mock:
+
+            backend = conftest.get_backend(config)
+
+            playlist = conftest.playlist_mock()
+            playlist.pop(0)
+            get_playlist_mock.return_value = iter(playlist)
+
+            track = backend.library.get_next_pandora_track(station_mock.id)
+            assert track.name == 'Advertisement'
+
+
 def test_lookup_of_invalid_uri(config):
     with pytest.raises(NotImplementedError):
         backend = conftest.get_backend(config)
@@ -261,22 +302,6 @@ def test_browse_station_uri(config, station_mock):
             results = backend.library.browse(station_uri.uri)
             # Station should just contain the first track to be played.
             assert len(results) == 1
-
-
-def test_browse_station_uri_renames_advertisements(config, station_mock):
-    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
-        with mock.patch.object(Station, 'get_playlist', mock.Mock()) as get_playlist_mock:
-
-            backend = conftest.get_backend(config)
-            station_uri = StationUri._from_station(station_mock)
-
-            playlist = conftest.playlist_mock()
-            playlist.pop(0)
-            get_playlist_mock.return_value = iter(playlist)
-            results = backend.library.browse(station_uri.uri)
-            # Station should just contain the first track to be played.
-            assert len(results) == 1
-            assert results[0].name == 'Advertisement'
 
 
 def test_refresh_without_uri_refreshes_root(config):
