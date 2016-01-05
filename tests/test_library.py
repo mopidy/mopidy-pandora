@@ -12,7 +12,7 @@ from pandora.models.pandora import Station, StationList
 import pytest
 
 from mopidy_pandora.client import MopidyAPIClient
-from mopidy_pandora.library import PandoraLibraryProvider, TrackCacheItem
+from mopidy_pandora.library import PandoraLibraryProvider, StationCacheItem, TrackCacheItem
 
 from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
 
@@ -277,3 +277,69 @@ def test_browse_station_uri_renames_advertisements(config, station_mock):
             # Station should just contain the first track to be played.
             assert len(results) == 1
             assert results[0].name == 'Advertisement'
+
+
+def test_refresh_without_uri_refreshes_root(config):
+    backend = conftest.get_backend(config)
+    backend.api.get_station_list = mock.Mock()
+    backend.api.get_genre_stations = mock.Mock()
+
+    backend.library.refresh()
+    backend.api.get_station_list.assert_called_with(force_refresh=True)
+    assert not backend.api.get_genre_stations.called
+
+
+def test_refresh_root_directory(config):
+    backend = conftest.get_backend(config)
+    backend.api.get_station_list = mock.Mock()
+    backend.api.get_genre_stations = mock.Mock()
+
+    backend.library.refresh(backend.library.root_directory.uri)
+    backend.api.get_station_list.assert_called_with(force_refresh=True)
+    assert not backend.api.get_genre_stations.called
+
+
+def test_refresh_genre_directory(config):
+    backend = conftest.get_backend(config)
+    backend.api.get_station_list = mock.Mock()
+    backend.api.get_genre_stations = mock.Mock()
+
+    backend.library.refresh(backend.library.genre_directory.uri)
+    backend.api.get_genre_stations.assert_called_with(force_refresh=True)
+    assert not backend.api.get_station_list.called
+
+
+def test_refresh_station_directory_invalid_uri_type_raises_exception(config):
+    with pytest.raises(ValueError):
+        backend = conftest.get_backend(config)
+        backend.api.get_station_list = mock.Mock()
+        backend.api.get_genre_stations = mock.Mock()
+
+        backend.library.refresh('pandora:track:id_token_mock:id_token_mock')
+
+
+def test_refresh_station_directory(config):
+    backend = conftest.get_backend(config)
+    backend.api.get_station_list = mock.Mock()
+    backend.api.get_genre_stations = mock.Mock()
+
+    station_mock = mock.Mock(spec=Station)
+    station_mock.id = 'id_token_mock'
+    station_mock.id = 'id_token_mock'
+    backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([]))
+
+    backend.library.refresh('pandora:station:id_token_mock:id_token_mock')
+    assert backend.library.pandora_station_cache.currsize == 0
+    assert not backend.api.get_station_list.called
+    assert not backend.api.get_genre_stations.called
+
+
+def test_refresh_station_directory_not_in_cache_handles_key_error(config):
+    backend = conftest.get_backend(config)
+    backend.api.get_station_list = mock.Mock()
+    backend.api.get_genre_stations = mock.Mock()
+
+    backend.library.refresh('pandora:station:id_token_mock:id_token_mock')
+    assert backend.library.pandora_station_cache.currsize == 0
+    assert not backend.api.get_station_list.called
+    assert not backend.api.get_genre_stations.called

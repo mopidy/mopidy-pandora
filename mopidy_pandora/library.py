@@ -189,16 +189,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         try:
             station_iter = self.pandora_station_cache[station_id].iter
             pandora_track = next(station_iter)
-        # except requests.exceptions.RequestException as e:
-        #     logger.error('Error retrieving next Pandora track: {}'.format(encoding.locale_decode(e)))
-        #     return None
-        # except StopIteration:
-        #     # TODO: workaround for https://github.com/mcrute/pydora/issues/36
-        #     logger.error("Failed to retrieve next track for station '{}' from Pandora server".format(
-        #         self._station.name))
-        #     return None
         except Exception:
-            # TODO: Remove this catch-all exception once we've figured out how to deal with all of them
             logger.exception('Error retrieving next Pandora track.')
             return None
 
@@ -216,14 +207,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def refresh(self, uri=None):
         if not uri or uri == self.root_directory.uri:
             self.backend.api.get_station_list(force_refresh=True)
-            self.backend.api.get_genre_stations(force_refresh=True)
-        elif uri == self.genre_directory:
+        elif uri == self.genre_directory.uri:
             self.backend.api.get_genre_stations(force_refresh=True)
         else:
             pandora_uri = PandoraUri.factory(uri)
             if type(pandora_uri) is StationUri:
                 try:
-                    self.pandora_station_cache.pop(uri.station_id)
+                    self.pandora_station_cache.pop(pandora_uri.station_id)
                 except KeyError:
                     # Item not in cache, ignore
                     pass
+            else:
+                raise ValueError('Unexpected URI type to perform refresh of Pandora directory: {}.'
+                                 .format(pandora_uri.uri_type))
