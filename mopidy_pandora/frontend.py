@@ -126,7 +126,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def track_changed(self, track):
         if self.is_station_changed(track):
             # Another frontend has added a track, remove all other tracks from the tracklist
-            self._trim_tracklist(around_track=track)
+            self._trim_tracklist(keep_only=track)
         if self.is_end_of_tracklist_reached(track):
             self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
                                                    auto_play=False)
@@ -157,14 +157,10 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             self.core.playback.play(tl_tracks[-1]).get()
         self._trim_tracklist(maxsize=2)
 
-    def _trim_tracklist(self, around_track=None, maxsize=2):
+    def _trim_tracklist(self, keep_only=None, maxsize=2):
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
-        if around_track:
-            trim_tlids = []
-            for t in tl_tracks:
-                if t.track.uri != around_track.uri:
-                    trim_tlids.append(t.tlid)
-
+        if keep_only:
+            trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
             return len(self.core.tracklist.remove({'tlid': trim_tlids}).get())
 
         elif len(tl_tracks) > maxsize:

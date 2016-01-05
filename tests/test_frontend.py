@@ -99,6 +99,26 @@ class TestFrontend(BaseTest):
     def tearDown(self):  # noqa: N802
         super(TestFrontend, self).tearDown()
 
+    def test_add_track_starts_playback(self):
+        new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
+        self.tracks.append(new_track)  # Add to internal list for lookup to work
+
+        assert self.core.playback.get_state().get() == PlaybackState.STOPPED
+        self.frontend.add_track(new_track, auto_play=True).get()
+
+        assert self.core.playback.get_state().get() == PlaybackState.PLAYING
+        assert self.core.playback.get_current_track().get() == new_track
+
+    def test_add_track_trims_tracklist(self):
+        new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
+        self.tracks.append(new_track)  # Add to internal list for lookup to work
+
+        assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
+        self.frontend.add_track(new_track).get()
+        tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        assert len(tl_tracks) == 2
+        assert tl_tracks[-1].track == new_track
+
     def test_only_execute_for_pandora_executes_for_pandora_uri(self):
         func_mock = mock.PropertyMock()
         func_mock.__name__ = str('func_mock')
@@ -202,14 +222,11 @@ class TestEventHandlingFrontend(BaseTest):
     def tearDown(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).tearDown()
 
-# TODO: called is broken
     def test_process_events_ignores_ads(self):
         self.core.playback.play(tlid=self.tl_tracks[1].tlid).get()
 
-        self.frontend._trigger_event_triggered = mock.PropertyMock()
         self.frontend.check_doubleclicked(action='resume').get()
-
-        assert not self.frontend._trigger_event_triggered.called
+        assert len(self.events) == 0  # Check that no events were triggered
 
     def test_pause_starts_double_click_timer(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -225,7 +242,6 @@ class TestEventHandlingFrontend(BaseTest):
         self.frontend.track_playback_paused(mock.Mock(), 0).get()
         assert self.frontend.get_click_time().get() == 0
 
-# TODO: called is broken
     def test_process_events_handles_exception(self):
         with mock.patch.object(frontend.EventHandlingPandoraFrontend, '_get_event_targets',
                                mock.PropertyMock(return_value=None, side_effect=ValueError('error_mock'))):
@@ -234,7 +250,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.frontend._trigger_event_triggered = mock.PropertyMock()
             self.frontend.check_doubleclicked(action='resume').get()
 
-        assert not self.frontend._trigger_event_triggered.called
+        assert len(self.events) == 0  # Check that no events were triggered
 
     def test_is_double_click(self):
         static_frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), self.core)
