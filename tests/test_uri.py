@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from mock import mock
 
+from mopidy import models
+
 from pandora.models.pandora import GenreStation, Station
 
 import pytest
@@ -29,6 +31,38 @@ def test_ad_uri_parse():
     assert obj.ad_token == 'ad_token_mock'
 
     assert obj.uri == mock_uri
+
+
+def test_factory_ad(ad_item_mock):
+    obj = PandoraUri.factory(ad_item_mock)
+
+    assert type(obj) is AdItemUri
+    assert obj.uri == 'pandora:ad:{}:{}'.format(conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN)
+
+
+def test_factory_playlist_item(playlist_item_mock):
+    obj = PandoraUri.factory(playlist_item_mock)
+
+    assert type(obj) is PlaylistItemUri
+    assert obj.uri == 'pandora:track:{}:{}'.format(conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_TOKEN)
+
+
+def test_factory_track_ref():
+    track_ref = models.Ref(name='name_mock', uri='pandora:track:station_id_mock:track_token_mock')
+
+    obj = PandoraUri.factory(track_ref)
+
+    assert type(obj) is PlaylistItemUri
+    assert obj.uri == track_ref.uri
+
+
+def test_factory_track():
+    track = models.Track(name='name_mock', uri='pandora:track:station_id_mock:track_token_mock')
+
+    obj = PandoraUri.factory(track)
+
+    assert type(obj) is PlaylistItemUri
+    assert obj.uri == track.uri
 
 
 def test_factory_returns_correct_station_uri_types():

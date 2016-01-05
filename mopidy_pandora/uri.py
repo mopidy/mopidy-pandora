@@ -57,14 +57,19 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     @classmethod
     def factory(cls, obj):
         if isinstance(obj, basestring):
+            # A string
             return PandoraUri._from_uri(obj)
-        if isinstance(obj, models.Ref):
+
+        if isinstance(obj, models.Ref) or isinstance(obj, models.Track):
+            # A mopidy track or track reference
             return PandoraUri._from_uri(obj.uri)
-        if isinstance(obj, models.Track):
-            return PandoraUri._from_uri(obj.uri)
+
         elif isinstance(obj, Station) or isinstance(obj, GenreStation):
+            # One of the station types
             return PandoraUri._from_station(obj)
+
         elif isinstance(obj, PlaylistItem) or isinstance(obj, AdItem):
+            # One of the playlist item (track) types
             return PandoraUri._from_track(obj)
         else:
             raise NotImplementedError("Unsupported URI object type '{}'".format(type(obj)))
