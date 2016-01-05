@@ -149,7 +149,6 @@ def test_browse_directory_uri(config):
         assert len(results) == 4
 
         assert results[0].type == models.Ref.DIRECTORY
-        assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
         assert results[0].uri == PandoraUri('genres').uri
 
         assert results[1].type == models.Ref.DIRECTORY
@@ -158,14 +157,26 @@ def test_browse_directory_uri(config):
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][2])).uri
 
         assert results[2].type == models.Ref.DIRECTORY
-        assert results[2].name == conftest.MOCK_STATION_NAME + ' 2'
         assert results[2].uri == StationUri._from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][0])).uri
 
         assert results[3].type == models.Ref.DIRECTORY
-        assert results[3].name == conftest.MOCK_STATION_NAME + ' 1'
         assert results[3].uri == StationUri._from_station(
             Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][1])).uri
+
+
+def test_browse_directory_marks_quickmix_stations(config):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+
+        quickmix_station_uri = 'pandora:track:{}:{}'.format(conftest.MOCK_STATION_ID.replace('1', '2'),
+                                                            conftest.MOCK_STATION_TOKEN.replace('1', '2'),)
+
+        backend = conftest.get_backend(config)
+        results = backend.library.browse(backend.library.root_directory.uri)
+
+        for result in results:
+            if result.uri == quickmix_station_uri:
+                assert result.name.endswith('*')
 
 
 def test_browse_directory_sort_za(config):
@@ -179,7 +190,7 @@ def test_browse_directory_sort_za(config):
         assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
         assert results[1].name.startswith('QuickMix')
         assert results[2].name == conftest.MOCK_STATION_NAME + ' 1'
-        assert results[3].name == conftest.MOCK_STATION_NAME + ' 2'
+        assert results[3].name == conftest.MOCK_STATION_NAME + ' 2' + '*'
 
 
 def test_browse_directory_sort_date(config):
@@ -192,7 +203,7 @@ def test_browse_directory_sort_date(config):
 
         assert results[0].name == PandoraLibraryProvider.GENRE_DIR_NAME
         assert results[1].name.startswith('QuickMix')
-        assert results[2].name == conftest.MOCK_STATION_NAME + ' 2'
+        assert results[2].name == conftest.MOCK_STATION_NAME + ' 2' + '*'
         assert results[3].name == conftest.MOCK_STATION_NAME + ' 1'
 
 
@@ -203,6 +214,12 @@ def test_browse_genres(config):
         results = backend.library.browse(backend.library.genre_directory.uri)
         assert len(results) == 1
         assert results[0].name == 'Category mock'
+
+
+def test_browse_raises_exception_for_unsupported_uri_type(config):
+    with pytest.raises(NotImplementedError):
+        backend = conftest.get_backend(config)
+        backend.library.browse('pandora:invalid_uri')
 
 
 def test_browse_genre_category(config):
@@ -244,3 +261,19 @@ def test_browse_station_uri(config, station_mock):
             results = backend.library.browse(station_uri.uri)
             # Station should just contain the first track to be played.
             assert len(results) == 1
+
+
+def test_browse_station_uri_renames_advertisements(config, station_mock):
+    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(Station, 'get_playlist', mock.Mock()) as get_playlist_mock:
+
+            backend = conftest.get_backend(config)
+            station_uri = StationUri._from_station(station_mock)
+
+            playlist = conftest.playlist_mock()
+            playlist.pop(0)
+            get_playlist_mock.return_value = iter(playlist)
+            results = backend.library.browse(station_uri.uri)
+            # Station should just contain the first track to be played.
+            assert len(results) == 1
+            assert results[0].name == 'Advertisement'

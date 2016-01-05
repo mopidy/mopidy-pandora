@@ -50,8 +50,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if type(pandora_uri) is StationUri or type(pandora_uri) is GenreStationUri:
             return self._browse_tracks(uri)
 
-        raise Exception("Unknown or unsupported URI type '{}'".format(uri))
-
     def lookup(self, uri):
 
         pandora_uri = PandoraUri.factory(uri)

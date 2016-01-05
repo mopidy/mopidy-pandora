@@ -2,9 +2,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 
-from mock import Mock
+import mock
 
-from pandora.models.pandora import AdItem, GenreStation, GenreStationList, Playlist, PlaylistItem, Station, StationList
+from pandora import APIClient
+
+from pandora.models.pandora import AdItem, GenreStation, GenreStationList, PlaylistItem, Station, StationList
 
 import pytest
 
@@ -74,7 +76,7 @@ def config():
 
 
 def get_backend(config, simulate_request_exceptions=False):
-    obj = backend.PandoraBackend(config=config, audio=Mock())
+    obj = backend.PandoraBackend(config=config, audio=mock.Mock())
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock
@@ -83,7 +85,7 @@ def get_backend(config, simulate_request_exceptions=False):
         # running tests
         type(obj.api.transport).__call__ = transport_call_not_implemented_mock
 
-    obj._event_loop = Mock()
+    obj._event_loop = mock.Mock()
     return obj
 
 
@@ -155,36 +157,8 @@ def playlist_result_mock():
 
                        # Also add an advertisement to the playlist.
                        {
-                           'trackToken': None,
-                           'artistName': None,
-                           'albumName': None,
-                           'imageUrl': None,
-                           'audioUrlMap': {
-                               'highQuality': {
-                                   'bitrate': '64',
-                                   'encoding': 'aacplus',
-                                   'audioUrl': MOCK_TRACK_AUDIO_HIGH,
-                                   'protocol': 'http'
-                               },
-                               'mediumQuality': {
-                                   'bitrate': '64',
-                                   'encoding': 'aacplus',
-                                   'audioUrl': MOCK_TRACK_AUDIO_MED,
-                                   'protocol': 'http'
-                               },
-                               'lowQuality': {
-                                   'bitrate': '32',
-                                   'encoding': 'aacplus',
-                                   'audioUrl': MOCK_TRACK_AUDIO_LOW,
-                                   'protocol': 'http'
-                               }
-                           },
-                           'trackLength': 0,
-                           'songName': None,
-                           'songDetailUrl': None,
-                           'stationId': None,
-                           'songRating': None,
-                           'adToken': MOCK_TRACK_AD_TOKEN}
+                           'adToken': MOCK_TRACK_AD_TOKEN
+                       },
                    ])}
 
     return mock_result
@@ -229,7 +203,10 @@ def ad_metadata_result_mock():
 
 @pytest.fixture(scope='session')
 def playlist_mock(simulate_request_exceptions=False):
-    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock()['result'])
+    with mock.patch.object(APIClient, '__call__', mock.Mock()) as call_mock:
+
+        call_mock.return_value = playlist_result_mock()['result']
+        return get_backend(config(), simulate_request_exceptions).api.get_playlist(MOCK_STATION_TOKEN)
 
 
 @pytest.fixture(scope='session')
@@ -281,9 +258,10 @@ def genre_stations_result_mock():
 
 @pytest.fixture(scope='session')
 def station_list_result_mock():
+    quickmix_station_id = MOCK_STATION_ID.replace('1', '2')
     mock_result = {'stat': 'ok',
                    'result': {'stations': [
-                       {'stationId': MOCK_STATION_ID.replace('1', '2'),
+                       {'stationId': quickmix_station_id,
                         'stationToken': MOCK_STATION_TOKEN.replace('1', '2'),
                         'stationName': MOCK_STATION_NAME + ' 2'},
                        {'stationId': MOCK_STATION_ID,
@@ -291,7 +269,8 @@ def station_list_result_mock():
                         'stationName': MOCK_STATION_NAME + ' 1'},
                        {'stationId': MOCK_STATION_ID.replace('1', '3'),
                         'stationToken': MOCK_STATION_TOKEN.replace('1', '3'),
-                        'stationName': 'QuickMix', 'isQuickMix': True},
+                        'stationName': 'QuickMix', 'isQuickMix': True,
+                        'quickMixStationIds': [quickmix_station_id]},
                    ], 'checksum': MOCK_STATION_LIST_CHECKSUM},
                    }
 

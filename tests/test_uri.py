@@ -110,7 +110,7 @@ def test_pandora_parse_none_mock_uri():
 def test_pandora_parse_invalid_type_raises_exception():
     with pytest.raises(NotImplementedError):
 
-        PandoraUri()._from_uri('pandora:invalid')
+        PandoraUri()._from_uri('pandora:invalid_uri')
 
 
 def test_pandora_parse_invalid_scheme_raises_exception():
