@@ -32,8 +32,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         super(PandoraLibraryProvider, self).__init__(backend)
         self.sort_order = sort_order.lower()
 
-        self.pandora_station_cache = LRUCache(maxsize=25, missing=self.get_station_cache_item)
-        self.pandora_track_cache = LRUCache(maxsize=50)
+        self.pandora_station_cache = LRUCache(maxsize=5, missing=self.get_station_cache_item)
+        self.pandora_track_cache = LRUCache(maxsize=10)
 
     def browse(self, uri):
         if uri == self.root_directory.uri:

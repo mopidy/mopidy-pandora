@@ -49,23 +49,23 @@ class MopidyAPIClient(pandora.APIClient):
         self.genre_stations_cache = TTLCache(1, cache_ttl)
 
     def get_station_list(self, force_refresh=False):
-        list = []
+        station_list = []
         try:
             if (self.station_list_cache.currsize == 0 or
-                    (force_refresh and next(iter(self.station_list_cache.values())).has_changed())):
+                    (force_refresh and self.station_list_cache.values()[0].has_changed())):
 
-                list = super(MopidyAPIClient, self).get_station_list()
-                self.station_list_cache[time.time()] = list
+                station_list = super(MopidyAPIClient, self).get_station_list()
+                self.station_list_cache[time.time()] = station_list
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora station list.')
-            return list
+            station_list = []
 
         try:
             return self.station_list_cache.values()[0]
         except IndexError:
             # Cache disabled
-            return list
+            return station_list
 
     def get_station(self, station_token):
         try:
@@ -75,20 +75,20 @@ class MopidyAPIClient(pandora.APIClient):
             return super(MopidyAPIClient, self).get_station(station_token)
 
     def get_genre_stations(self, force_refresh=False):
-        list = []
+        genre_stations = []
         try:
             if (self.genre_stations_cache.currsize == 0 or
-                    (force_refresh and next(iter(self.genre_stations_cache.values())).has_changed())):
+                    (force_refresh and self.genre_stations_cache.values()[0].has_changed())):
 
-                list = super(MopidyAPIClient, self).get_genre_stations()
-                self.genre_stations_cache[time.time()] = list
+                genre_stations = super(MopidyAPIClient, self).get_genre_stations()
+                self.genre_stations_cache[time.time()] = genre_stations
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora genre stations.')
-            return list
+            return genre_stations
 
         try:
             return self.genre_stations_cache.values()[0]
         except IndexError:
             # Cache disabled
-            return list
+            return genre_stations
