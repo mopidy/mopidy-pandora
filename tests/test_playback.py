@@ -5,6 +5,7 @@ import mock
 from mopidy import audio, models
 
 from pandora import APITransport
+from pandora.models.pandora import PlaylistItem
 
 import pytest
 
@@ -41,9 +42,6 @@ def test_change_track_enforces_skip_limit_if_no_track_available(provider, playli
     with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=None):
         track = PandoraUri.factory(playlist_item_mock)
 
-        provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
-        provider.next_tl_track = {'track': {'uri': track.uri}}
-
         provider._trigger_track_unplayable = mock.PropertyMock()
         provider._trigger_skip_limit_exceeded = mock.PropertyMock(0)
 
@@ -64,9 +62,6 @@ def test_change_track_enforces_skip_limit_if_no_track_available(provider, playli
 def test_change_track_enforces_skip_limit_if_no_audio_url(provider, playlist_item_mock, caplog):
     with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
         track = PandoraUri.factory(playlist_item_mock)
-
-        provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
-        provider.next_tl_track = {'track': {'uri': track.uri}}
 
         provider._trigger_track_unplayable = mock.PropertyMock()
         provider._trigger_skip_limit_exceeded = mock.PropertyMock(0)
@@ -92,9 +87,6 @@ def test_change_track_enforces_skip_limit_on_request_exceptions(provider, playli
         with mock.patch.object(APITransport, '__call__', side_effect=conftest.request_exception_mock):
             track = PandoraUri.factory(playlist_item_mock)
 
-            provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
-            provider.next_tl_track = {'track': {'uri': track.uri}}
-
             provider._trigger_track_unplayable = mock.PropertyMock()
             provider._trigger_skip_limit_exceeded = mock.PropertyMock(0)
             playlist_item_mock.audio_url = 'pandora:track:mock_id:mock_token'
@@ -117,9 +109,6 @@ def test_change_track_fetches_next_track_if_unplayable(provider, playlist_item_m
     with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=None):
         track = PandoraUri.factory(playlist_item_mock)
 
-        provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
-        provider.next_tl_track = {'track': {'uri': track.uri}}
-
         provider._trigger_track_unplayable = mock.PropertyMock()
 
         assert provider.change_track(track) is False
@@ -139,17 +128,35 @@ def test_change_track_skips_if_no_track_uri(provider):
 def test_change_track_skips_if_track_not_available_in_buffer(provider, playlist_item_mock, caplog):
     track = PandoraUri.factory(playlist_item_mock)
 
-    provider.previous_tl_track = {'track': {'uri': 'previous_track'}}
-    provider.next_tl_track = {'track': {'uri': track.uri}}
-
     provider.backend.prepare_next_track = mock.PropertyMock()
 
     assert provider.change_track(track) is False
     assert "Error changing Pandora track: failed to lookup '{}'.".format(track.uri) in caplog.text()
 
 
-def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
+def test_change_track_resets_skips_on_success(provider, playlist_item_mock):
+    with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
+        with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=True):
+            track = PandoraUri.factory(playlist_item_mock)
 
+            provider._consecutive_track_skips = 1
+
+            assert provider.change_track(track) is True
+            assert provider._consecutive_track_skips == 0
+
+
+def test_change_track_triggers_event_on_success(provider, playlist_item_mock):
+    with mock.patch.object(PandoraLibraryProvider, 'lookup_pandora_track', return_value=playlist_item_mock):
+        with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=True):
+            track = PandoraUri.factory(playlist_item_mock)
+
+            provider._trigger_track_changed = mock.PropertyMock()
+
+            assert provider.change_track(track) is True
+            assert provider._trigger_track_changed.called
+
+
+def test_translate_uri_returns_audio_url(provider, playlist_item_mock):
     test_uri = 'pandora:track:test_station_id:test_token'
     provider.backend.library.pandora_track_cache[test_uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
                                                                             playlist_item_mock)
@@ -169,12 +176,10 @@ def test_resume_click_ignored_if_start_of_track(provider):
 
 
 def add_artist_bookmark(provider):
-
     provider.add_artist_bookmark(conftest.MOCK_TRACK_TOKEN)
     provider.client.add_artist_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)
 
 
 def add_song_bookmark(provider):
-
     provider.add_song_bookmark(conftest.MOCK_TRACK_TOKEN)
     provider.client.add_song_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)
