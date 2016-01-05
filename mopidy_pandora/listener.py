@@ -12,7 +12,7 @@ class PandoraFrontendListener(listener.Listener):
 
     @staticmethod
     def send(event, **kwargs):
-        listener.send_async(PandoraFrontendListener, event, **kwargs)
+        listener.send(PandoraFrontendListener, event, **kwargs)
 
     def end_of_tracklist_reached(self, station_id, auto_play=False):
         """
@@ -34,7 +34,7 @@ class PandoraEventHandlingFrontendListener(listener.Listener):
 
     @staticmethod
     def send(event, **kwargs):
-        listener.send_async(PandoraEventHandlingFrontendListener, event, **kwargs)
+        listener.send(PandoraEventHandlingFrontendListener, event, **kwargs)
 
     def event_triggered(self, track_uri, pandora_event):
         """
@@ -58,7 +58,7 @@ class PandoraBackendListener(backend.BackendListener):
 
     @staticmethod
     def send(event, **kwargs):
-        listener.send_async(PandoraBackendListener, event, **kwargs)
+        listener.send(PandoraBackendListener, event, **kwargs)
 
     def next_track_available(self, track, auto_play=False):
         """
@@ -93,7 +93,7 @@ class PandoraPlaybackListener(listener.Listener):
 
     @staticmethod
     def send(event, **kwargs):
-        listener.send_async(PandoraPlaybackListener, event, **kwargs)
+        listener.send(PandoraPlaybackListener, event, **kwargs)
 
     def track_changed(self, track):
         """
@@ -136,7 +136,7 @@ class PandoraEventHandlingPlaybackListener(listener.Listener):
 
     @staticmethod
     def send(event, **kwargs):
-        listener.send_async(PandoraEventHandlingPlaybackListener, event, **kwargs)
+        listener.send(PandoraEventHandlingPlaybackListener, event, **kwargs)
 
     def check_doubleclicked(self, action=None):
         """
