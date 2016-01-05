@@ -113,7 +113,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
         return track_index == length - 1
 
-    def is_station_changed(self, track=None):
+    def is_station_changed(self, track):
         try:
             previous_track_uri = PandoraUri.factory(self.core.history.get_history().get()[1][1].uri)
             if previous_track_uri.station_id != PandoraUri.factory(track.uri).station_id:
@@ -124,16 +124,12 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         return False
 
     def track_changed(self, track):
-        try:
-            if self.is_station_changed(track):
-                # Another frontend has added a track, remove all tracks after it
-                self._trim_tracklist(around_track=track)
-            if self.is_end_of_tracklist_reached(track):
-                self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
-                                                       auto_play=False)
-        except IndexError:
-            # No tracks in history, continue
-            pass
+        if self.is_station_changed(track):
+            # Another frontend has added a track, remove all other tracks from the tracklist
+            self._trim_tracklist(around_track=track)
+        if self.is_end_of_tracklist_reached(track):
+            self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
+                                                   auto_play=False)
 
     def track_unplayable(self, track):
         if self.is_end_of_tracklist_reached(track):

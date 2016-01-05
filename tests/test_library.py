@@ -78,10 +78,10 @@ def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
     station_mock.id = 'id_token_mock'
     backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([playlist_item_mock]))
 
-    track = backend.library.get_next_pandora_track('id_token_mock')
-    assert track.uri == PandoraUri.factory(playlist_item_mock).uri
-    assert backend.library.pandora_track_cache[track.uri].track_ref == track
-    assert backend.library.pandora_track_cache[track.uri].pandora_track == playlist_item_mock
+    ref = backend.library.get_next_pandora_track('id_token_mock')
+    assert ref.uri == PandoraUri.factory(playlist_item_mock).uri
+    assert backend.library.pandora_track_cache[ref.uri].ref == ref
+    assert backend.library.pandora_track_cache[ref.uri].track == playlist_item_mock
 
 
 def test_get_next_pandora_track_handles_no_more_tracks_available(config, caplog):

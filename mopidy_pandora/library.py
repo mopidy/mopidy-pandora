@@ -18,7 +18,7 @@ from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri,
 logger = logging.getLogger(__name__)
 
 StationCacheItem = namedtuple('StationCacheItem', 'station, iter')
-TrackCacheItem = namedtuple('TrackCacheItem', 'track_ref, pandora_track')
+TrackCacheItem = namedtuple('TrackCacheItem', 'ref, track')
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):
@@ -55,7 +55,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         pandora_uri = PandoraUri.factory(uri)
         if isinstance(pandora_uri, TrackUri):
             try:
-                pandora_track = self.lookup_pandora_track(uri)
+                track = self.lookup_pandora_track(uri)
             except KeyError:
                 logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
                 return []
@@ -71,22 +71,22 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 if type(pandora_uri) is AdItemUri:
                     track_kwargs['name'] = 'Advertisement'
 
-                    if not pandora_track.title:
-                        pandora_track.title = '(Title not specified)'
-                    artist_kwargs['name'] = pandora_track.title
+                    if not track.title:
+                        track.title = '(Title not specified)'
+                    artist_kwargs['name'] = track.title
 
-                    if not pandora_track.company_name:
-                        pandora_track.company_name = '(Company name not specified)'
-                    album_kwargs['name'] = pandora_track.company_name
+                    if not track.company_name:
+                        track.company_name = '(Company name not specified)'
+                    album_kwargs['name'] = track.company_name
 
-                    album_kwargs['uri'] = pandora_track.click_through_url
+                    album_kwargs['uri'] = track.click_through_url
                 else:
-                    track_kwargs['name'] = pandora_track.song_name
-                    track_kwargs['length'] = pandora_track.track_length * 1000
-                    track_kwargs['bitrate'] = int(pandora_track.bitrate)
-                    artist_kwargs['name'] = pandora_track.artist_name
-                    album_kwargs['name'] = pandora_track.album_name
-                    album_kwargs['uri'] = pandora_track.album_detail_url
+                    track_kwargs['name'] = track.song_name
+                    track_kwargs['length'] = track.track_length * 1000
+                    track_kwargs['bitrate'] = int(track.bitrate)
+                    artist_kwargs['name'] = track.artist_name
+                    album_kwargs['name'] = track.album_name
+                    album_kwargs['uri'] = track.album_detail_url
         else:
             raise ValueError('Unexpected type to perform Pandora track lookup: {}.'.format(pandora_uri.uri_type))
 
@@ -99,11 +99,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         for uri in uris:
             image_uris = set()
             try:
-                pandora_track = self.lookup_pandora_track(uri)
-                if pandora_track.is_ad is True:
-                    image_uri = pandora_track.image_url
+                track = self.lookup_pandora_track(uri)
+                if track.is_ad is True:
+                    image_uri = track.image_url
                 else:
-                    image_uri = pandora_track.album_art_url
+                    image_uri = track.album_art_url
                 if image_uri:
                     image_uris.update([image_uri])
             except (TypeError, KeyError):
@@ -174,7 +174,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 [PandoraUri.factory(uri).category_name]]
 
     def lookup_pandora_track(self, uri):
-        return self.pandora_track_cache[uri].pandora_track
+        return self.pandora_track_cache[uri].track
 
     def get_station_cache_item(self, station_id):
         if GenreStationUri.pattern.match(station_id):
@@ -188,20 +188,20 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def get_next_pandora_track(self, station_id):
         try:
             station_iter = self.pandora_station_cache[station_id].iter
-            pandora_track = next(station_iter)
+            track = next(station_iter)
         except Exception:
             logger.exception('Error retrieving next Pandora track.')
             return None
 
-        track_uri = PandoraUri.factory(pandora_track)
+        track_uri = PandoraUri.factory(track)
         if type(track_uri) is AdItemUri:
             track_name = 'Advertisement'
         else:
-            track_name = pandora_track.song_name
+            track_name = track.song_name
 
-        track = models.Ref.track(name=track_name, uri=track_uri.uri)
-        self.pandora_track_cache[track_uri.uri] = TrackCacheItem(track, pandora_track)
-        return track
+        ref = models.Ref.track(name=track_name, uri=track_uri.uri)
+        self.pandora_track_cache[track_uri.uri] = TrackCacheItem(ref, track)
+        return ref
 
     def refresh(self, uri=None):
         if not uri or uri == self.root_directory.uri:
