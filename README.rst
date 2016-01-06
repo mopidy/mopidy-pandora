@@ -145,7 +145,7 @@ The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sle
 Project resources
 =================
 
-- `Change log <https://github.com/rectalogic/mopidy-pandora/blob/master/CHANGES.rst>`_
+- `Change log <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
 - `Source code <https://github.com/rectalogic/mopidy-pandora>`_
 - `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
 - `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
