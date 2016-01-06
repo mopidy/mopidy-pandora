@@ -42,7 +42,8 @@ Ideally, Mopidy needs `dynamic playlists <https://github.com/mopidy/mopidy/issue
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ to properly support Pandora. In the meantime,
 Mopidy-Pandora comes bundled with a frontend extension that automatically adds more tracks to the tracklist as needed.
 Mopidy-Pandora will ensure that there are always just two tracks in the tracklist: the currently playing track and the
-track that is up next. It is not possible to have Pandora and non-Pandora tracks in the tracklist at the same time.
+track that is up next. It is not possible to mix Pandora and non-Pandora tracks for playback at the same time, so any
+non-Pandora tracks will be removed from the tracklist when playback starts.
 
 Pandora expects users to interact with tracks at the point in time and in the sequence that it serves them up. For this
 reason, trying to save tracks to playlists or messing with the Mopidy-Pandora generated tracklist is probably not a good
