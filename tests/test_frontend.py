@@ -127,6 +127,24 @@ class TestFrontend(BaseTest):
 
         assert func_mock.called
 
+    def test_next_track_available_adds_track_to_playlist(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
+        self.tracks.append(new_track)  # Add to internal list for lookup to work
+
+        self.frontend.next_track_available(new_track, True).get()
+        tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        assert tl_tracks[-1].track == new_track
+        assert self.core.playback.get_current_track().get() == new_track
+
+    def test_next_track_available_forces_stop_if_no_more_tracks(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        assert self.core.playback.get_state().get() == PlaybackState.PLAYING
+        self.frontend.next_track_available(None).get()
+        assert self.core.playback.get_state().get() == PlaybackState.STOPPED
+
     def test_only_execute_for_pandora_does_not_execute_for_non_pandora_uri(self):
         func_mock = mock.PropertyMock()
         func_mock.__name__ = str('func_mock')
