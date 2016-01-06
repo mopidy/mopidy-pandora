@@ -21,18 +21,33 @@ Mopidy-Pandora
 `Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora Radio <http://www.pandora.com/>`_.
 
 
+Features
+========
+
+- Supports **Pandora One** as well as **free** ad-supported Pandora accounts.
+- Add ratings to tracks (thumbs up, thumbs down, sleep)
+- Bookmark songs or artists
+- Browse and add genre stations
+- Play QuickMix stations
+- Sort stations by date added or alphabetically
+- Delete stations from user's profile
+- The usual features provided by the Mopidy music server (album covers, scrobbling to last.fm, etc.)
+
+
 Dependencies
 ============
 
-- Requires a free, ad supported.  Pandora account or a Pandora One subscription (which provides ad-free playback and a
-  higher quality 192 Kbps audio stream).
+- Requires a Pandora user account. Users with a Pandora One subscription will have access to the higher quality 192 Kbps
+  audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.6.4. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
+- ``pydora`` >= 1.6.5. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
 - ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
 
 - ``Mopidy`` >= 1.1.2. The music server that Mopidy-Pandora extends.
+
+- ``requests`` >= 2.5.0. Python HTTP Requests for Humans™.
 
 
 Installation
@@ -46,8 +61,8 @@ Install by running::
 Configuration
 =============
 
-Before starting Mopidy, you must add your Pandora username and password to your Mopidy configuration file, and provide
-the details of the JSON API endpoint that you would like to use::
+Before starting Mopidy, you must add your Pandora username and password to your Mopidy configuration file. The minimum
+configuration also requires that you provide the details of the JSON API endpoint that you would like to use::
 
     [pandora]
     enabled = true
@@ -92,7 +107,8 @@ The following configuration values are available:
 It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
 pause/play/previous/next buttons.
 
-- ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers.
+- ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers. Eventing is disabled by
+  default.
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval (in seconds) will
   trigger an event. Defaults to ``2.00`` seconds.
 - ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults
@@ -112,95 +128,18 @@ Usage
 Mopidy needs `dynamic playlists <https://github.com/mopidy/mopidy/issues/620>`_ and
 `core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ to properly support Pandora. In the meantime,
 Mopidy-Pandora comes bundled with a frontend extension that automatically adds more tracks to the tracklist as needed.
-Mopidy-Pandora will ensure that there are always at least two tracks in the playlist to avoid playback gaps when
-switching tracks.
+Mopidy-Pandora will ensure that there are always just two tracks in the tracklist: the currently playing track and the
+track that is up next. It is not possible to have Pandora and non-Pandora tracks in the tracklist at the same time.
 
-Pandora expects users to interact with tracks at the time and in the sequence that it serves them up. For this reason,
-trying to create playlists manually or mess with the tracklist queue is probably not a good idea. And not supported.
+Pandora expects users to interact with tracks at the point in time and in the sequence that it serves them up. For this
+reason, trying to save tracks to playlists or messing with the Mopidy-Pandora generated tracklist is probably not a good
+idea. And not recommended.
 
 
 Project resources
 =================
 
+- `Change log <https://github.com/rectalogic/mopidy-pandora/blob/master/CHANGES.rst>`_
 - `Source code <https://github.com/rectalogic/mopidy-pandora>`_
 - `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
 - `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
-
-
-Changelog
-=========
-
-v0.2.0 (UNRELEASED)
--------------------
-
-- Now displays all of the correct track information during playback (e.g. song and artist names, album covers, track
-  length, bitrate etc.).
-- Simulate dynamic tracklist (workaround for `#2 <https://github.com/rectalogic/mopidy-pandora/issues/2>`_)
-- Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
-  your profile.
-- Add ability to delete a station by setting one of the doubleclick event parameters to ``delete_station``.
-- Move 'QuickMix' to the top of the station list. Stations that will be played as part of QuickMix are marked with an
-  asterisk (*).
-- Scrobbling tracks to Last.fm is now supported.
-- Station lists are now cached which speeds up startup and browsing of the list of stations dramatically. Configuration
-  parameter ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
-- Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
-- Now plays advertisements which should prevent non-Pandora One accounts from being locked after extended use.
-
-v0.1.7 (Oct 31, 2015)
----------------------
-
-- Configuration parameter ``auto_set_repeat`` has been renamed to ``auto_setup`` - please update your Mopidy
-  configuration file.
-- Now resumes playback after a track has been rated.
-- Enhanced auto_setup routines to ensure that ``consume``, ``random``, and ``single`` modes are disabled as well.
-- Optimized auto_setup routines: now only called when the Mopidy tracklist changes.
-
-v0.1.6 (Oct 26, 2015)
----------------------
-
-- Release to pypi
-
-v0.1.5 (Aug 20, 2015)
----------------------
-
-- Add option to automatically set tracks to play in repeat mode when Mopidy-Pandora starts.
-- Add experimental support for rating songs by re-using buttons available in the current front-end Mopidy extensions.
-- Audio quality now defaults to the highest setting.
-- Improved caching to revert to Pandora server if station cannot be found in the local cache.
-- Fix to retrieve stations by ID instead of token.
-- Add unit tests to increase test coverage.
-
-v0.1.4 (Aug 17, 2015)
----------------------
-
-- Limit number of consecutive track skips to prevent Mopidy's skip-to-next-on-error behaviour from locking the user's
-  Pandora account.
-- Better handling of exceptions that occur in the backend to prevent Mopidy actor crashes.
-- Add support for unicode characters in station and track names.
-
-v0.1.3 (Jul 11, 2015)
----------------------
-
-- Update to work with release of Mopidy version 1.0
-- Update to work with pydora version >= 1.4.0: now keeps the Pandora session alive in tha API itself.
-- Implement station list caching to speed up browsing.
-- Get rid of 'Stations' root directory. Browsing now displays all of the available stations immediately.
-- Fill artist name to improve how tracks are displayed in various Mopidy front-end extensions.
-
-v0.1.2 (Jun 20, 2015)
----------------------
-
-- Enhancement to handle ``Invalid Auth Token`` exceptions when the Pandora session expires after long periods of
-  inactivity. Allows Mopidy-Pandora to run indefinitely on dedicated music servers like the Pi MusicBox.
-- Add configuration option to sort stations alphabetically, instead of by date.
-
-v0.1.1 (Mar 22, 2015)
----------------------
-
-- Added ability to make preferred audio quality user-configurable.
-
-v0.1.0 (Dec 28, 2014)
----------------------
-
-- Initial release.
