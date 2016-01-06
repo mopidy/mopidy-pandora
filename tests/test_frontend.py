@@ -6,10 +6,10 @@ import unittest
 
 from mock import mock
 
-from mopidy import core
+from mopidy import core, listener, models
 
-from mopidy import models
 from mopidy.audio import PlaybackState
+from mopidy.core import CoreListener
 
 import pykka
 
@@ -83,12 +83,12 @@ class BaseTest(unittest.TestCase):
         pykka.ActorRegistry.stop_all()
         self.patcher.stop()
 
-    def replay_events(self, until=None):
+    def replay_events(self, frontend, until=None):
         while self.events:
             if self.events[0][0] == until:
                 break
             event, kwargs = self.events.pop(0)
-            self.core.on_event(event, **kwargs)
+            frontend.on_event(event, **kwargs).get()
 
 
 class TestFrontend(BaseTest):
@@ -98,6 +98,9 @@ class TestFrontend(BaseTest):
 
     def tearDown(self):  # noqa: N802
         super(TestFrontend, self).tearDown()
+
+    def replay_events(self, until=None):
+        super(TestFrontend, self).replay_events(self.frontend, until)
 
     def test_add_track_starts_playback(self):
         new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
@@ -139,6 +142,12 @@ class TestFrontend(BaseTest):
 
         assert not func_mock.called
 
+    def test_options_changed_requires_setup(self):
+        self.frontend.setup_required = False
+        listener.send(CoreListener, 'options_changed')
+        self.replay_events()
+        assert self.frontend.setup_required.get()
+
     def test_set_options_performs_auto_setup(self):
         self.core.tracklist.set_repeat(True).get()
         self.core.tracklist.set_consume(False).get()
@@ -147,7 +156,8 @@ class TestFrontend(BaseTest):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
 
         assert self.frontend.setup_required.get()
-        self.frontend.track_playback_started(self.tracks[0]).get()
+        listener.send(CoreListener, 'track_playback_started', tl_track=self.tracks[0])
+        self.replay_events()
         assert self.core.tracklist.get_repeat().get() is False
         assert self.core.tracklist.get_consume().get() is True
         assert self.core.tracklist.get_random().get() is False
@@ -221,6 +231,9 @@ class TestEventHandlingFrontend(BaseTest):
 
     def tearDown(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).tearDown()
+
+    def replay_events(self, until=None):
+        super(TestEventHandlingFrontend, self).replay_events(self.frontend, until)
 
     def test_process_events_ignores_ads(self):
         self.core.playback.play(tlid=self.tl_tracks[1].tlid).get()
