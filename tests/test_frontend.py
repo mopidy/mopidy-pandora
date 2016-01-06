@@ -289,6 +289,7 @@ class TestEventHandlingFrontend(BaseTest):
     def setUp(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).setUp()
         self.frontend = frontend.EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
+        self.core.tracklist.set_consume(True).get()  # Set consume mode so that tracklist behaves as expected.
 
     def tearDown(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).tearDown()
@@ -323,6 +324,55 @@ class TestEventHandlingFrontend(BaseTest):
                 self.replay_events(self.frontend)
                 self.assertEqual(click_mock.called, True, "Doubleclick not checked for event '{}'".format(event))
                 click_mock.reset_mock()
+
+    def test_get_event_targets_invalid_event_no_op(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.next().get()
+        self.core.playback.pause().get()
+
+        self.frontend.set_click_time().get()
+        self.frontend.check_doubleclicked(action='invalid').get()
+
+        assert len(self.events) == 0
+
+    def test_get_event_targets_change_next(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.next().get()
+        self.core.playback.pause().get()
+
+        self.frontend.set_click_time().get()
+        self.frontend.check_doubleclicked(action='change_track').get()
+
+        assert len(self.events) == 1
+        assert self.events[0][0] == 'event_triggered'
+        assert self.events[0][1]['track_uri'] == self.tl_tracks[0].track.uri
+        assert self.events[0][1]['pandora_event'] == self.frontend.settings.get()['change_track_next']
+
+    def test_get_event_targets_change_previous(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.previous().get()
+        self.core.playback.pause().get()
+
+        self.frontend.set_click_time().get()
+        self.frontend.check_doubleclicked(action='change_track').get()
+
+        assert len(self.events) == 1
+        assert self.events[0][0] == 'event_triggered'
+        assert self.events[0][1]['track_uri'] == self.tl_tracks[0].track.uri
+        assert self.events[0][1]['pandora_event'] == self.frontend.settings.get()['change_track_previous']
+
+    def test_get_event_targets_resume(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.next().get()
+        self.core.playback.pause().get()
+
+        self.frontend.set_click_time().get()
+        self.frontend.check_doubleclicked(action='resume').get()
+
+        assert len(self.events) == 1
+        assert self.events[0][0] == 'event_triggered'
+        assert self.events[0][1]['track_uri'] == self.tl_tracks[1].track.uri
+        assert self.events[0][1]['pandora_event'] == self.frontend.settings.get()['resume']
 
     def test_pause_starts_double_click_timer(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -381,7 +431,6 @@ class TestEventHandlingFrontend(BaseTest):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
         self.core.playback.next().get()
         self.core.playback.pause().get()
-        assert self.core.playback.get_state().get() == PlaybackState.PAUSED
 
         self.frontend.set_click_time().get()
         self.frontend.check_doubleclicked(action='resume').get()
