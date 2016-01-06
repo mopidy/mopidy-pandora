@@ -36,8 +36,6 @@ class TestPandoraFrontendFactory(unittest.TestCase):
 
 
 class BaseTest(unittest.TestCase):
-    config = {'core': {'max_tracklist_length': 10000}}
-
     tracks = [
         models.Track(uri='pandora:track:id_mock:token_mock1', length=40000),  # Regular track
         models.Track(uri='pandora:ad:id_mock:token_mock2', length=40000),  # Advertisement
@@ -99,9 +97,6 @@ class TestFrontend(BaseTest):
     def tearDown(self):  # noqa: N802
         super(TestFrontend, self).tearDown()
 
-    def replay_events(self, until=None):
-        super(TestFrontend, self).replay_events(self.frontend, until)
-
     def test_add_track_starts_playback(self):
         new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
         self.tracks.append(new_track)  # Add to internal list for lookup to work
@@ -145,7 +140,7 @@ class TestFrontend(BaseTest):
     def test_options_changed_requires_setup(self):
         self.frontend.setup_required = False
         listener.send(CoreListener, 'options_changed')
-        self.replay_events()
+        self.replay_events(self.frontend)
         assert self.frontend.setup_required.get()
 
     def test_set_options_performs_auto_setup(self):
@@ -156,13 +151,39 @@ class TestFrontend(BaseTest):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
 
         assert self.frontend.setup_required.get()
-        listener.send(CoreListener, 'track_playback_started', tl_track=self.tracks[0])
-        self.replay_events()
+        self.frontend.set_options().get()
         assert self.core.tracklist.get_repeat().get() is False
         assert self.core.tracklist.get_consume().get() is True
         assert self.core.tracklist.get_random().get() is False
         assert self.core.tracklist.get_single().get() is False
         assert not self.frontend.setup_required.get()
+
+    def test_set_options_skips_auto_setup_if_not_configured(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        config = conftest.config()
+        config['pandora']['auto_setup'] = False
+        self.frontend = frontend.PandoraFrontend.start(config, self.core).proxy()
+        self.frontend.setup_required = True
+        self.core.tracklist.set_repeat(True).get()  # Set a mode that we know will usually be changed
+
+        self.frontend.set_options().get()
+        assert self.core.tracklist.get_repeat().get()  # Confirm mode was not changed
+
+    def test_set_options_triggered_on_core_events(self):
+        core_events = {'track_playback_started': {'tl_track': self.tracks[0]},
+                       'track_playback_ended': {'tl_track': self.tracks[0], 'time_position': 100},
+                       'track_playback_paused': {'tl_track': self.tracks[0], 'time_position': 100},
+                       'track_playback_resumed': {'tl_track': self.tracks[0], 'time_position': 100},
+                       }
+
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        for (event, kwargs) in core_events.items():
+            self.frontend.setup_required = True
+            listener.send(CoreListener, event, **kwargs)
+            self.replay_events(self.frontend)
+            self.assertEqual(self.frontend.setup_required.get(), False, "Setup not done for event '{}'".format(event))
 
     def test_skip_limit_exceed_stops_playback(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -223,6 +244,22 @@ class TestFrontend(BaseTest):
 
         assert self.events[0] == ('end_of_tracklist_reached', {'station_id': 'id_mock_other', 'auto_play': False})
 
+    def test_track_unplayable_removes_tracks_from_tracklist(self):
+        tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        unplayable_track = tl_tracks[0]
+        self.frontend.track_unplayable(unplayable_track.track).get()
+
+        self.assertEqual(unplayable_track in self.core.tracklist.get_tl_tracks().get(), False)
+
+    def test_track_unplayable_triggers_end_of_tracklist_event(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+        self.frontend.track_unplayable(self.tl_tracks[-1].track).get()
+        is_event = [e[0] == 'end_of_tracklist_reached' for e in self.events]
+
+        assert any(is_event)
+        assert self.core.playback.get_state().get() == PlaybackState.STOPPED
+
 
 class TestEventHandlingFrontend(BaseTest):
     def setUp(self):  # noqa: N802
@@ -231,9 +268,6 @@ class TestEventHandlingFrontend(BaseTest):
 
     def tearDown(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).tearDown()
-
-    def replay_events(self, until=None):
-        super(TestEventHandlingFrontend, self).replay_events(self.frontend, until)
 
     def test_process_events_ignores_ads(self):
         self.core.playback.play(tlid=self.tl_tracks[1].tlid).get()
