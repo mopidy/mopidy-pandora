@@ -25,13 +25,28 @@ Features
 ========
 
 - Supports **Pandora One** as well as **free** ad-supported Pandora accounts.
-- Add ratings to tracks (thumbs up, thumbs down, sleep)
-- Bookmark songs or artists
-- Browse and add genre stations
-- Play QuickMix stations
-- Sort stations by date added or alphabetically
-- Delete stations from user's profile
-- The usual features provided by the Mopidy music server (album covers, scrobbling to last.fm, etc.)
+- Add ratings to tracks (thumbs up, thumbs down, sleep).
+- Bookmark songs or artists.
+- Browse and add genre stations.
+- Play QuickMix stations.
+- Sort stations alphabetically or by date added.
+- Delete stations from the user's Pandora profile.
+- Also supports the usual features provided by the Mopidy music server (displaying album covers, scrobbling to last.fm,
+  etc.).
+
+
+Usage
+=====
+
+Ideally, Mopidy needs `dynamic playlists <https://github.com/mopidy/mopidy/issues/620>`_ and
+`core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ to properly support Pandora. In the meantime,
+Mopidy-Pandora comes bundled with a frontend extension that automatically adds more tracks to the tracklist as needed.
+Mopidy-Pandora will ensure that there are always just two tracks in the tracklist: the currently playing track and the
+track that is up next. It is not possible to have Pandora and non-Pandora tracks in the tracklist at the same time.
+
+Pandora expects users to interact with tracks at the point in time and in the sequence that it serves them up. For this
+reason, trying to save tracks to playlists or messing with the Mopidy-Pandora generated tracklist is probably not a good
+idea. And not recommended.
 
 
 Dependencies
@@ -95,45 +110,35 @@ The following configuration values are available:
 - ``pandora/sort_order``: defaults to the ``date`` that the station was added. Use ``a-z`` to display the list of
   stations in alphabetical order.
 
-- ``pandora/auto_setup``: If Mopidy-Pandora should automatically configure the Mopidy player for best compatibility
-  with the Pandora radio stream. Defaults to ``true`` and turns ``consume`` on and ``repeat``, ``random``, and
-  ``single`` modes off.
+- ``pandora/auto_setup``: Specifies if Mopidy-Pandora should automatically configure the Mopidy player for best
+  compatibility with the Pandora radio stream. Defaults to ``true`` and turns ``consume`` on and ``repeat``, ``random``,
+  and ``single`` modes off.
 
-- ``pandora/cache_time_to_live``: specifies how long station and genre lists should be cached for between refreshes,
-  which greatly speeds up browsing the library. Setting this to ``0`` will disable caching entirely and ensure that the
-  latest lists are always retrieved from Pandora. It should not be necessary to fiddle with this unless you want
-  Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other players.
+- ``pandora/cache_time_to_live``: specifies the length of time (in seconds) that station and genre lists should be cached
+  for between automatic refreshes. Using a local cache greatly speeds up browsing the library. It should not be necessary
+  to fiddle with this unless the Mopidy frontend that you are using does not support manually refreshing the library,
+  and you want Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other Pandora
+  players. Setting this to ``0`` will disable caching completely and ensure that the latest lists are always retrieved
+  directly from the Pandora server.
 
 It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
 pause/play/previous/next buttons.
 
 - ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers. Eventing is disabled by
   default.
-- ``pandora/double_click_interval``: successive button clicks that occur within this interval (in seconds) will
-  trigger an event. Defaults to ``2.00`` seconds.
+- ``pandora/double_click_interval``: successive button clicks that occur within this interval will trigger an event.
+  Defaults to ``2.00`` seconds.
 - ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults
   to ``thumbs_up``.
 - ``pandora/on_pause_next_click``: click pause and then next in quick succession. Calls event and skips to next song.
   Defaults to ``thumbs_down``.
 - ``pandora/on_pause_previous_click``: click pause and then previous in quick succession. Calls event and restarts the
   current song. Defaults to ``sleep``.
-- ``pandora/on_pause_stop_click``: click pause and then stop in quick succession. Calls event. Defaults to ``delete_station``.
+- ``pandora/on_pause_stop_click``: click pause and then stop in quick succession. Calls event. Defaults to
+  ``delete_station``.
 
 The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``,
 ``add_song_bookmark``, and ``delete_station``.
-
-Usage
-=====
-
-Mopidy needs `dynamic playlists <https://github.com/mopidy/mopidy/issues/620>`_ and
-`core extensions <https://github.com/mopidy/mopidy/issues/1100>`_ to properly support Pandora. In the meantime,
-Mopidy-Pandora comes bundled with a frontend extension that automatically adds more tracks to the tracklist as needed.
-Mopidy-Pandora will ensure that there are always just two tracks in the tracklist: the currently playing track and the
-track that is up next. It is not possible to have Pandora and non-Pandora tracks in the tracklist at the same time.
-
-Pandora expects users to interact with tracks at the point in time and in the sequence that it serves them up. For this
-reason, trying to save tracks to playlists or messing with the Mopidy-Pandora generated tracklist is probably not a good
-idea. And not recommended.
 
 
 Project resources
