@@ -14,6 +14,7 @@ from mopidy.core import CoreListener
 import pykka
 
 from mopidy_pandora import frontend
+from mopidy_pandora.frontend import EventHandlingPandoraFrontend, PandoraFrontend
 
 from tests import conftest, dummy_backend
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
@@ -183,25 +184,29 @@ class TestFrontend(BaseTest):
         config['pandora']['auto_setup'] = False
         self.frontend = frontend.PandoraFrontend.start(config, self.core).proxy()
         self.frontend.setup_required = True
-        self.core.tracklist.set_repeat(True).get()  # Set a mode that we know will usually be changed
 
         self.frontend.set_options().get()
-        assert self.core.tracklist.get_repeat().get()  # Confirm mode was not changed
+        assert self.frontend.setup_required
 
     def test_set_options_triggered_on_core_events(self):
-        core_events = {'track_playback_started': {'tl_track': self.tracks[0]},
-                       'track_playback_ended': {'tl_track': self.tracks[0], 'time_position': 100},
-                       'track_playback_paused': {'tl_track': self.tracks[0], 'time_position': 100},
-                       'track_playback_resumed': {'tl_track': self.tracks[0], 'time_position': 100},
-                       }
+        with mock.patch.object(PandoraFrontend, 'set_options', mock.Mock()) as set_options_mock:
 
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            tl_tracks = self.core.tracklist.get_tl_tracks().get()
+            core_events = {
+                'track_playback_started': {'tl_track': tl_tracks[0]},
+                'track_playback_ended': {'tl_track': tl_tracks[0], 'time_position': 100},
+                'track_playback_paused': {'tl_track': tl_tracks[0], 'time_position': 100},
+                'track_playback_resumed': {'tl_track': tl_tracks[0], 'time_position': 100},
+            }
 
-        for (event, kwargs) in core_events.items():
-            self.frontend.setup_required = True
-            listener.send(CoreListener, event, **kwargs)
-            self.replay_events(self.frontend)
-            self.assertEqual(self.frontend.setup_required.get(), False, "Setup not done for event '{}'".format(event))
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+            for (event, kwargs) in core_events.items():
+                self.frontend.setup_required = True
+                listener.send(CoreListener, event, **kwargs)
+                self.replay_events(self.frontend)
+                self.assertEqual(set_options_mock.called, True, "Setup not done for event '{}'".format(event))
+                set_options_mock.reset()
 
     def test_skip_limit_exceed_stops_playback(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -257,8 +262,8 @@ class TestFrontend(BaseTest):
 
         self.frontend.track_changed(self.tl_tracks[3].track).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
-        assert len(tl_tracks) == 1
-        assert tl_tracks[0] == self.tl_tracks[3]
+        assert len(tl_tracks) == 1  # Tracks were trimmed from the tracklist
+        assert tl_tracks[0] == self.tl_tracks[3]  # Only the track recently changed to is left in the tracklist
 
         assert self.events[0] == ('end_of_tracklist_reached', {'station_id': 'id_mock_other', 'auto_play': False})
 
@@ -286,6 +291,27 @@ class TestEventHandlingFrontend(BaseTest):
 
     def tearDown(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).tearDown()
+
+    def test_events_check_for_doubleclick(self):
+        with mock.patch.object(EventHandlingPandoraFrontend, 'check_doubleclicked', mock.Mock()) as click_mock:
+
+            click_mock.return_value = False
+
+            tl_tracks = self.core.tracklist.get_tl_tracks().get()
+            core_events = {
+                'track_playback_ended': {'tl_track': tl_tracks[0], 'time_position': 100},
+                'track_playback_resumed': {'tl_track': tl_tracks[0], 'time_position': 100},
+                'track_changed': {'track': tl_tracks[0].track},
+            }
+
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+            for (event, kwargs) in core_events.items():
+                self.frontend.set_click_time().get()
+                listener.send(CoreListener, event, **kwargs)
+                self.replay_events(self.frontend)
+                self.assertEqual(click_mock.called, True, "Doubleclick not checked for event '{}'".format(event))
+                click_mock.reset()
 
     def test_process_events_ignores_ads(self):
         self.core.playback.play(tlid=self.tl_tracks[1].tlid).get()
@@ -317,10 +343,33 @@ class TestEventHandlingFrontend(BaseTest):
 
         assert len(self.events) == 0  # Check that no events were triggered
 
-    def test_is_double_click(self):
-        static_frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), self.core)
-        static_frontend.set_click_time()
-        assert static_frontend._is_double_click()
+    def test_wait_for_track_change_processes_stop_event(self):
+        with mock.patch.object(EventHandlingPandoraFrontend, '_process_event', mock.Mock()) as mock_process_event:
 
-        time.sleep(float(static_frontend.double_click_interval) + 0.1)
-        assert static_frontend._is_double_click() is False
+            self.frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), mock.Mock())
+            self.frontend.set_click_time()
+            self.frontend.check_doubleclicked(action='stop')
+            time.sleep(float(self.frontend.double_click_interval + 0.1))
+
+            assert mock_process_event.called
+
+    def test_wait_for_track_change_aborts_stop_event_on_track_change(self):
+        with mock.patch.object(EventHandlingPandoraFrontend, '_process_event', mock.Mock()) as mock_process_event:
+
+            self.frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), mock.Mock())
+            self.frontend.set_click_time()
+            self.frontend.check_doubleclicked(action='stop')
+            self.frontend.track_changed_event.set()
+
+            assert not mock_process_event.called
+
+
+# Test private methods that are not available in the pykka actor.
+
+def test_is_double_click():
+    static_frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), mock.Mock())
+    static_frontend.set_click_time()
+    assert static_frontend._is_double_click()
+
+    time.sleep(float(static_frontend.double_click_interval) + 0.1)
+    assert static_frontend._is_double_click() is False

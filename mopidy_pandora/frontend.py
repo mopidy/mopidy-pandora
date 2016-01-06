@@ -70,7 +70,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
-            assert isinstance(self.core.tracklist, object)
+
             if self.core.tracklist.get_repeat().get() is True:
                 self.core.tracklist.set_repeat(False)
             if self.core.tracklist.get_consume().get() is False:
