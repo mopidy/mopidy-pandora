@@ -128,7 +128,7 @@ pause/play/previous/next buttons.
 - ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers. Eventing is disabled by
   default.
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval will trigger an event.
-  Defaults to ``2.00`` seconds.
+  Defaults to ``2.50`` seconds.
 - ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults
   to ``thumbs_up``.
 - ``pandora/on_pause_next_click``: click pause and then next in quick succession. Calls event and skips to next song.

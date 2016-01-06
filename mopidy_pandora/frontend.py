@@ -191,11 +191,6 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
         self.track_changed_event = threading.Event()
         self.track_changed_event.set()
 
-    @only_execute_for_pandora_uris
-    def track_playback_ended(self, tl_track, time_position):
-        super(EventHandlingPandoraFrontend, self).track_playback_ended(tl_track, time_position)
-        self.check_doubleclicked(action='stop')
-
     @run_async
     def _wait_for_track_change(self):
         self.track_changed_event.clear()
@@ -212,6 +207,12 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
     def track_playback_resumed(self, tl_track, time_position):
         super(EventHandlingPandoraFrontend, self).track_playback_resumed(tl_track, time_position)
         self.check_doubleclicked(action='resume')
+
+    @only_execute_for_pandora_uris
+    def playback_state_changed(self, old_state, new_state):
+        super(EventHandlingPandoraFrontend, self).playback_state_changed(old_state, new_state)
+        if old_state == PlaybackState.PAUSED and new_state == PlaybackState.STOPPED:
+            self.check_doubleclicked(action='stop')
 
     def track_changed(self, track):
         super(EventHandlingPandoraFrontend, self).track_changed(track)
@@ -252,8 +253,9 @@ class EventHandlingPandoraFrontend(PandoraFrontend, listener.PandoraEventHandlin
 
             self._trigger_event_triggered(event_target_uri, event_target_action)
             # Resume playback...
-            if action in ['stop', 'change_track'] and self.core.playback.get_state().get() != PlaybackState.PLAYING:
-                self.core.playback.resume().get()
+            if action in ['stop', 'change_track'] and event_target_action != 'delete_station':
+                if self.core.playback.get_state().get() != PlaybackState.PLAYING:
+                    self.core.playback.resume().get()
         except ValueError:
             logger.exception("Error processing Pandora event '{}', ignoring...".format(action))
             return

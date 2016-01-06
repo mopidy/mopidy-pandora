@@ -32,7 +32,7 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('auto_setup = true', config)
         self.assertIn('cache_time_to_live = 1800', config)
         self.assertIn('event_support_enabled = false', config)
-        self.assertIn('double_click_interval = 2.00', config)
+        self.assertIn('double_click_interval = 2.50', config)
         self.assertIn('on_pause_resume_click = thumbs_up', config)
         self.assertIn('on_pause_next_click = thumbs_down', config)
         self.assertIn('on_pause_previous_click = sleep', config)

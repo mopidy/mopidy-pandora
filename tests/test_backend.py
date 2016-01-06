@@ -128,9 +128,9 @@ def test_process_event_calls_method(config, caplog):
                 backend.process_event(uri_mock, event)
 
                 assert mock_call.called
-                mock_call.reset()
+                mock_call.reset_mock()
                 assert backend._trigger_event_processed.called
-                backend._trigger_event_processed.reset()
+                backend._trigger_event_processed.reset_mock()
 
                 assert "Triggering event '{}'".format(event) in caplog.text()
 
