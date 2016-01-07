@@ -101,24 +101,20 @@ class TestFrontend(BaseTest):
         super(TestFrontend, self).tearDown()
 
     def test_add_track_starts_playback(self):
-        new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
-        self.tracks.append(new_track)  # Add to internal list for lookup to work
-
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
-        self.frontend.add_track(new_track, auto_play=True).get()
+        self.core.tracklist.clear().get()
+        self.frontend.add_track(self.tl_tracks[0].track, auto_play=True).get()
 
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
-        assert self.core.playback.get_current_track().get() == new_track
+        assert self.core.playback.get_current_track().get() == self.tl_tracks[0].track
 
     def test_add_track_trims_tracklist(self):
-        new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
-        self.tracks.append(new_track)  # Add to internal list for lookup to work
-
         assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
-        self.frontend.add_track(new_track).get()
+        self.core.tracklist.remove({'tlid': [self.tl_tracks[0].tlid]}).get() # Remove first track so we can add it again
+        self.frontend.add_track(self.tl_tracks[0].track).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
         assert len(tl_tracks) == 2
-        assert tl_tracks[-1].track == new_track
+        assert tl_tracks[-1].track == self.tl_tracks[0].track
 
     def test_only_execute_for_pandora_executes_for_pandora_uri(self):
         func_mock = mock.PropertyMock()
@@ -131,15 +127,14 @@ class TestFrontend(BaseTest):
         assert func_mock.called
 
     def test_next_track_available_adds_track_to_playlist(self):
+        self.core.tracklist.clear().get()
+        self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
 
-        new_track = models.Track(uri='pandora:track:id_mock:new_token_mock', length=40000)
-        self.tracks.append(new_track)  # Add to internal list for lookup to work
-
-        self.frontend.next_track_available(new_track, True).get()
+        self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
-        assert tl_tracks[-1].track == new_track
-        assert self.core.playback.get_current_track().get() == new_track
+        assert tl_tracks[-1].track == self.tl_tracks[1].track
+        assert self.core.playback.get_current_track().get() == self.tl_tracks[1].track
 
     def test_next_track_available_forces_stop_if_no_more_tracks(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -215,6 +210,16 @@ class TestFrontend(BaseTest):
 
         self.frontend.skip_limit_exceeded().get()
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
+
+    def test_station_change_does_not_trim_currently_playing_track_from_tracklist(self):
+        with mock.patch.object(PandoraFrontend, 'is_station_changed', mock.Mock(return_value=True)):
+
+            self.core.tracklist.clear().get()
+            self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
+            self.frontend.track_changed(self.tl_tracks[0].track).get()
+            tl_tracks = self.core.tracklist.get_tl_tracks().get()
+            assert len(tl_tracks) == 1
+            assert tl_tracks[0].track == self.tl_tracks[0].track
 
     def test_is_end_of_tracklist_reached(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()

@@ -161,7 +161,10 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
         if keep_only:
             trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
-            return len(self.core.tracklist.remove({'tlid': trim_tlids}).get())
+            if len(trim_tlids) > 0:
+                return len(self.core.tracklist.remove({'tlid': trim_tlids}).get())
+            else:
+                return 0
 
         elif len(tl_tracks) > maxsize:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
