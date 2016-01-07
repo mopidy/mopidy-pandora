@@ -107,6 +107,11 @@ Project resources
 Changelog
 =========
 
+v0.1.8 (Jan 8, 2016)
+----------------------------------------
+
+- Update dependencies: requires at least pydora 1.5.1.
+
 v0.1.7 (Oct 31, 2015)
 ----------------------------------------
 

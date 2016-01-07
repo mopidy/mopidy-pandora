@@ -51,7 +51,7 @@ setup(
         'setuptools',
         'Mopidy >= 1.0.7',
         'Pykka >= 1.1',
-        'pydora >= 1.4.0',
+        'pydora >= 1.5.1',
         'requests >= 2.5.0'
     ],
     tests_require=['tox'],
