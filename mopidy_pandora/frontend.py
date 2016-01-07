@@ -118,8 +118,8 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             previous_track_uri = PandoraUri.factory(self.core.history.get_history().get()[1][1].uri)
             if previous_track_uri.station_id != PandoraUri.factory(track.uri).station_id:
                 return True
-        except IndexError:
-            # No tracks in history, ignore
+        except (IndexError, NotImplementedError):
+            # No tracks in history, or last played track was not a Pandora track. Ignore
             pass
         return False
 
