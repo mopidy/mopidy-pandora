@@ -21,6 +21,7 @@ v0.2.0 (UNRELEASED)
 - Now plays advertisements which should prevent non-Pandora One accounts from being locked after extended use.
 - Tracks are now played in ``consume`` instead of ``repeat`` mode. This is more in line with how Pandora deals with
   track playback. It also avoids infinite loops on unplayable tracks, which is still an issue in Mopidy 1.1.2.
+- Added link to a short troubleshooting guide on the README page.
 
 v0.1.8 (Jan 8, 2016)
 --------------------
