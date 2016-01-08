@@ -23,7 +23,7 @@ v0.2.0 (UNRELEASED)
   track playback. It also avoids infinite loops on unplayable tracks, which is still an issue in Mopidy 1.1.2.
 
 v0.1.8 (Jan 8, 2016)
-----------------------------------------
+--------------------
 
 - Update dependencies: requires at least pydora 1.5.1.
 
