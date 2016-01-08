@@ -27,7 +27,7 @@ Ensure that you are connected to the internet
 This sounds rather obvious but Mopidy-Pandora relies on a working internet
 connection to log on to the Pandora servers and retrieve station information.
 If you are behind a proxy, you may have to configure some of Mopidy's
-`proxy settings <http://mopidy.readthedocs.org/en/latest/config/?highlight=proxy#proxy-configuration)>`_.
+`proxy settings <http://mopidy.readthedocs.org/en/latest/config/?highlight=proxy#proxy-configuration>`_.
 
 Run pydora directly
 -------------------
