@@ -95,13 +95,14 @@ class PandoraPlaybackListener(listener.Listener):
     def send(event, **kwargs):
         listener.send(PandoraPlaybackListener, event, **kwargs)
 
-    def track_changed(self, track):
+    def changing_track(self, track):
         """
-        Called when the track has been changed successfully. Let's the frontend know that it should probably
-        expand the tracklist by fetching and adding another track to the tracklist, and removing tracks that have
-        already been played.
+        Called when a track change has been initiated. Let's the frontend know that it should probably expand the
+        tracklist by fetching and adding another track to the tracklist, and removing tracks that do not belong to
+        the currently selected station. This is also the earliest point at which we can detect a 'previous' or 'next'
+        action performed by the user.
 
-        :param track: the Pandora track that was just changed to.
+        :param track: the Pandora track that is being changed to.
         :type track: :class:`mopidy.models.Ref`
         """
         pass
@@ -123,27 +124,5 @@ class PandoraPlaybackListener(listener.Listener):
         player should probably be stopped in order to avoid an infinite loop on the tracklist (which should still be
         in 'repeat' mode.
 
-        """
-        pass
-
-
-class PandoraEventHandlingPlaybackListener(listener.Listener):
-
-    """
-    Marker interface for recipients of events sent by the playback provider.
-
-    """
-
-    @staticmethod
-    def send(event, **kwargs):
-        listener.send(PandoraEventHandlingPlaybackListener, event, **kwargs)
-
-    def check_doubleclicked(self, action=None):
-        """
-        Called to check if a doubleclick action was performed on one of the playback actions (i.e. pause/back,
-        pause/resume, pause, next).
-
-        :param action: The playback action that occurred.
-        :type action: string
         """
         pass

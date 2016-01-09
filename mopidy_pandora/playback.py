@@ -43,7 +43,6 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             if pandora_track.get_is_playable():
                 # Success, reset track skip counter.
                 self._consecutive_track_skips = 0
-                self._trigger_track_changed(track)
             else:
                 raise Unplayable("Track with URI '{}' is not playable.".format(track.uri))
 
@@ -61,6 +60,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
         try:
+            self._trigger_changing_track(track)
             self.check_skip_limit()
             self.change_pandora_track(track)
             return super(PandoraPlaybackProvider, self).change_track(track)
@@ -81,8 +81,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
-    def _trigger_track_changed(self, track):
-        listener.PandoraPlaybackListener.send('track_changed', track=track)
+    def _trigger_changing_track(self, track):
+        listener.PandoraPlaybackListener.send('changing_track', track=track)
 
     def _trigger_track_unplayable(self, track):
         listener.PandoraPlaybackListener.send('track_unplayable', track=track)

@@ -71,34 +71,18 @@ class PandoraPlaybackListenerTest(unittest.TestCase):
         self.listener = listener.PandoraPlaybackListener()
 
     def test_on_event_forwards_to_specific_handler(self):
-        self.listener.track_changed = mock.Mock()
+        self.listener.changing_track = mock.Mock()
 
         self.listener.on_event(
-            'track_changed', track=models.Ref(name='name_mock'))
+            'changing_track', track=models.Ref(name='name_mock'))
 
-        self.listener.track_changed.assert_called_with(track=models.Ref(name='name_mock'))
+        self.listener.changing_track.assert_called_with(track=models.Ref(name='name_mock'))
 
-    def test_listener_has_default_impl_for_track_changed(self):
-        self.listener.track_changed(track=models.Ref(name='name_mock'))
+    def test_listener_has_default_impl_for_changing_track(self):
+        self.listener.changing_track(track=models.Ref(name='name_mock'))
 
     def test_listener_has_default_impl_for_track_unplayable(self):
         self.listener.track_unplayable(track=models.Ref(name='name_mock'))
 
     def test_listener_has_default_impl_for_skip_limit_exceeded(self):
         self.listener.skip_limit_exceeded()
-
-
-class PandoraEventHandlingPlaybackListenerTest(unittest.TestCase):
-
-    def setUp(self):  # noqa: N802
-        self.listener = listener.PandoraEventHandlingPlaybackListener()
-
-    def test_on_event_forwards_to_specific_handler(self):
-        self.listener.check_doubleclicked = mock.Mock()
-
-        self.listener.on_event('check_doubleclicked', action='action_mock')
-
-        self.listener.check_doubleclicked.assert_called_with(action='action_mock')
-
-    def test_listener_has_default_impl_for_check_doubleclicked(self):
-        self.listener.check_doubleclicked(action='action_mock')
