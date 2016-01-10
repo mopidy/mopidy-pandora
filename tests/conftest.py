@@ -71,7 +71,7 @@ def config():
             'on_pause_resume_click': 'thumbs_up',
             'on_pause_next_click': 'thumbs_down',
             'on_pause_previous_click': 'sleep',
-            'on_pause_stop_click': 'delete_station',
+            'on_pause_resume_pause_click': 'delete_station',
         }
     }
 

@@ -55,12 +55,12 @@ class Extension(ext.Extension):
                                                                    'add_artist_bookmark',
                                                                    'add_song_bookmark',
                                                                    'delete_station'])
-        schema['on_pause_stop_click'] = config.String(choices=['thumbs_up',
-                                                               'thumbs_down',
-                                                               'sleep',
-                                                               'add_artist_bookmark',
-                                                               'add_song_bookmark',
-                                                               'delete_station'])
+        schema['on_pause_resume_pause_click'] = config.String(choices=['thumbs_up',
+                                                                       'thumbs_down',
+                                                                       'sleep',
+                                                                       'add_artist_bookmark',
+                                                                       'add_song_bookmark',
+                                                                       'delete_station'])
         return schema
 
     def setup(self, registry):

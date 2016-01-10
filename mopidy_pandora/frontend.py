@@ -126,7 +126,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             pass
         return False
 
-    def changing_track(self, track):
+    def track_changed(self, track):
         if self.is_station_changed(track):
             # Station has changed, remove tracks from previous station from tracklist.
             self._trim_tracklist(keep_only=track)
@@ -191,14 +191,14 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
             'resume': config['pandora'].get('on_pause_resume_click'),
             'change_track_next': config['pandora'].get('on_pause_next_click'),
             'change_track_previous': config['pandora'].get('on_pause_previous_click'),
-            'stop': config['pandora'].get('on_pause_stop_click')
+            'triple_click': config['pandora'].get('on_pause_resume_pause_click')
         }
 
         self.double_click_interval = float(config['pandora'].get('double_click_interval'))
         self._click_marker = None
 
-        self.change_track_event = threading.Event()
-        self.change_track_event.set()
+        self._triple_click_event = threading.Event()
+        self._triple_click_event.set()
 
     @only_execute_for_pandora_uris
     def track_playback_paused(self, tl_track, time_position):
@@ -208,7 +208,10 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
 
         """
         if time_position > 0:
-            self.set_click_marker(tl_track)
+            if not self._triple_click_event.isSet():
+                self._triple_click_event.set()
+            else:
+                self.set_click_marker(tl_track)
         super(EventHandlingPandoraFrontend, self).track_playback_paused(tl_track, time_position)
 
     @only_execute_for_pandora_uris
@@ -218,27 +221,13 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
 
         """
         if self._is_double_click():
-            self._queue_event(event='resume')
+            self._queue_event('resume', self._triple_click_event, 'triple_click', timeout=self.double_click_interval)
         super(EventHandlingPandoraFrontend, self).track_playback_resumed(tl_track, time_position)
 
-    @only_execute_for_pandora_uris
-    def playback_state_changed(self, old_state, new_state):
-        """
-        Used to detect pause -> stop, pause -> previous, and pause -> next double click events.
-
-        """
-        if old_state == PlaybackState.PAUSED and new_state == PlaybackState.STOPPED:
-            if self._is_double_click():
-                # Mopidy (as of 1.1.2) always forces a call to core.playback.stop() when the track changes, even
-                # if the user did not click stop explicitly. We need to wait for a 'change_track' event
-                # immediately thereafter to know if this is a real track stop, or just a transition to the
-                # next/previous track.
-                self._queue_event('stop', self.change_track_event, 'change_track', timeout=self.double_click_interval)
-        super(EventHandlingPandoraFrontend, self).playback_state_changed(old_state, new_state)
-
-    def changing_track(self, track):
-        self.change_track_event.set()
-        super(EventHandlingPandoraFrontend, self).changing_track(track)
+    def track_changed(self, track):
+        if self._is_double_click():
+            self._queue_event('change_track')
+        super(EventHandlingPandoraFrontend, self).track_changed(track)
 
     def set_click_marker(self, tl_track, click_time=None):
         if click_time is None:
@@ -276,6 +265,8 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
             threading_event.clear()
             if threading_event.wait(timeout=timeout):
                 event = override_event
+            else:
+                threading_event.set()
 
         self.process_event(event=event)
 

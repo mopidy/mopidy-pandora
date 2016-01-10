@@ -18,7 +18,7 @@ import pykka
 
 from mopidy_pandora import frontend
 from mopidy_pandora.frontend import EventHandlingPandoraFrontend, PandoraFrontend
-from mopidy_pandora.listener import PandoraBackendListener
+from mopidy_pandora.listener import PandoraBackendListener, PandoraPlaybackListener
 
 from tests import conftest, dummy_backend
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
@@ -247,7 +247,7 @@ class TestFrontend(BaseTest):
                 self.core.tracklist.clear().get()
                 self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
 
-                self.frontend.changing_track(self.tl_tracks[0].track).get()
+                self.frontend.track_changed(self.tl_tracks[0].track).get()
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
                 tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -292,7 +292,7 @@ class TestFrontend(BaseTest):
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
             self.replay_events(self.frontend)
 
-            self.frontend.changing_track(self.tl_tracks[1].track).get()
+            self.frontend.track_changed(self.tl_tracks[1].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
@@ -306,7 +306,7 @@ class TestFrontend(BaseTest):
 
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
 
-            self.frontend.changing_track(self.tl_tracks[4].track).get()
+            self.frontend.track_changed(self.tl_tracks[4].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -361,18 +361,22 @@ class TestEventHandlingFrontend(BaseTest):
                 self.core.playback.pause().get()
                 self.core.playback.resume().get()
                 self.replay_events(self.frontend)
+                thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
 
-                assert process_mock.called
+                process_mock.assert_called_with(event='resume')
                 process_mock.reset_mock()
                 self.events = Queue.Queue()
 
-                # Pause -> Stop
+                # Pause -> Resume -> Pause
+                self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+                self.core.playback.seek(100).get()
                 self.core.playback.pause().get()
-                self.core.playback.stop().get()
+                self.core.playback.resume().get()
+                self.core.playback.pause().get()
                 self.replay_events(self.frontend)
-                time.sleep(self.frontend.double_click_interval.get() + 0.1)  # Wait for 'change_track' timeout
+                thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
 
-                assert process_mock.called
+                process_mock.assert_called_with(event='triple_click')
                 process_mock.reset_mock()
                 self.events = Queue.Queue()
 
@@ -381,6 +385,7 @@ class TestEventHandlingFrontend(BaseTest):
                 self.core.playback.seek(100).get()
                 self.core.playback.pause().get()
                 self.core.playback.next().get()
+                listener.send(PandoraPlaybackListener, 'track_changed', track=self.tl_tracks[1].track)
                 self.replay_events(self.frontend)
 
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
@@ -409,7 +414,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.core.playback.next().get()
             self.replay_events(self.frontend)
 
-            self.frontend.changing_track(track=self.tl_tracks[1].track).get()
+            self.frontend.track_changed(track=self.tl_tracks[1].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             assert all(self.has_events([
@@ -430,7 +435,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.core.playback.previous().get()
             self.replay_events(self.frontend)
 
-            self.frontend.changing_track(track=self.tl_tracks[0].track).get()
+            self.frontend.track_changed(track=self.tl_tracks[0].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             assert all(self.has_events([
@@ -441,22 +446,24 @@ class TestEventHandlingFrontend(BaseTest):
                  })]))
 
     def test_get_event_targets_resume(self):
-        """
-        Pause -> Resume
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            """
+            Pause -> Resume
 
-        """
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.seek(100).get()
-        self.core.playback.pause().get()
-        self.core.playback.resume().get()
-        self.replay_events(self.frontend, until='track_playback_resumed')
+            """
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.seek(100).get()
+            self.core.playback.pause().get()
+            self.core.playback.resume().get()
+            self.replay_events(self.frontend, until='track_playback_resumed')
 
-        assert all(self.has_events([
-            ('event_triggered',
-             {
-                 'track_uri': self.tl_tracks[0].track.uri,
-                 'pandora_event': self.frontend.settings.get()['resume']
-             })]))
+            thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
+            assert all(self.has_events([
+                ('event_triggered',
+                 {
+                     'track_uri': self.tl_tracks[0].track.uri,
+                     'pandora_event': self.frontend.settings.get()['resume']
+                 })]))
 
     def test_pause_starts_double_click_timer(self):
         assert self.frontend.get_click_marker().get() is None
@@ -525,49 +532,55 @@ class TestEventHandlingFrontend(BaseTest):
                                  "Failed to set playback for action '{}'".format(action))
 
     def test_process_event_triggers_event(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.seek(100).get()
-        self.core.playback.pause().get()
-        self.replay_events(self.frontend)
-        self.core.playback.resume().get()
-        self.replay_events(self.frontend, until='track_playback_resumed')
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.seek(100).get()
+            self.core.playback.pause().get()
+            self.replay_events(self.frontend)
+            self.core.playback.resume().get()
+            self.replay_events(self.frontend, until='track_playback_resumed')
 
-        assert all(self.has_events([
-            ('event_triggered',
-             {
-                 'track_uri': self.tl_tracks[0].track.uri,
-                 'pandora_event': self.frontend.settings.get()['resume']
-             })]))
+            thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
+            assert all(self.has_events([
+                ('event_triggered',
+                 {
+                     'track_uri': self.tl_tracks[0].track.uri,
+                     'pandora_event': self.frontend.settings.get()['resume']
+                 })]))
 
     def test_process_event_resets_click_marker(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.seek(100).get()
-        self.core.playback.pause().get()
-        self.replay_events(self.frontend)
-        self.core.playback.resume().get()
-        self.replay_events(self.frontend, until='track_playback_resumed')
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.seek(100).get()
+            self.core.playback.pause().get()
+            self.replay_events(self.frontend)
+            self.core.playback.resume().get()
+            self.replay_events(self.frontend, until='track_playback_resumed')
 
-        assert self.frontend.get_click_marker().get() is None
+            thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
+            assert self.frontend.get_click_marker().get() is None
 
     def test_playback_state_changed_handles_stop(self):
-        """
-        Pause -> Stop
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            """
+            Pause -> Resume -> Pause
 
-        """
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.seek(100).get()
-        self.core.playback.pause().get()
-        self.core.playback.stop().get()
-        self.replay_events(self.frontend)
+            """
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.seek(100).get()
+            self.core.playback.pause().get()
+            self.core.playback.resume().get()
+            self.replay_events(self.frontend)
+            self.core.playback.pause().get()
+            self.replay_events(self.frontend, until='track_playback_paused')
 
-        time.sleep(float(self.frontend.double_click_interval.get() + 0.1))
-
-        assert all(self.has_events([
-            ('event_triggered',
-             {
-                 'track_uri': self.tl_tracks[0].track.uri,
-                 'pandora_event': self.frontend.settings.get()['stop']
-             })]))
+            thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
+            assert all(self.has_events([
+                ('event_triggered',
+                 {
+                     'track_uri': self.tl_tracks[0].track.uri,
+                     'pandora_event': self.frontend.settings.get()['triple_click']
+                 })]))
 
     def test_playback_state_changed_handles_change_track(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -577,7 +590,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.core.playback.next().get()
             self.replay_events(self.frontend)
 
-            self.frontend.changing_track(self.tl_tracks[1].track).get()
+            self.frontend.track_changed(self.tl_tracks[1].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             assert all(self.has_events([
@@ -683,12 +696,3 @@ class TestEventTargets(BaseTest):
         event_target_uri, event_target_action = self.frontend._get_event_targets('resume')
         assert event_target_uri == self.refs[0].uri
         assert event_target_action == self.frontend.settings['resume']
-
-    def test_get_event_targets_stop(self):
-        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
-        time.sleep(0.01)
-        self.frontend.set_click_marker(self.tl_tracks[0])
-
-        event_target_uri, event_target_action = self.frontend._get_event_targets('stop')
-        assert event_target_uri == self.refs[0].uri
-        assert event_target_action == self.frontend.settings['stop']

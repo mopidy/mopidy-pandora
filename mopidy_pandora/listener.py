@@ -95,14 +95,14 @@ class PandoraPlaybackListener(listener.Listener):
     def send(event, **kwargs):
         listener.send(PandoraPlaybackListener, event, **kwargs)
 
-    def changing_track(self, track):
+    def track_changed(self, track):
         """
-        Called when a track change has been initiated. Let's the frontend know that it should probably expand the
+        Called when a track has been changed. Let's the frontend know that it should probably expand the
         tracklist by fetching and adding another track to the tracklist, and removing tracks that do not belong to
         the currently selected station. This is also the earliest point at which we can detect a 'previous' or 'next'
         action performed by the user.
 
-        :param track: the Pandora track that is being changed to.
+        :param track: the Pandora track that was changed to.
         :type track: :class:`mopidy.models.Ref`
         """
         pass

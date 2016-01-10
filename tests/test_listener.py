@@ -71,15 +71,15 @@ class PandoraPlaybackListenerTest(unittest.TestCase):
         self.listener = listener.PandoraPlaybackListener()
 
     def test_on_event_forwards_to_specific_handler(self):
-        self.listener.changing_track = mock.Mock()
+        self.listener.track_changed = mock.Mock()
 
         self.listener.on_event(
-            'changing_track', track=models.Ref(name='name_mock'))
+            'track_changed', track=models.Ref(name='name_mock'))
 
-        self.listener.changing_track.assert_called_with(track=models.Ref(name='name_mock'))
+        self.listener.track_changed.assert_called_with(track=models.Ref(name='name_mock'))
 
-    def test_listener_has_default_impl_for_changing_track(self):
-        self.listener.changing_track(track=models.Ref(name='name_mock'))
+    def test_listener_has_default_impl_for_track_changed(self):
+        self.listener.track_changed(track=models.Ref(name='name_mock'))
 
     def test_listener_has_default_impl_for_track_unplayable(self):
         self.listener.track_unplayable(track=models.Ref(name='name_mock'))

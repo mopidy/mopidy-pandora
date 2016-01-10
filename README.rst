@@ -136,8 +136,8 @@ pause/play/previous/next buttons.
   Defaults to ``thumbs_down``.
 - ``pandora/on_pause_previous_click``: click pause and then previous in quick succession. Calls event and restarts the
   current song. Defaults to ``sleep``.
-- ``pandora/on_pause_stop_click``: click pause and then stop in quick succession. Calls event. Defaults to
-  ``delete_station``.
+- ``pandora/on_pause_resume_pause_click``: click pause, resume, and pause again in quick succession (i.e. triple click).
+  Calls event. Defaults to ``delete_station``.
 
 The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``,
 ``add_song_bookmark``, and ``delete_station``.

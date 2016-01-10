@@ -60,9 +60,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
         try:
-            self._trigger_changing_track(track)
             self.check_skip_limit()
             self.change_pandora_track(track)
+            self._trigger_track_changed(track)
             return super(PandoraPlaybackProvider, self).change_track(track)
 
         except KeyError:
@@ -81,8 +81,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 
-    def _trigger_changing_track(self, track):
-        listener.PandoraPlaybackListener.send('changing_track', track=track)
+    def _trigger_track_changed(self, track):
+        listener.PandoraPlaybackListener.send('track_changed', track=track)
 
     def _trigger_track_unplayable(self, track):
         listener.PandoraPlaybackListener.send('track_unplayable', track=track)
