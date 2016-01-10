@@ -208,10 +208,11 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
 
         """
         if time_position > 0:
-            if not self._triple_click_event.isSet():
-                self._triple_click_event.set()
-            else:
+            if self.get_click_marker() is None:
                 self.set_click_marker(tl_track)
+            else:
+                self._triple_click_event.set()
+
         super(EventHandlingPandoraFrontend, self).track_playback_paused(tl_track, time_position)
 
     @only_execute_for_pandora_uris

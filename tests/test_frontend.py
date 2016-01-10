@@ -351,7 +351,7 @@ class TestEventHandlingFrontend(BaseTest):
 
         assert len(self.core.tracklist.get_tl_tracks().get()) == 0
 
-    def test_events_processed_on_resume_stop_and_change_track_actions(self):
+    def test_events_processed_on_resume_action(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
 
@@ -361,12 +361,13 @@ class TestEventHandlingFrontend(BaseTest):
                 self.core.playback.pause().get()
                 self.core.playback.resume().get()
                 self.replay_events(self.frontend)
+
                 thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
-
                 process_mock.assert_called_with(event='resume')
-                process_mock.reset_mock()
-                self.events = Queue.Queue()
 
+    def test_events_processed_on_triple_click_action(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
                 # Pause -> Resume -> Pause
                 self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
                 self.core.playback.seek(100).get()
@@ -374,11 +375,13 @@ class TestEventHandlingFrontend(BaseTest):
                 self.core.playback.resume().get()
                 self.core.playback.pause().get()
                 self.replay_events(self.frontend)
-                thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
 
+                thread_joiner.wait(timeout=self.frontend.double_click_interval.get() + 1)
                 process_mock.assert_called_with(event='triple_click')
-                process_mock.reset_mock()
-                self.events = Queue.Queue()
+
+    def test_events_processed_on_change_track_action(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
 
                 # Change track
                 self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -390,8 +393,6 @@ class TestEventHandlingFrontend(BaseTest):
 
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
                 assert process_mock.called
-                process_mock.reset_mock()
-                self.events = Queue.Queue()
 
     def test_get_event_targets_invalid_event_no_op(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
