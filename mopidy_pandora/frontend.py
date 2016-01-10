@@ -157,7 +157,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         self.core.tracklist.add(uris=[track.uri]).get()
         if auto_play:
             tl_tracks = self.core.tracklist.get_tl_tracks().get()
-            self.core.playback.play(tl_tracks[-1]).get()
+            self.core.playback.play(tlid=tl_tracks[-1].tlid).get()
         self._trim_tracklist(maxsize=2)
 
     def _trim_tracklist(self, keep_only=None, maxsize=2):
