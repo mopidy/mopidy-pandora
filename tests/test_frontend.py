@@ -240,14 +240,14 @@ class TestFrontend(BaseTest):
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
 
     def test_station_change_does_not_trim_currently_playing_track_from_tracklist(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             with mock.patch.object(PandoraFrontend, 'is_station_changed', mock.Mock(return_value=True)):
 
                 self.core.tracklist.clear().get()
                 self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
 
                 self.frontend.changing_track(self.tl_tracks[0].track).get()
-                thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+                thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
 
                 tl_tracks = self.core.tracklist.get_tl_tracks().get()
                 assert len(tl_tracks) == 1
@@ -284,7 +284,7 @@ class TestFrontend(BaseTest):
         assert not self.frontend.is_station_changed(self.tl_tracks[0].track).get()
 
     def test_changing_track_no_op(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.core.playback.next().get()  # Add track to history
 
@@ -292,13 +292,13 @@ class TestFrontend(BaseTest):
             self.replay_events(self.frontend)
 
             self.frontend.changing_track(self.tl_tracks[1].track).get()
-            thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+            thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
 
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
             assert self.events.qsize() == 0
 
     def test_changing_track_station_changed(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.core.playback.play(tlid=self.tl_tracks[4].tlid).get()
             self.replay_events(self.frontend)
@@ -306,7 +306,7 @@ class TestFrontend(BaseTest):
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
 
             self.frontend.changing_track(self.tl_tracks[4].track).get()
-            thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+            thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
 
             tl_tracks = self.core.tracklist.get_tl_tracks().get()
             assert len(tl_tracks) == 1  # Tracks were trimmed from the tracklist
@@ -351,7 +351,7 @@ class TestEventHandlingFrontend(BaseTest):
         assert len(self.core.tracklist.get_tl_tracks().get()) == 0
 
     def test_events_processed_on_resume_stop_and_change_track(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
 
                 # Pause -> Resume
@@ -382,7 +382,7 @@ class TestEventHandlingFrontend(BaseTest):
                 self.core.playback.next().get()
                 self.replay_events(self.frontend)
 
-                thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+                thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
                 assert process_mock.called
                 process_mock.reset_mock()
                 self.events = Queue.Queue()
@@ -397,7 +397,7 @@ class TestEventHandlingFrontend(BaseTest):
         assert self.events.qsize() == 0
 
     def test_get_event_targets_change_next(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.core.playback.seek(100).get()
             self.core.playback.pause().get()
@@ -405,7 +405,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.replay_events(self.frontend)
 
             self.frontend.changing_track(track=self.tl_tracks[1].track).get()
-            thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+            thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
 
             assert all(self.has_events([
                 ('event_triggered',
@@ -415,7 +415,7 @@ class TestEventHandlingFrontend(BaseTest):
                  })]))
 
     def test_get_event_targets_change_previous(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[1].tlid).get()
             self.core.playback.seek(100).get()
             self.core.playback.pause().get()
@@ -423,7 +423,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.replay_events(self.frontend)
 
             self.frontend.changing_track(track=self.tl_tracks[0].track).get()
-            thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+            thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
 
             assert all(self.has_events([
                 ('event_triggered',
@@ -544,7 +544,7 @@ class TestEventHandlingFrontend(BaseTest):
              })]))
 
     def test_playback_state_changed_handles_change_track(self):
-        with conftest.ThreadJoiner(timeout=1) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=2.50) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.core.playback.seek(100).get()
             self.core.playback.pause().get()
@@ -552,7 +552,7 @@ class TestEventHandlingFrontend(BaseTest):
             self.replay_events(self.frontend)
 
             self.frontend.changing_track(self.tl_tracks[1].track).get()
-            thread_joiner.wait(timeout=1)  # Wait until threads spawned by frontend have finished.
+            thread_joiner.wait(timeout=2.50)  # Wait until threads spawned by frontend have finished.
 
             assert all(self.has_events([
                 ('event_triggered',

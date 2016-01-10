@@ -67,7 +67,7 @@ def config():
             'cache_time_to_live': 1800,
 
             'event_support_enabled': False,
-            'double_click_interval': '0.5',
+            'double_click_interval': '2.50',
             'on_pause_resume_click': 'thumbs_up',
             'on_pause_next_click': 'thumbs_down',
             'on_pause_previous_click': 'sleep',
