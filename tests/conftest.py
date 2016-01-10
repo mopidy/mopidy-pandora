@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
+import threading
 
 import mock
 
@@ -299,3 +300,45 @@ def transport_call_not_implemented_mock(self, method, **data):
 
 class TransportCallTestNotImplemented(Exception):
     pass
+
+
+# Based on https://pypi.python.org/pypi/tl.testing/0.5
+# Copyright (c) 2011-2012 Thomas Lotze
+class ThreadJoiner(object):
+    """Context manager that tries to join any threads started by its suite.
+
+    This context manager is instantiated with a mandatory ``timeout``
+    parameter and an optional ``check_alive`` switch. The time-out is applied
+    when joining each of the new threads started while executing the context
+    manager's code suite. If ``check_alive`` has a true value (the default),
+    a ``RuntimeError`` is raised if a thread is still alive after the attempt
+    to join timed out.
+
+    Returns an instance of itself upon entering. This instance has a
+    ``before`` attribute that is a collection of all threads active when the
+    manager was entered. After the manager exited, the instance has another
+    attribute, ``left_behind``, that is a collection of any threads that could
+    not be joined within the time-out period. The latter is obviously only
+    useful if ``check_alive`` is set to a false value.
+
+    """
+
+    def __init__(self, timeout, check_alive=True):
+        self.timeout = timeout
+        self.check_alive = check_alive
+
+    def __enter__(self):
+        self.before = set(threading.enumerate())
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for thread in set(threading.enumerate()) - self.before:
+            thread.join(self.timeout)
+            if self.check_alive and thread.is_alive():
+                raise RuntimeError('Timeout joining thread %r' % thread)
+        self.left_behind = sorted(
+            set(threading.enumerate()) - self.before, key=lambda t: t.name)
+
+    def wait(self, timeout):
+        for thread in set(threading.enumerate()) - self.before:
+            thread.join(timeout)
