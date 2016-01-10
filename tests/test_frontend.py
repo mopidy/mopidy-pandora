@@ -11,7 +11,8 @@ from mock import mock
 from mopidy import core, listener, models
 
 from mopidy.audio import PlaybackState
-from mopidy.core import CoreListener
+
+from mopidy.core import Core, CoreListener, HistoryController
 
 import pykka
 
@@ -350,7 +351,7 @@ class TestEventHandlingFrontend(BaseTest):
 
         assert len(self.core.tracklist.get_tl_tracks().get()) == 0
 
-    def test_events_processed_on_resume_stop_and_change_track(self):
+    def test_events_processed_on_resume_stop_and_change_track_actions(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
 
@@ -397,6 +398,10 @@ class TestEventHandlingFrontend(BaseTest):
         assert self.events.qsize() == 0
 
     def test_get_event_targets_change_next(self):
+        """
+        Pause -> Next
+
+        """
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.core.playback.seek(100).get()
@@ -415,8 +420,11 @@ class TestEventHandlingFrontend(BaseTest):
                  })]))
 
     def test_get_event_targets_change_previous(self):
+        """
+        Pause -> Previous
+        """
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[1].tlid).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.core.playback.seek(100).get()
             self.core.playback.pause().get()
             self.core.playback.previous().get()
@@ -428,11 +436,15 @@ class TestEventHandlingFrontend(BaseTest):
             assert all(self.has_events([
                 ('event_triggered',
                  {
-                     'track_uri': self.tl_tracks[1].track.uri,
+                     'track_uri': self.tl_tracks[0].track.uri,
                      'pandora_event': self.frontend.settings.get()['change_track_previous']
                  })]))
 
     def test_get_event_targets_resume(self):
+        """
+        Pause -> Resume
+
+        """
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
         self.core.playback.seek(100).get()
         self.core.playback.pause().get()
@@ -447,7 +459,7 @@ class TestEventHandlingFrontend(BaseTest):
              })]))
 
     def test_pause_starts_double_click_timer(self):
-        assert self.frontend.get_click_marker().get().time == 0
+        assert self.frontend.get_click_marker().get() is None
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
         self.core.playback.seek(100).get()
         self.core.playback.pause().get()
@@ -456,13 +468,13 @@ class TestEventHandlingFrontend(BaseTest):
         assert self.frontend.get_click_marker().get().time > 0
 
     def test_pause_does_not_start_timer_at_track_start(self):
-        assert self.frontend.get_click_marker().get().time == 0
+        assert self.frontend.get_click_marker().get() is None
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
         self.core.playback.pause().get()
         self.replay_events(self.frontend)
 
         self.frontend.track_playback_paused(mock.Mock(), 0).get()
-        assert self.frontend.get_click_marker().get().time == 0
+        assert self.frontend.get_click_marker().get() is None
 
     def test_process_event_handles_exception(self):
         with mock.patch.object(frontend.EventHandlingPandoraFrontend, '_get_event_targets',
@@ -527,7 +539,21 @@ class TestEventHandlingFrontend(BaseTest):
                  'pandora_event': self.frontend.settings.get()['resume']
              })]))
 
+    def test_process_event_resets_click_marker(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.seek(100).get()
+        self.core.playback.pause().get()
+        self.replay_events(self.frontend)
+        self.core.playback.resume().get()
+        self.replay_events(self.frontend, until='track_playback_resumed')
+
+        assert self.frontend.get_click_marker().get() is None
+
     def test_playback_state_changed_handles_stop(self):
+        """
+        Pause -> Stop
+
+        """
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
         self.core.playback.seek(100).get()
         self.core.playback.pause().get()
@@ -562,9 +588,20 @@ class TestEventHandlingFrontend(BaseTest):
                  })]))
 
 
-# Test private methods that are not available in the pykka actor.
+# Test private methods that are not available in the Pykka actor.
 
-def test_is_double_click():
+def test_is_double_click_true():
+    static_frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), mock.Mock())
+    track_mock = mock.Mock(spec=models.Track)
+    track_mock.uri = 'pandora:track:id_mock:token_mock'
+    tl_track_mock = mock.Mock(spec=models.TlTrack)
+    tl_track_mock.track = track_mock
+
+    static_frontend.set_click_marker(tl_track_mock)
+    assert static_frontend._is_double_click()
+
+
+def test_is_double_click_false():
     static_frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), mock.Mock())
     track_mock = mock.Mock(spec=models.Track)
     track_mock.uri = 'pandora:track:id_mock:token_mock'
@@ -577,3 +614,81 @@ def test_is_double_click():
     static_frontend.set_click_marker(tl_track_mock)
     time.sleep(float(static_frontend.double_click_interval) + 0.5)
     assert static_frontend._is_double_click() is False
+
+
+class TestEventTargets(BaseTest):
+    def setUp(self):  # noqa: N802
+        self.history = []
+        self.tracks = [
+            models.Track(uri='pandora:track:id_mock:token_mock1', length=40000),
+            models.Track(uri='pandora:track:id_mock:token_mock2', length=40000),
+            models.Track(uri='pandora:track:id_mock:token_mock3', length=40000),
+        ]
+
+        self.tl_tracks = ([models.TlTrack(track=self.tracks[i], tlid=i+1)
+                           for i in range(0, len(self.tracks))])
+
+        self.refs = ([models.Ref.track(uri=self.tl_tracks[i].track.uri, name='name_mock')
+                      for i in range(0, len(self.tracks))])
+
+        core_mock = mock.Mock(spec=Core)
+        history_mock = mock.Mock(spec=HistoryController)
+        threading_future_mock = mock.Mock(spec=pykka.ThreadingFuture)
+        core.history = history_mock
+        threading_future_mock.get.return_value = self.history
+        core_mock.history.get_history.return_value = threading_future_mock
+
+        self.frontend = frontend.EventHandlingPandoraFrontend(conftest.config(), core_mock)
+
+    def test_get_event_targets_change_track_next(self):
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+        time.sleep(0.01)
+        self.frontend.set_click_marker(self.tl_tracks[0])
+        time.sleep(0.01)
+        self.history.insert(0, (int(time.time() * 1000), self.refs[1]))
+
+        event_target_uri, event_target_action = self.frontend._get_event_targets('change_track')
+        assert event_target_uri == self.refs[0].uri
+        assert event_target_action == self.frontend.settings['change_track_next']
+
+    def test_get_event_targets_change_track_next_first_track_has_multiple_replays(self):
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+        time.sleep(0.01)
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+        time.sleep(0.01)
+        self.frontend.set_click_marker(self.tl_tracks[0])
+        time.sleep(0.01)
+        self.history.insert(0, (int(time.time() * 1000), self.refs[1]))
+
+        event_target_uri, event_target_action = self.frontend._get_event_targets('change_track')
+        assert event_target_uri == self.refs[0].uri
+        assert event_target_action == self.frontend.settings['change_track_next']
+
+    def test_get_event_targets_change_track_previous(self):
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+        time.sleep(0.01)
+        self.frontend.set_click_marker(self.tl_tracks[0])
+        time.sleep(0.01)
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+
+        event_target_uri, event_target_action = self.frontend._get_event_targets('change_track')
+        assert event_target_uri == self.refs[0].uri
+        assert event_target_action == self.frontend.settings['change_track_previous']
+
+    def test_get_event_targets_resume(self):
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+        time.sleep(0.01)
+        self.frontend.set_click_marker(self.tl_tracks[0])
+
+        event_target_uri, event_target_action = self.frontend._get_event_targets('resume')
+        assert event_target_uri == self.refs[0].uri
+        assert event_target_action == self.frontend.settings['resume']
+
+    def test_get_event_targets_stop(self):
+        self.history.insert(0, (int(time.time() * 1000), self.refs[0]))
+        time.sleep(0.01)
+        self.frontend.set_click_marker(self.tl_tracks[0])
+
+        event_target_uri, event_target_action = self.frontend._get_event_targets('stop')
+        assert event_target_uri == self.refs[0].uri
+        assert event_target_action == self.frontend.settings['stop']

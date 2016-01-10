@@ -195,7 +195,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
         }
 
         self.double_click_interval = float(config['pandora'].get('double_click_interval'))
-        self._click_marker = ClickMarker(None, 0)
+        self._click_marker = None
 
         self.change_track_event = threading.Event()
         self.change_track_event.set()
@@ -229,7 +229,11 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
         """
         if old_state == PlaybackState.PAUSED and new_state == PlaybackState.STOPPED:
             if self._is_double_click():
-                self._queue_event('stop', self.change_track_event, 'change_track')
+                # Mopidy (as of 1.1.2) always forces a call to core.playback.stop() when the track changes, even
+                # if the user did not click stop explicitly. We need to wait for a 'change_track' event
+                # immediately thereafter to know if this is a real track stop, or just a transition to the
+                # next/previous track.
+                self._queue_event('stop', self.change_track_event, 'change_track', timeout=self.double_click_interval)
         super(EventHandlingPandoraFrontend, self).playback_state_changed(old_state, new_state)
 
     def changing_track(self, track):
@@ -238,7 +242,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
 
     def set_click_marker(self, tl_track, click_time=None):
         if click_time is None:
-            click_time = time.time()
+            click_time = int(time.time() * 1000)
 
         self._click_marker = ClickMarker(tl_track.track.uri, click_time)
 
@@ -250,19 +254,27 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
             self.core.tracklist.clear()
 
     def _is_double_click(self):
-        return self._click_marker.time > 0 and time.time() - self._click_marker.time < self.double_click_interval
+        if self._click_marker is None:
+            return False
+        return (self._click_marker.time > 0 and
+                int(time.time() * 1000) - self._click_marker.time < self.double_click_interval * 1000)
 
     @run_async
-    def _queue_event(self, event, threading_event=None, override_event=None):
+    def _queue_event(self, event, threading_event=None, override_event=None, timeout=None):
         """
-        Mopidy (as of 1.1.2) always forces a call to core.playback.stop() when the track changes, even
-        if the user did not click stop explicitly. We need to wait for a 'change_track' event
-        immediately thereafter to know if this is a real track stop, or just a transition to the
-        next/previous track.
+        Queue an event for processing. If the specified threading event is set, then the event will be overridden with
+        the one specified. Useful for detecting track change transitions, which always trigger 'stop' first.
+
+        :param event: the original event action that was originally called.
+        :param threading_event: the threading.Event to monitor.
+        :param override_event:  the new event that should be called instead of the original if the threading event is
+                                set within the timeout specified.
+        :param timeout: the length of time to wait for the threading.Event to be set before processing the orignal event
         """
+
         if threading_event:
             threading_event.clear()
-            if threading_event.wait(timeout=self.double_click_interval):
+            if threading_event.wait(timeout=timeout):
                 event = override_event
 
         self.process_event(event=event)
@@ -287,7 +299,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
         if action == 'change_track':
             history = self.core.history.get_history().get()
             for i, h in enumerate(history):
-                if h[0] < int(self._click_marker.time * 1000):
+                if h[0] < self._click_marker.time:
                     if h[1].uri == self._click_marker.uri:
                         # This is the point in time in the history that the track was played
                         # before the double_click event occurred.
@@ -295,13 +307,16 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
                             # Track was played again immediately after double_click.
                             # User clicked 'previous' in consume mode.
                             action = 'change_track_previous'
+                            break
                         else:
                             # Switched to another track, user clicked 'next'.
                             action = 'change_track_next'
+                            break
 
         return self._click_marker.uri, self.settings[action]
 
     def _trigger_event_triggered(self, track_uri, event):
+        self._click_marker = None
         (listener.PandoraEventHandlingFrontendListener.send('event_triggered',
                                                             track_uri=track_uri,
                                                             pandora_event=event))
