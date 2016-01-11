@@ -125,7 +125,7 @@ class TestFrontend(BaseTest):
 
     def test_add_track_starts_playback(self):
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
-        self.core.tracklist.clear().get()
+        self.core.tracklist.clear()
         self.frontend.add_track(self.tl_tracks[0].track, auto_play=True).get()
 
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
@@ -135,7 +135,7 @@ class TestFrontend(BaseTest):
         assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
 
         # Remove first track so we can add it again
-        self.core.tracklist.remove({'tlid': [self.tl_tracks[0].tlid]}).get()
+        self.core.tracklist.remove({'tlid': [self.tl_tracks[0].tlid]})
 
         self.frontend.add_track(self.tl_tracks[0].track).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -147,15 +147,15 @@ class TestFrontend(BaseTest):
         func_mock.__name__ = str('func_mock')
         func_mock.return_value = True
 
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         frontend.only_execute_for_pandora_uris(func_mock)(self)
 
         assert func_mock.called
 
     def test_next_track_available_adds_track_to_playlist(self):
-        self.core.tracklist.clear().get()
+        self.core.tracklist.clear()
         self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
 
         self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -163,7 +163,7 @@ class TestFrontend(BaseTest):
         assert self.core.playback.get_current_track().get() == self.tl_tracks[1].track
 
     def test_next_track_available_forces_stop_if_no_more_tracks(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
 
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
         self.frontend.next_track_available(None).get()
@@ -174,7 +174,7 @@ class TestFrontend(BaseTest):
         func_mock.__name__ = str('func_mock')
         func_mock.return_value = True
 
-        self.core.playback.play(tlid=self.tl_tracks[3].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[3].tlid)
         frontend.only_execute_for_pandora_uris(func_mock)(self)
 
         assert not func_mock.called
@@ -188,10 +188,10 @@ class TestFrontend(BaseTest):
 
     def test_set_options_performs_auto_setup(self):
         assert self.frontend.setup_required.get()
-        self.core.tracklist.set_repeat(True).get()
-        self.core.tracklist.set_consume(False).get()
-        self.core.tracklist.set_random(True).get()
-        self.core.tracklist.set_single(True).get()
+        self.core.tracklist.set_repeat(True)
+        self.core.tracklist.set_consume(False)
+        self.core.tracklist.set_random(True)
+        self.core.tracklist.set_single(True)
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
         self.replay_events(self.frontend)
 
@@ -234,7 +234,7 @@ class TestFrontend(BaseTest):
                 set_options_mock.reset_mock()
 
     def test_skip_limit_exceed_stops_playback(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
 
         self.frontend.skip_limit_exceeded().get()
@@ -244,7 +244,7 @@ class TestFrontend(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(PandoraFrontend, 'is_station_changed', mock.Mock(return_value=True)):
 
-                self.core.tracklist.clear().get()
+                self.core.tracklist.clear()
                 self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
 
                 self.frontend.track_changed(self.tl_tracks[0].track).get()
@@ -255,28 +255,28 @@ class TestFrontend(BaseTest):
                 assert tl_tracks[0].track == self.tl_tracks[0].track
 
     def test_is_end_of_tracklist_reached(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
 
         assert not self.frontend.is_end_of_tracklist_reached().get()
 
     def test_is_end_of_tracklist_reached_last_track(self):
-        self.core.playback.play(tlid=self.tl_tracks[-1].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[-1].tlid)
 
         assert self.frontend.is_end_of_tracklist_reached().get()
 
     def test_is_end_of_tracklist_reached_no_tracks(self):
-        self.core.tracklist.clear().get()
+        self.core.tracklist.clear()
 
         assert self.frontend.is_end_of_tracklist_reached().get()
 
     def test_is_end_of_tracklist_reached_second_last_track(self):
-        self.core.playback.play(tlid=self.tl_tracks[3].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[3].tlid)
 
         assert not self.frontend.is_end_of_tracklist_reached(self.tl_tracks[3].track).get()
 
     def test_is_station_changed(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.next().get()  # Add track to history
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.next()
 
         # Check against track of a different station
         assert self.frontend.is_station_changed(self.tl_tracks[4].track).get()
@@ -286,8 +286,8 @@ class TestFrontend(BaseTest):
 
     def test_changing_track_no_op(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.next().get()  # Add track to history
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.next()
 
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
             self.replay_events(self.frontend)
@@ -300,7 +300,7 @@ class TestFrontend(BaseTest):
 
     def test_changing_track_station_changed(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.play(tlid=self.tl_tracks[4].tlid).get()
             self.replay_events(self.frontend)
 
@@ -336,7 +336,7 @@ class TestEventHandlingFrontend(BaseTest):
     def setUp(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).setUp()
         self.frontend = frontend.EventHandlingPandoraFrontend.start(conftest.config(), self.core).proxy()
-        self.core.tracklist.set_consume(True).get()  # Set consume mode so that tracklist behaves as expected.
+        self.core.tracklist.set_consume(True)  # Set consume mode so that tracklist behaves as expected.
 
     def tearDown(self):  # noqa: N802
         super(TestEventHandlingFrontend, self).tearDown()
@@ -356,9 +356,9 @@ class TestEventHandlingFrontend(BaseTest):
             with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
 
                 # Pause -> Resume
-                self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-                self.core.playback.seek(100).get()
-                self.core.playback.pause().get()
+                self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+                self.core.playback.seek(100)
+                self.core.playback.pause()
                 self.core.playback.resume().get()
                 self.replay_events(self.frontend)
 
@@ -369,10 +369,10 @@ class TestEventHandlingFrontend(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
                 # Pause -> Resume -> Pause
-                self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-                self.core.playback.seek(100).get()
-                self.core.playback.pause().get()
-                self.core.playback.resume().get()
+                self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+                self.core.playback.seek(100)
+                self.core.playback.pause()
+                self.core.playback.resume()
                 self.core.playback.pause().get()
                 self.replay_events(self.frontend)
 
@@ -384,9 +384,9 @@ class TestEventHandlingFrontend(BaseTest):
             with mock.patch.object(EventHandlingPandoraFrontend, 'process_event', mock.Mock()) as process_mock:
 
                 # Change track
-                self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-                self.core.playback.seek(100).get()
-                self.core.playback.pause().get()
+                self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+                self.core.playback.seek(100)
+                self.core.playback.pause()
                 self.core.playback.next().get()
                 listener.send(PandoraPlaybackListener, 'track_changed', track=self.tl_tracks[1].track)
                 self.replay_events(self.frontend)
@@ -395,8 +395,8 @@ class TestEventHandlingFrontend(BaseTest):
                 assert process_mock.called
 
     def test_get_event_targets_invalid_event_no_op(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.seek(100).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.seek(100)
         self.core.playback.pause().get()
         self.replay_events(self.frontend)
 
@@ -409,9 +409,9 @@ class TestEventHandlingFrontend(BaseTest):
 
         """
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
-            self.core.playback.pause().get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause()
             self.core.playback.next().get()
             self.replay_events(self.frontend)
 
@@ -430,9 +430,9 @@ class TestEventHandlingFrontend(BaseTest):
         Pause -> Previous
         """
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
-            self.core.playback.pause().get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause()
             self.core.playback.previous().get()
             self.replay_events(self.frontend)
 
@@ -452,9 +452,9 @@ class TestEventHandlingFrontend(BaseTest):
             Pause -> Resume
 
             """
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
-            self.core.playback.pause().get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause()
             self.core.playback.resume().get()
             self.replay_events(self.frontend, until='track_playback_resumed')
 
@@ -468,8 +468,8 @@ class TestEventHandlingFrontend(BaseTest):
 
     def test_pause_starts_double_click_timer(self):
         assert self.frontend.get_click_marker().get() is None
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.core.playback.seek(100).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.seek(100)
         self.core.playback.pause().get()
         self.replay_events(self.frontend)
 
@@ -477,18 +477,18 @@ class TestEventHandlingFrontend(BaseTest):
 
     def test_pause_does_not_start_timer_at_track_start(self):
         assert self.frontend.get_click_marker().get() is None
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.core.playback.pause().get()
         self.replay_events(self.frontend)
 
-        self.frontend.track_playback_paused(mock.Mock(), 0).get()
+        self.frontend.track_playback_paused(mock.Mock(), 0)
         assert self.frontend.get_click_marker().get() is None
 
     def test_process_event_handles_exception(self):
         with mock.patch.object(frontend.EventHandlingPandoraFrontend, '_get_event_targets',
                                mock.PropertyMock(return_value=None, side_effect=KeyError('error_mock'))):
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
             self.core.playback.pause().get()
             self.replay_events(self.frontend)
 
@@ -498,7 +498,7 @@ class TestEventHandlingFrontend(BaseTest):
             assert self.events.qsize() == 0  # Check that no events were triggered
 
     def test_process_event_ignores_ads(self):
-        self.core.playback.play(tlid=self.tl_tracks[2].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[2].tlid)
         self.core.playback.seek(100)
         self.core.playback.pause().get()
         self.replay_events(self.frontend)
@@ -513,14 +513,14 @@ class TestEventHandlingFrontend(BaseTest):
 
         for action in actions:
             self.events = Queue.Queue()  # Make sure that the queue is empty
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause().get()
             self.replay_events(self.frontend)
             assert self.core.playback.get_state().get() == PlaybackState.PAUSED
 
             if action == 'change_track':
-                self.core.playback.next().get()
+                self.core.playback.next()
                 self.frontend.process_event(event=action).get()
 
                 self.assertEqual(self.core.playback.get_state().get(),
@@ -534,8 +534,8 @@ class TestEventHandlingFrontend(BaseTest):
 
     def test_process_event_triggers_event(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
             self.core.playback.pause().get()
             self.replay_events(self.frontend)
             self.core.playback.resume().get()
@@ -551,8 +551,8 @@ class TestEventHandlingFrontend(BaseTest):
 
     def test_process_event_resets_click_marker(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
             self.core.playback.pause().get()
             self.replay_events(self.frontend)
             self.core.playback.resume().get()
@@ -567,9 +567,9 @@ class TestEventHandlingFrontend(BaseTest):
             Pause -> Resume -> Pause
 
             """
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
-            self.core.playback.pause().get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause()
             self.core.playback.resume().get()
             self.replay_events(self.frontend)
             self.core.playback.pause().get()
@@ -585,9 +585,9 @@ class TestEventHandlingFrontend(BaseTest):
 
     def test_playback_state_changed_handles_change_track(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.core.playback.seek(100).get()
-            self.core.playback.pause().get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause()
             self.core.playback.next().get()
             self.replay_events(self.frontend)
 
