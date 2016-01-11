@@ -73,14 +73,18 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
-            if self.core.tracklist.get_repeat().get() is True:
-                self.core.tracklist.set_repeat(False)
             if self.core.tracklist.get_consume().get() is False:
                 self.core.tracklist.set_consume(True)
+                return
+            if self.core.tracklist.get_repeat().get() is True:
+                self.core.tracklist.set_repeat(False)
+                return
             if self.core.tracklist.get_random().get() is True:
                 self.core.tracklist.set_random(False)
+                return
             if self.core.tracklist.get_single().get() is True:
                 self.core.tracklist.set_single(False)
+                return
 
             self.setup_required = False
 
@@ -140,7 +144,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
                                                    auto_play=True)
 
-        self.core.tracklist.remove({'uri': [track.uri]}).get()
+        self.core.tracklist.remove({'uri': [track.uri]})
 
     def next_track_available(self, track, auto_play=False):
         if track:
@@ -154,10 +158,10 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def add_track(self, track, auto_play=False):
         # Add the next Pandora track
-        self.core.tracklist.add(uris=[track.uri]).get()
+        self.core.tracklist.add(uris=[track.uri])
         if auto_play:
             tl_tracks = self.core.tracklist.get_tl_tracks().get()
-            self.core.playback.play(tlid=tl_tracks[-1].tlid).get()
+            self.core.playback.play(tlid=tl_tracks[-1].tlid)
         self._trim_tracklist(maxsize=2)
 
     def _trim_tracklist(self, keep_only=None, maxsize=2):
@@ -165,15 +169,15 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         if keep_only:
             trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
             if len(trim_tlids) > 0:
-                return len(self.core.tracklist.remove({'tlid': trim_tlids}).get())
+                return self.core.tracklist.remove({'tlid': trim_tlids})
             else:
                 return 0
 
         elif len(tl_tracks) > maxsize:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
-            return len(self.core.tracklist.remove(
+            return self.core.tracklist.remove(
                 {'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-maxsize)]}
-            ).get())
+            )
 
     def _trigger_end_of_tracklist_reached(self, station_id, auto_play=False):
         listener.PandoraFrontendListener.send('end_of_tracklist_reached', station_id=station_id, auto_play=auto_play)
@@ -285,7 +289,7 @@ class EventHandlingPandoraFrontend(PandoraFrontend):
             self._trigger_event_triggered(event_target_uri, event_target_action)
             # Resume playback...
             if event == 'change_track' and self.core.playback.get_state().get() != PlaybackState.PLAYING:
-                self.core.playback.resume().get()
+                self.core.playback.resume()
 
     def _get_event_targets(self, action=None):
         if action == 'change_track':

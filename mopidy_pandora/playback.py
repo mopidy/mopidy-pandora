@@ -23,11 +23,11 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         self._consecutive_track_skips = 0
 
         # TODO: add gapless playback when it is supported in Mopidy > 1.1
-        # self.audio.set_about_to_finish_callback(self.callback).get()
+        # self.audio.set_about_to_finish_callback(self.callback)
 
         # def callback(self):
         # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
-        # self.audio.set_uri(self.translate_uri(self.get_next_track())).get()
+        # self.audio.set_uri(self.translate_uri(self.get_next_track()))
 
     def change_pandora_track(self, track):
         """ Attempt to retrieve the Pandora playlist item from the buffer and verify that it is ready to be played.
