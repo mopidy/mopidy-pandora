@@ -148,6 +148,11 @@ v0.2.0 (UNRELEASED)
   so it has been disabled by default. In the interim, you can patch Mopidy 1.1.1 with `#1356 <https://github.com/mopidy/mopidy/pull/1356>`_
   if you want to keep using events until the fix is available.
 
+v0.1.8 (Jan 8, 2016)
+----------------------------------------
+
+- Update dependencies: requires at least pydora 1.5.1.
+
 v0.1.7 (Oct 31, 2015)
 ---------------------
 
