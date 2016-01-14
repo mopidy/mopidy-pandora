@@ -149,7 +149,7 @@ v0.2.0 (UNRELEASED)
   if you want to keep using events until the fix is available.
 
 v0.1.8 (Jan 8, 2016)
-----------------------------------------
+--------------------
 
 - Update dependencies: requires at least pydora 1.5.1.
 
