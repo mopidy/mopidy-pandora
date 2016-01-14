@@ -46,7 +46,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             else:
                 raise Unplayable("Track with URI '{}' is not playable.".format(track.uri))
 
-        except (AttributeError, requests.exceptions.RequestException) as e:
+        except (Unplayable, AttributeError, requests.exceptions.RequestException) as e:
             logger.warning('Error changing Pandora track: {}, ({})'.format(pandora_track, e))
             # Track is not playable.
             self._consecutive_track_skips += 1
