@@ -2,6 +2,35 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from mopidy import backend, listener
 
+class EventMonitorListener(listener.Listener):
+
+    """
+    Marker interface for recipients of events sent by the frontend actor.
+
+    """
+
+    @staticmethod
+    def send(event, **kwargs):
+        listener.send(EventMonitorListener, event, **kwargs)
+
+    def event_triggered(self, track_uri, pandora_event):
+        """
+        Called when one of the Pandora events have been triggered (e.g. thumbs_up, thumbs_down, sleep, etc.).
+
+        :param track_uri: the URI of the track that the event should be applied to.
+        :type track_uri: string
+        :param pandora_event: the Pandora event that should be called. Needs to correspond with the name of one of
+                              the event handling methods defined in `:class:mopidy_pandora.backend.PandoraBackend`
+        :type pandora_event: string
+        """
+        pass
+
+    def track_changed_previous(self, old_uri, new_uri):
+        pass
+
+    def track_changed_next(self, old_uri, new_uri):
+        pass
+
 
 class PandoraFrontendListener(listener.Listener):
 
