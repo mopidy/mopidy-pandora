@@ -16,6 +16,7 @@ import pykka
 
 from mopidy_pandora import frontend
 from mopidy_pandora.frontend import PandoraFrontend
+from mopidy_pandora.monitor import EventMonitor
 
 from tests import conftest, dummy_backend
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
@@ -150,6 +151,18 @@ class TestFrontend(BaseTest):
         self.frontend.next_track_available(None).get()
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
 
+    def test_on_event_passes_on_calls_to_monitor(self):
+        config = conftest.config()
+        config['pandora']['event_support_enabled'] = True
+
+        self.frontend = frontend.PandoraFrontend.start(config, self.core).proxy()
+
+        assert self.frontend.event_monitor.core.get()
+        monitor_mock = mock.Mock(spec=EventMonitor)
+        self.frontend.event_monitor = monitor_mock
+        self.frontend.on_event('track_playback_started', tl_track=self.core.tracklist.get_tl_tracks().get()[0]).get()
+        assert monitor_mock.on_event.called
+
     def test_only_execute_for_pandora_does_not_execute_for_non_pandora_uri(self):
         func_mock = mock.PropertyMock()
         func_mock.__name__ = str('func_mock')
@@ -239,6 +252,9 @@ class TestFrontend(BaseTest):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
 
         assert not self.frontend.is_end_of_tracklist_reached().get()
+
+    def test_event_support_disabled_does_not_initialize_monitor(self):
+        assert not self.frontend.event_monitor.get()
 
     def test_is_end_of_tracklist_reached_last_track(self):
         self.core.playback.play(tlid=self.tl_tracks[-1].tlid)

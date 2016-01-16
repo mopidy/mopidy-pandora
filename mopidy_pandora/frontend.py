@@ -13,7 +13,6 @@ from mopidy_pandora.uri import PandoraUri
 logger = logging.getLogger(__name__)
 
 
-# TODO: profile this function for optimisation?
 def only_execute_for_pandora_uris(func):
     """ Function decorator intended to ensure that "func" is only executed if a Pandora track
         is currently playing. Allows CoreListener events to be ignored if they are being raised
@@ -57,7 +56,9 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         self.setup_required = True
         self.core = core
 
-        self.event_monitor = EventMonitor(config, core)
+        self.event_monitor = None
+        if self.config['event_support_enabled']:
+            self.event_monitor = EventMonitor(config, core)
 
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
@@ -81,11 +82,11 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         self.setup_required = True
         self.set_options()
 
-    # TODO: add toggle to disable event monitoring 'event_support_enabled'?
     @only_execute_for_pandora_uris
     def on_event(self, event, **kwargs):
-        self.event_monitor.on_event(event, **kwargs)
-        getattr(self, event)(**kwargs)
+        super(PandoraFrontend, self).on_event(event, **kwargs)
+        if self.event_monitor:
+            self.event_monitor.on_event(event, **kwargs)
 
     def track_playback_started(self, tl_track):
         self.set_options()
