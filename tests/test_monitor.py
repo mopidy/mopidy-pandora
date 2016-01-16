@@ -260,8 +260,9 @@ class EventMonitorTest(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[2].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.core.playback.resume().get()
             self.replay_events(self.monitor)
+            self.core.playback.resume().get()
+            self.replay_events(self.monitor, until='track_playback_resumed')
 
             thread_joiner.wait(timeout=1.0)
             assert self.events.qsize() == 0  # Check that no events were triggered
@@ -348,7 +349,7 @@ class EventSequenceTest(unittest.TestCase):
         assert not self.es_wait.is_monitoring()
         assert self.rq.qsize() == 1
 
-    def test_get_stop_monitor_that_all_events_occurred(self):
+    def test_get_stop_monitor_ensures_that_all_events_occurred(self):
         self.es.notify('e1', time_position=100)
         self.es.notify('e2', time_position=100)
         self.es.notify('e3', time_position=100)
@@ -358,17 +359,17 @@ class EventSequenceTest(unittest.TestCase):
         self.es.events_seen = ['e1', 'e2', 'e3']
         assert self.rq.qsize() > 0
 
-    def test_get_stop_monitor_that_events_were_seen_in_order(self):
-        self.es.notify('e1', time_position=100)
-        self.es.notify('e3', time_position=100)
-        self.es.notify('e2', time_position=100)
-        self.es.wait(timeout=1.0)
+    def test_get_stop_monitor_strict_ensures_that_events_were_seen_in_order(self):
+        self.es_strict.notify('e1', time_position=100)
+        self.es_strict.notify('e3', time_position=100)
+        self.es_strict.notify('e2', time_position=100)
+        self.es_strict.wait(timeout=1.0)
         assert self.rq.qsize() == 0
 
-        self.es.notify('e1', time_position=100)
-        self.es.notify('e2', time_position=100)
-        self.es.notify('e3', time_position=100)
-        self.es.wait(timeout=1.0)
+        self.es_strict.notify('e1', time_position=100)
+        self.es_strict.notify('e2', time_position=100)
+        self.es_strict.notify('e3', time_position=100)
+        self.es_strict.wait(timeout=1.0)
         assert self.rq.qsize() > 0
 
     def test_get_ratio_handles_repeating_events(self):

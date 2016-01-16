@@ -150,8 +150,11 @@ class EventMonitor(core.CoreListener,
             match = self.sequence_match_results.get()
             self.sequence_match_results.task_done()
 
-        if match and match.ratio > 0.85:
-            self._trigger_event_triggered(match.marker.event, match.marker.uri)
+        if match and match.ratio >= 0.80:
+            if match.marker.uri and type(PandoraUri.factory(match.marker.uri)) is AdItemUri:
+                logger.info('Ignoring doubleclick event for Pandora advertisement...')
+            else:
+                self._trigger_event_triggered(match.marker.event, match.marker.uri)
             # Resume playback...
             if self.core.playback.get_state().get() != PlaybackState.PLAYING:
                 self.core.playback.resume()
@@ -241,11 +244,6 @@ class EventSequence(object):
 
     def start_monitor(self, uri):
         self.monitoring_completed.clear()
-        if uri and type(PandoraUri.factory(uri)) is AdItemUri:
-            logger.info('Ignoring doubleclick event for Pandora advertisement...')
-            self.reset()
-            self.monitoring_completed.set()
-            return
 
         self.target_uri = uri
         self._timer = threading.Timer(self.interval, self.stop_monitor, args=(self.interval,))
@@ -254,15 +252,18 @@ class EventSequence(object):
 
     @run_async
     def stop_monitor(self, timeout):
-        i = 0
-        # Make sure that we have seen every event in the target sequence, and in the right order
         try:
-            for e in self.target_sequence:
-                i = self.events_seen[i:].index(e) + 1
-        except ValueError:
-            # Sequence does not match, ignore
-            pass
-        else:
+            if self.strict:
+                i = 0
+                try:
+                    for e in self.target_sequence:
+                        i = self.events_seen[i:].index(e) + 1
+                except ValueError:
+                    # Make sure that we have seen every event in the target sequence, and in the right order
+                    return
+            elif not all([e in self.events_seen for e in self.target_sequence]):
+                # Make sure that we have seen every event in the target sequence, ignoring order
+                return
             if self.wait_for_event.wait(timeout=timeout):
                 self.result_queue.put(
                     MatchResult(
