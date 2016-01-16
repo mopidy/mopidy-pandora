@@ -129,7 +129,7 @@ pause/play/previous/next buttons.
 - ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers. Eventing is disabled by
   default as this feature is fairly experimental. It works, but it is not impossible that the wrong events may be
   triggered for tracks or (in the worst case scenario) that one of your stations may be deleted accidentally. Mileage
-  may vary - use at your own risk.
+  may vary - **use at your own risk.**
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval will trigger an event.
   Defaults to ``2.50`` seconds.
 - ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults
