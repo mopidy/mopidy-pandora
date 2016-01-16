@@ -121,7 +121,7 @@ class EventMonitor(core.CoreListener,
             es.notify(event, **kwargs)
 
     def _detect_track_change(self, event, **kwargs):
-        if not self._track_changed_marker and event in ['track_playback_ended']:
+        if not self._track_changed_marker and event == 'track_playback_ended':
             self._track_changed_marker = EventMarker(event,
                                                      kwargs['tl_track'].track.uri,
                                                      int(time.time() * 1000))

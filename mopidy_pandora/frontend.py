@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
+import threading
 
 from mopidy import core
 
@@ -60,6 +61,9 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         if self.config['event_support_enabled']:
             self.event_monitor = EventMonitor(config, core)
 
+        self.track_change_completed_event = threading.Event()
+        self.track_change_completed_event.set()
+
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
@@ -90,12 +94,18 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def track_playback_started(self, tl_track):
         self.set_options()
+        if not self.track_change_completed_event.is_set():
+            self.track_change_completed_event.set()
+            self.update_tracklist(tl_track.track)
 
     def track_playback_ended(self, tl_track, time_position):
         self.set_options()
 
     def track_playback_paused(self, tl_track, time_position):
         self.set_options()
+        if not self.track_change_completed_event.is_set():
+            self.track_change_completed_event.set()
+            self.update_tracklist(tl_track.track)
 
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
@@ -122,9 +132,11 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             pass
         return False
 
-    # TODO: ideally all of this should be delayed until after the track change has been completed.
-    # Not sure the tracklist / history will always be up to date at this point.
     def track_changing(self, track):
+        self.track_change_completed_event.clear()
+
+    def update_tracklist(self, track):
+        self.track_change_completed_event.wait(timeout=10)
         if self.is_station_changed(track):
             # Station has changed, remove tracks from previous station from tracklist.
             self._trim_tracklist(keep_only=track)
