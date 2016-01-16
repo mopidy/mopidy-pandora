@@ -150,10 +150,10 @@ def test_change_track_triggers_event_on_success(provider, playlist_item_mock):
         with mock.patch.object(PlaylistItem, 'get_is_playable', return_value=True):
             track = PandoraUri.factory(playlist_item_mock)
 
-            provider._trigger_track_changed = mock.PropertyMock()
+            provider._trigger_track_changing = mock.PropertyMock()
 
             assert provider.change_track(track) is True
-            assert provider._trigger_track_changed.called
+            assert provider._trigger_track_changing.called
 
 
 def test_translate_uri_returns_audio_url(provider, playlist_item_mock):

@@ -65,6 +65,6 @@ class Extension(ext.Extension):
 
     def setup(self, registry):
         from .backend import PandoraBackend
-        from .frontend import PandoraFrontendFactory
+        from .frontend import PandoraFrontend
         registry.add('backend', PandoraBackend)
-        registry.add('frontend', PandoraFrontendFactory)
+        registry.add('frontend', PandoraFrontend)

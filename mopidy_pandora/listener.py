@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from mopidy import backend, listener
 
+
 class EventMonitorListener(listener.Listener):
 
     """
@@ -26,9 +27,27 @@ class EventMonitorListener(listener.Listener):
         pass
 
     def track_changed_previous(self, old_uri, new_uri):
+        """
+        Called when a 'previous' track change has been completed.
+
+        :param old_uri: the URI of the Pandora track that was changed from.
+        :type old_uri: :class:`mopidy.models.Ref`
+        :param new_uri: the URI of the Pandora track that was changed to.
+        :type new_uri: :class:`mopidy.models.Ref`
+        """
         pass
 
     def track_changed_next(self, old_uri, new_uri):
+        """
+        Called when a 'next' track change has been completed. Let's the frontend know that it should probably expand
+        the tracklist by fetching and adding another track to the tracklist, and removing tracks that do not belong to
+        the currently selected station.
+
+        :param old_uri: the URI of the Pandora track that was changed from.
+        :type old_uri: :class:`mopidy.models.Ref`
+        :param new_uri: the URI of the Pandora track that was changed to.
+        :type new_uri: :class:`mopidy.models.Ref`
+        """
         pass
 
 
@@ -124,14 +143,11 @@ class PandoraPlaybackListener(listener.Listener):
     def send(event, **kwargs):
         listener.send(PandoraPlaybackListener, event, **kwargs)
 
-    def track_changed(self, track):
+    def track_changing(self, track):
         """
-        Called when a track has been changed. Let's the frontend know that it should probably expand the
-        tracklist by fetching and adding another track to the tracklist, and removing tracks that do not belong to
-        the currently selected station. This is also the earliest point at which we can detect a 'previous' or 'next'
-        action performed by the user.
+        Called when a track is being changed to.
 
-        :param track: the Pandora track that was changed to.
+        :param track: the Pandora track that is being changed to.
         :type track: :class:`mopidy.models.Ref`
         """
         pass

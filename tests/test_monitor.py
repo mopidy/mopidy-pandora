@@ -2,20 +2,24 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import Queue
 
+import time
 
 import unittest
 
 from mock import mock
 
-from mopidy import core, models
+from mopidy import core, listener, models
 
 import pykka
-import pytest
 
 from mopidy_pandora import monitor
-from mopidy_pandora.monitor import EventSequence
+
+from mopidy_pandora.listener import PandoraPlaybackListener
+
+from mopidy_pandora.monitor import EventMarker, EventSequence, MatchResult
 
 from tests import conftest, dummy_backend
+
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
 
 
@@ -75,7 +79,7 @@ class BaseTest(unittest.TestCase):
             try:
                 e = self.events.get(timeout=0.1)
                 event, kwargs = e
-                listener.on_event(event, **kwargs).get()
+                listener.on_event(event, **kwargs)
                 if e[0] == until:
                     break
             except Queue.Empty:
@@ -97,29 +101,114 @@ class BaseTest(unittest.TestCase):
 class EventMonitorTest(BaseTest):
     def setUp(self):  # noqa: N802
         super(EventMonitorTest, self).setUp()
-        self.monitor = monitor.EventMonitor.start(conftest.config(), self.core).proxy()
+        self.monitor = monitor.EventMonitor(conftest.config(), self.core)
+        # Consume more needs to be enabled to detect 'previous' track changes
+        self.core.tracklist.set_consume(True)
 
-        es1 = EventSequence('delete_station', ['track_playback_paused', 'track_playback_resumed', 'track_playback_paused'])
-        es2 = EventSequence('thumbs_up', ['track_playback_paused', 'track_playback_resumed'])
-        es3 = EventSequence('thumbs_down', ['track_playback_paused', 'track_playback_ended', 'track_playback_resumed'])
-        es4 = EventSequence('sleep', ['track_playback_paused', 'track_playback_ended', 'track_playback_resumed'])
+    def test_detect_track_change_next(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            # Next
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.replay_events(self.monitor)
+            self.core.playback.next().get()
+            self.replay_events(self.monitor, until='track_playback_started')
 
-    es_list = [es1, es2, es3, es4]
+            thread_joiner.wait(timeout=1.0)
+            assert all(self.has_events([('track_changed_next', {
+                'old_uri': self.tl_tracks[0].track.uri,
+                'new_uri': self.tl_tracks[1].track.uri
+            })]))
 
-        for es in EventMonitorTest.es_list:
-            self.monitor.add_event_sequence(es).get()
+    def test_detect_track_change_next_from_paused(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            # Next
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause().get()
+            self.replay_events(self.monitor)
+            self.core.playback.next().get()
+            self.replay_events(self.monitor, until='track_playback_paused')
 
-    def tearDown(self):  # noqa: N802
-        super(EventMonitorTest, self).tearDown()
+            thread_joiner.wait(timeout=1.0)
+            assert all(self.has_events([('track_changed_next', {
+                'old_uri': self.tl_tracks[0].track.uri,
+                'new_uri': self.tl_tracks[1].track.uri
+            })]))
 
-    def test_events_processed_on_resume_action(self):
+    def test_detect_track_change_previous(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            # Next
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100).get()
+            self.replay_events(self.monitor)
+            self.core.playback.previous().get()
+            self.replay_events(self.monitor, until='track_playback_started')
+
+            thread_joiner.wait(timeout=1.0)
+            assert all(self.has_events([('track_changed_previous', {
+                'old_uri': self.tl_tracks[0].track.uri,
+                'new_uri': self.tl_tracks[0].track.uri
+            })]))
+
+    def test_detect_track_change_previous_from_paused(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            # Next
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause().get()
+            self.replay_events(self.monitor)
+            self.core.playback.previous().get()
+            self.replay_events(self.monitor, until='track_playback_paused')
+
+            thread_joiner.wait(timeout=1.0)
+            assert all(self.has_events([('track_changed_previous', {
+                'old_uri': self.tl_tracks[0].track.uri,
+                'new_uri': self.tl_tracks[0].track.uri
+            })]))
+
+    def test_events_triggered_on_next_action(self):
+        with conftest.ThreadJoiner(timeout=10.0) as thread_joiner:
+            # Pause -> Next
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause().get()
+            self.replay_events(self.monitor)
+            self.core.playback.next().get()
+            listener.send(PandoraPlaybackListener, 'track_changing', track=self.tl_tracks[1].track)
+            self.replay_events(self.monitor)
+
+            thread_joiner.wait(timeout=10.0)
+            assert all(self.has_events([('event_triggered', {
+                'track_uri': self.tl_tracks[0].track.uri,
+                'pandora_event': conftest.config()['pandora']['on_pause_next_click']
+            })]))
+
+    def test_events_triggered_on_previous_action(self):
+        with conftest.ThreadJoiner(timeout=10.0) as thread_joiner:
+            # Pause -> Previous
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause().get()
+            self.replay_events(self.monitor)
+            self.core.playback.previous().get()
+            listener.send(PandoraPlaybackListener, 'track_changing', track=self.tl_tracks[0].track)
+            self.replay_events(self.monitor)
+
+            thread_joiner.wait(timeout=10.0)
+            assert all(self.has_events([('event_triggered', {
+                'track_uri': self.tl_tracks[0].track.uri,
+                'pandora_event': conftest.config()['pandora']['on_pause_previous_click']
+            })]))
+
+    def test_events_triggered_on_resume_action(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Pause -> Resume
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
             self.core.playback.resume().get()
-            self.replay_events(self.monitor)
+            self.replay_events(self.monitor, until='track_playback_resumed')
 
             thread_joiner.wait(timeout=1.0)
             assert all(self.has_events([('event_triggered', {
@@ -127,15 +216,16 @@ class EventMonitorTest(BaseTest):
                 'pandora_event': conftest.config()['pandora']['on_pause_resume_click']
             })]))
 
-    def test_events_processed_on_triple_click_action(self):
+    def test_events_triggered_on_triple_click_action(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Pause -> Resume -> Pause
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
             self.core.playback.resume()
-            self.core.playback.pause().get()
             self.replay_events(self.monitor)
+            self.core.playback.pause().get()
+            self.replay_events(self.monitor, until='track_playback_resumed')
 
             thread_joiner.wait(timeout=1.0)
             assert all(self.has_events([('event_triggered', {
@@ -143,7 +233,7 @@ class EventMonitorTest(BaseTest):
                 'pandora_event': conftest.config()['pandora']['on_pause_resume_pause_click']
             })]))
 
-    def test_process_event_ignores_ads(self):
+    def test_monitor_ignores_ads(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[2].tlid)
             self.core.playback.seek(100)
@@ -154,72 +244,145 @@ class EventMonitorTest(BaseTest):
             thread_joiner.wait(timeout=1.0)
             assert self.events.qsize() == 0  # Check that no events were triggered
 
-    def test_process_event_resets_event_marker(self):
-        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            with pytest.raises(KeyError):
-                self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-                self.core.playback.seek(100)
-                self.core.playback.pause()
-                self.core.playback.resume().get()
-                self.replay_events(self.monitor)
-
-                thread_joiner.wait(timeout=self.monitor.double_click_interval.get() + 1)
-                self.monitor.get_event_marker('track_playback_paused').get()
-
-    def test_process_event_handles_exception(self):
-        with mock.patch.object(monitor.EventMonitor, '_get_event',
-                               mock.PropertyMock(return_value=None, side_effect=KeyError('error_mock'))):
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.seek(100)
-            self.core.playback.pause()
-            self.core.playback.resume().get()
-            self.replay_events(self.monitor)
-
-            assert self.events.qsize() == 0  # Check that no events were triggered
-
-    def test_trigger_starts_double_click_timer(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-        self.core.playback.seek(100)
-        self.core.playback.pause().get()
-        self.replay_events(self.monitor)
-
-        assert self.monitor.get_event_marker('track_playback_paused').get().time > 0
-
-    def test_trigger_does_not_start_timer_at_track_start(self):
-        with pytest.raises(KeyError):
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.pause().get()
-            self.replay_events(self.monitor)
-
-            assert self.monitor.get_event_marker('track_playback_paused').get()
+    # TODO: Add this test back again
+    # def test_process_event_resumes_playback_for_change_track(self):
+    #     actions = ['stop', 'change_track', 'resume']
+    #
+    #     for action in actions:
+    #         self.events = Queue.Queue()  # Make sure that the queue is empty
+    #         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+    #         self.core.playback.seek(100)
+    #         self.core.playback.pause().get()
+    #         self.replay_events(self.frontend)
+    #         assert self.core.playback.get_state().get() == PlaybackState.PAUSED
+    #
+    #         if action == 'change_track':
+    #             self.core.playback.next()
+    #             self.frontend.process_event(event=action).get()
+    #
+    #             self.assertEqual(self.core.playback.get_state().get(),
+    #                              PlaybackState.PLAYING,
+    #                              "Failed to set playback for action '{}'".format(action))
+    #         else:
+    #             self.frontend.process_event(event=action).get()
+    #             self.assertEqual(self.core.playback.get_state().get(),
+    #                              PlaybackState.PAUSED,
+    #                              "Failed to set playback for action '{}'".format(action))
 
 
-def test_match_sequence_on_longest():
-    es1 = EventSequence('match_event_1', ['e1'])
-    es2 = EventSequence('match_event_1', ['e1', 'e2'])
-    es3 = EventSequence('match_event_1', ['e1', 'e2', 'e3'])
+class EventSequenceTest(unittest.TestCase):
 
-    es_list = [es1, es2, es3]
+    def setUp(self):
+        self.rq = Queue.PriorityQueue()
+        self.es = EventSequence('match_mock', ['e1', 'e2', 'e3'], self.rq, 0.1, False)
+        self.es_strict = EventSequence('match_mock', ['e1', 'e2', 'e3'], self.rq, 0.1, True)
+        self.es_wait = EventSequence('match_mock', ['e1', 'e2', 'e3'], self.rq, 0.1, False, 'w1')
 
-    es1.events_seen = ['e1']
-    es2.events_seen = ['e1', 'e2']
-    es3.events_seen = ['e1', 'e2', 'e3']
+        self.event_sequences = [self.es, self.es_strict, self.es_wait]
 
-    assert es1 in EventSequence.match_sequence_list(es_list)
+        track_mock = mock.Mock(spec=models.Track)
+        track_mock.uri = 'pandora:track:id_mock:token_mock'
+        self.tl_track_mock = mock.Mock(spec=models.TlTrack)
+        self.tl_track_mock.track = track_mock
+
+    def test_events_ignored_if_time_position_is_zero(self):
+        for es in self.event_sequences:
+            es.notify('e1')
+        for es in self.event_sequences:
+            assert not es.is_monitoring()
+
+    def test_start_monitor_on_event(self):
+        for es in self.event_sequences:
+            es.notify('e1', tl_track=self.tl_track_mock, time_position=100)
+        for es in self.event_sequences:
+            assert es.is_monitoring()
+
+    def test_start_monitor_handles_no_tl_track(self):
+        for es in self.event_sequences:
+            es.notify('e1', time_position=100)
+        for es in self.event_sequences:
+            assert es.is_monitoring()
+
+    def test_stop_monitor_adds_result_to_queue(self):
+        for es in self.event_sequences[0:2]:
+            es.notify('e1', time_position=100)
+            es.notify('e2', time_position=100)
+            es.notify('e3', time_position=100)
+
+        for es in self.event_sequences[0:2]:
+            es.wait(1.0)
+            assert not es.is_monitoring()
+
+        assert self.rq.qsize() == 2
+
+    def test_stop_monitor_only_waits_for_matched_events(self):
+        self.es_wait.notify('e1', time_position=100)
+        self.es_wait.notify('e_not_in_monitored_sequence', time_position=100)
+
+        time.sleep(0.1 * 1.1)
+        assert not self.es_wait.is_monitoring()
+        assert self.rq.qsize() == 0
+
+    def test_stop_monitor_waits_for_event(self):
+        self.es_wait.notify('e1', time_position=100)
+        self.es_wait.notify('e2', time_position=100)
+        self.es_wait.notify('e3', time_position=100)
+
+        assert self.es_wait.is_monitoring()
+        assert self.rq.qsize() == 0
+
+        self.es_wait.notify('w1', time_position=100)
+        self.es_wait.wait(timeout=1.0)
+
+        assert not self.es_wait.is_monitoring()
+        assert self.rq.qsize() == 1
+
+    def test_get_stop_monitor_that_all_events_occurred(self):
+        self.es.notify('e1', time_position=100)
+        self.es.notify('e2', time_position=100)
+        self.es.notify('e3', time_position=100)
+        assert self.rq.qsize() == 0
+
+        self.es.wait(timeout=1.0)
+        self.es.events_seen = ['e1', 'e2', 'e3']
+        assert self.rq.qsize() > 0
+
+    def test_get_stop_monitor_that_events_were_seen_in_order(self):
+        self.es.notify('e1', time_position=100)
+        self.es.notify('e3', time_position=100)
+        self.es.notify('e2', time_position=100)
+        self.es.wait(timeout=1.0)
+        assert self.rq.qsize() == 0
+
+        self.es.notify('e1', time_position=100)
+        self.es.notify('e2', time_position=100)
+        self.es.notify('e3', time_position=100)
+        self.es.wait(timeout=1.0)
+        assert self.rq.qsize() > 0
+
+    def test_get_ratio_handles_repeating_events(self):
+        self.es.target_sequence = ['e1', 'e2', 'e3', 'e1']
+        self.es.events_seen = ['e1', 'e2', 'e3', 'e1']
+        assert self.es.get_ratio() > 0
+
+    def test_get_ratio_enforces_strict_matching(self):
+        self.es_strict.events_seen = ['e1', 'e2', 'e3', 'e4']
+        assert self.es_strict.get_ratio() == 0
+
+        self.es_strict.events_seen = ['e1', 'e2', 'e3']
+        assert self.es_strict.get_ratio() == 1
 
 
-def test_match_sequence_strict():
-    es_list = [EventSequence('match_event_1', ['e1', 'e2', 'e3'], True)]
-    assert EventSequence.match_sequence_list(es_list, ['e1', 'e3']) is None
+class MatchResultTest(unittest.TestCase):
 
+    def test_match_result_comparison(self):
 
-def test_match_sequence_partial():
-    es1 = EventSequence('match_event_1', ['e1', 'e3'])
-    es2 = EventSequence('match_event_1', ['e1', 'e2', 'e3'])
-    es3 = EventSequence('match_event_1', ['e1', 'e2', 'e3', 'e4'])
+        mr1 = MatchResult(EventMarker('e1', 'u1', 0), 1)
+        mr2 = MatchResult(EventMarker('e1', 'u1', 0), 2)
 
-    es_list = [es1, es2, es3]
+        assert mr1 < mr2
+        assert mr2 > mr1
+        assert mr1 != mr2
 
-    assert EventSequence.match_sequence_list(es_list, ['e1', 'e3']) == es1
-    assert EventSequence.match_sequence_list(es_list, ['e1', 'e2', 'e3']) == es2
-    assert EventSequence.match_sequence_list(es_list, ['e1', 'e3', 'e4']) == es3
+        mr2.ratio = 1
+        assert mr1 == mr2
