@@ -13,8 +13,7 @@ from mopidy import core, listener, models
 import pykka
 
 from mopidy_pandora import monitor
-
-from mopidy_pandora.listener import PandoraPlaybackListener
+from mopidy_pandora.listener import PandoraBackendListener
 
 from mopidy_pandora.monitor import EventMarker, EventSequence, MatchResult
 
@@ -102,8 +101,19 @@ class EventMonitorTest(BaseTest):
     def setUp(self):  # noqa: N802
         super(EventMonitorTest, self).setUp()
         self.monitor = monitor.EventMonitor(conftest.config(), self.core)
-        # Consume more needs to be enabled to detect 'previous' track changes
+        # Consume mode needs to be enabled to detect 'previous' track changes
         self.core.tracklist.set_consume(True)
+
+    def test_delete_station_clears_tracklist_on_finish(self):
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        assert len(self.core.tracklist.get_tl_tracks().get()) > 0
+
+        listener.send(PandoraBackendListener, 'event_processed',
+                      track_uri=self.tracks[0].uri,
+                      pandora_event='delete_station')
+        self.replay_events(self.monitor)
+
+        assert len(self.core.tracklist.get_tl_tracks().get()) == 0
 
     def test_detect_track_change_next(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -121,16 +131,16 @@ class EventMonitorTest(BaseTest):
             })]))
 
     def test_detect_track_change_next_from_paused(self):
-        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.core.playback.pause().get()
+            self.core.playback.pause()
             self.replay_events(self.monitor)
             self.core.playback.next().get()
             self.replay_events(self.monitor, until='track_playback_paused')
 
-            thread_joiner.wait(timeout=1.0)
+            thread_joiner.wait(timeout=5.0)
             assert all(self.has_events([('track_changed_next', {
                 'old_uri': self.tl_tracks[0].track.uri,
                 'new_uri': self.tl_tracks[1].track.uri
@@ -140,7 +150,7 @@ class EventMonitorTest(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.seek(100).get()
+            self.core.playback.seek(100)
             self.replay_events(self.monitor)
             self.core.playback.previous().get()
             self.replay_events(self.monitor, until='track_playback_started')
@@ -152,50 +162,48 @@ class EventMonitorTest(BaseTest):
             })]))
 
     def test_detect_track_change_previous_from_paused(self):
-        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.core.playback.pause().get()
+            self.core.playback.pause()
             self.replay_events(self.monitor)
             self.core.playback.previous().get()
             self.replay_events(self.monitor, until='track_playback_paused')
 
-            thread_joiner.wait(timeout=1.0)
+            thread_joiner.wait(timeout=5.0)
             assert all(self.has_events([('track_changed_previous', {
                 'old_uri': self.tl_tracks[0].track.uri,
                 'new_uri': self.tl_tracks[0].track.uri
             })]))
 
     def test_events_triggered_on_next_action(self):
-        with conftest.ThreadJoiner(timeout=10.0) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Pause -> Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.core.playback.pause().get()
+            self.core.playback.pause()
             self.replay_events(self.monitor)
             self.core.playback.next().get()
-            listener.send(PandoraPlaybackListener, 'track_changing', track=self.tl_tracks[1].track)
-            self.replay_events(self.monitor)
+            self.replay_events(self.monitor, until='track_changed_next')
 
-            thread_joiner.wait(timeout=10.0)
+            thread_joiner.wait(timeout=5.0)
             assert all(self.has_events([('event_triggered', {
                 'track_uri': self.tl_tracks[0].track.uri,
                 'pandora_event': conftest.config()['pandora']['on_pause_next_click']
             })]))
 
     def test_events_triggered_on_previous_action(self):
-        with conftest.ThreadJoiner(timeout=10.0) as thread_joiner:
+        with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Pause -> Previous
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.core.playback.pause().get()
+            self.core.playback.pause()
             self.replay_events(self.monitor)
             self.core.playback.previous().get()
-            listener.send(PandoraPlaybackListener, 'track_changing', track=self.tl_tracks[0].track)
-            self.replay_events(self.monitor)
+            self.replay_events(self.monitor, until='track_changed_previous')
 
-            thread_joiner.wait(timeout=10.0)
+            thread_joiner.wait(timeout=5.0)
             assert all(self.has_events([('event_triggered', {
                 'track_uri': self.tl_tracks[0].track.uri,
                 'pandora_event': conftest.config()['pandora']['on_pause_previous_click']
@@ -243,31 +251,31 @@ class EventMonitorTest(BaseTest):
 
             thread_joiner.wait(timeout=1.0)
             assert self.events.qsize() == 0  # Check that no events were triggered
-
-    # TODO: Add this test back again
-    # def test_process_event_resumes_playback_for_change_track(self):
-    #     actions = ['stop', 'change_track', 'resume']
-    #
-    #     for action in actions:
-    #         self.events = Queue.Queue()  # Make sure that the queue is empty
-    #         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-    #         self.core.playback.seek(100)
-    #         self.core.playback.pause().get()
-    #         self.replay_events(self.frontend)
-    #         assert self.core.playback.get_state().get() == PlaybackState.PAUSED
-    #
-    #         if action == 'change_track':
-    #             self.core.playback.next()
-    #             self.frontend.process_event(event=action).get()
-    #
-    #             self.assertEqual(self.core.playback.get_state().get(),
-    #                              PlaybackState.PLAYING,
-    #                              "Failed to set playback for action '{}'".format(action))
-    #         else:
-    #             self.frontend.process_event(event=action).get()
-    #             self.assertEqual(self.core.playback.get_state().get(),
-    #                              PlaybackState.PAUSED,
-    #                              "Failed to set playback for action '{}'".format(action))
+#
+#     # TODO: Add this test back again
+#     # def test_process_event_resumes_playback_for_change_track(self):
+#     #     actions = ['stop', 'change_track', 'resume']
+#     #
+#     #     for action in actions:
+#     #         self.events = Queue.Queue()  # Make sure that the queue is empty
+#     #         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+#     #         self.core.playback.seek(100)
+#     #         self.core.playback.pause().get()
+#     #         self.replay_events(self.frontend)
+#     #         assert self.core.playback.get_state().get() == PlaybackState.PAUSED
+#     #
+#     #         if action == 'change_track':
+#     #             self.core.playback.next()
+#     #             self.frontend.process_event(event=action).get()
+#     #
+#     #             self.assertEqual(self.core.playback.get_state().get(),
+#     #                              PlaybackState.PLAYING,
+#     #                              "Failed to set playback for action '{}'".format(action))
+#     #         else:
+#     #             self.frontend.process_event(event=action).get()
+#     #             self.assertEqual(self.core.playback.get_state().get(),
+#     #                              PlaybackState.PAUSED,
+#     #                              "Failed to set playback for action '{}'".format(action))
 
 
 class EventSequenceTest(unittest.TestCase):

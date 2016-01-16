@@ -31,9 +31,9 @@ class EventMonitorListener(listener.Listener):
         Called when a 'previous' track change has been completed.
 
         :param old_uri: the URI of the Pandora track that was changed from.
-        :type old_uri: :class:`mopidy.models.Ref`
+        :type old_uri: string
         :param new_uri: the URI of the Pandora track that was changed to.
-        :type new_uri: :class:`mopidy.models.Ref`
+        :type new_uri: string
         """
         pass
 
@@ -44,9 +44,9 @@ class EventMonitorListener(listener.Listener):
         the currently selected station.
 
         :param old_uri: the URI of the Pandora track that was changed from.
-        :type old_uri: :class:`mopidy.models.Ref`
+        :type old_uri: string
         :param new_uri: the URI of the Pandora track that was changed to.
-        :type new_uri: :class:`mopidy.models.Ref`
+        :type new_uri: string
         """
         pass
 
@@ -69,30 +69,6 @@ class PandoraFrontendListener(listener.Listener):
         :type station_id: string
         :param auto_play: specifies if the next track should be played as soon as it is added to the tracklist.
         :type auto_play: boolean
-        """
-        pass
-
-
-class PandoraEventHandlingFrontendListener(listener.Listener):
-
-    """
-    Marker interface for recipients of events sent by the event handling frontend actor.
-
-    """
-
-    @staticmethod
-    def send(event, **kwargs):
-        listener.send(PandoraEventHandlingFrontendListener, event, **kwargs)
-
-    def event_triggered(self, track_uri, pandora_event):
-        """
-        Called when one of the Pandora events have been triggered (e.g. thumbs_up, thumbs_down, sleep, etc.).
-
-        :param track_uri: the URI of the track that the event should be applied to.
-        :type track_uri: string
-        :param pandora_event: the Pandora event that should be called. Needs to correspond with the name of one of
-                              the event handling methods defined in `:class:mopidy_pandora.backend.PandoraBackend`
-        :type pandora_event: string
         """
         pass
 

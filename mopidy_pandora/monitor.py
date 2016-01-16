@@ -43,7 +43,8 @@ class MatchResult(object):
 class EventMonitor(core.CoreListener,
                    listener.PandoraBackendListener,
                    listener.PandoraPlaybackListener,
-                   listener.PandoraFrontendListener):
+                   listener.PandoraFrontendListener,
+                   listener.EventMonitorListener):
 
     pykka_traversable = True
 
@@ -80,9 +81,9 @@ class EventMonitor(core.CoreListener,
                                                   ['track_playback_paused',
                                                    'playback_state_changed',
                                                    'track_playback_ended',
+                                                   'track_changing',
                                                    'playback_state_changed',
-                                                   'track_playback_paused',
-                                                   'track_changing'], self.sequence_match_results,
+                                                   'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_previous',
                                                   interval=interval))
 
@@ -90,14 +91,24 @@ class EventMonitor(core.CoreListener,
                                                   ['track_playback_paused',
                                                    'playback_state_changed',
                                                    'track_playback_ended',
+                                                   'track_changing',
                                                    'playback_state_changed',
-                                                   'track_playback_paused',
-                                                   'track_changing'], self.sequence_match_results,
+                                                   'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_next',
                                                   interval=interval))
 
+        self.trigger_events = set(e.target_sequence[0] for e in self.event_sequences)
+
     def on_event(self, event, **kwargs):
+        super(EventMonitor, self).on_event(event, **kwargs)
         self._detect_track_change(event, **kwargs)
+
+        if self._monitor_lock.acquire(False):
+            if event not in self.trigger_events:
+                # Optimisation: monitor not running and current event will not trigger any starts either, ignore
+                self._monitor_lock.release()
+                return
+            self._monitor_lock.release()
 
         for es in self.event_sequences:
             es.notify(event, **kwargs)
@@ -106,7 +117,7 @@ class EventMonitor(core.CoreListener,
             self.monitor_sequences()
 
     def _detect_track_change(self, event, **kwargs):
-        if event in ['track_playback_ended']:
+        if not self._track_changed_marker and event in ['track_playback_ended']:
             self._track_changed_marker = EventMarker(event,
                                                      kwargs['tl_track'].track.uri,
                                                      int(time.time() * 1000))
@@ -114,10 +125,11 @@ class EventMonitor(core.CoreListener,
         elif self._track_changed_marker and event in ['track_playback_paused', 'track_playback_started']:
             try:
                 change_direction = self._get_track_change_direction(self._track_changed_marker)
-                self._trigger_track_changed(change_direction,
-                                            old_uri=self._track_changed_marker.uri,
-                                            new_uri=kwargs['tl_track'].track.uri)
-                self._track_changed_marker = None
+                if change_direction:
+                    self._trigger_track_changed(change_direction,
+                                                old_uri=self._track_changed_marker.uri,
+                                                new_uri=kwargs['tl_track'].track.uri)
+                    self._track_changed_marker = None
             except KeyError:
                 # Must be playing the first track, ignore
                 pass
@@ -144,12 +156,20 @@ class EventMonitor(core.CoreListener,
 
         self._monitor_lock.release()
 
+    def event_processed(self, track_uri, pandora_event):
+        if pandora_event == 'delete_station':
+            self.core.tracklist.clear()
+
     def _get_track_change_direction(self, track_marker):
         history = self.core.history.get_history().get()
         for i, h in enumerate(history):
-            if h[0] < track_marker.time:
+            # TODO: find a way to eliminate this timing disparity between when 'track_playback_ended' event for
+            # one track is processed, and the next track is added to the history.
+            if h[0] + 100 < track_marker.time:
                 if h[1].uri == track_marker.uri:
                     # This is the point in time in the history that the track was played.
+                    if i == 0:
+                        return None
                     if history[i-1][1].uri == track_marker.uri:
                         # Track was played again immediately.
                         # User clicked 'previous' in consume mode.
@@ -159,9 +179,9 @@ class EventMonitor(core.CoreListener,
                         return 'track_changed_next'
 
     def _trigger_event_triggered(self, event, uri):
-        (listener.PandoraEventHandlingFrontendListener.send('event_triggered',
-                                                            track_uri=uri,
-                                                            pandora_event=event))
+        (listener.EventMonitorListener.send('event_triggered',
+                                            track_uri=uri,
+                                            pandora_event=event))
 
     def _trigger_track_changed(self, track_change_event, old_uri, new_uri):
         (listener.EventMonitorListener.send(track_change_event,
@@ -227,7 +247,7 @@ class EventSequence(object):
             return
 
         self.target_uri = uri
-        self._timer = threading.Timer(self.interval, self.stop_monitor, args=(5.0,))
+        self._timer = threading.Timer(self.interval, self.stop_monitor, args=(self.interval,))
         self._timer.daemon = True
         self._timer.start()
 

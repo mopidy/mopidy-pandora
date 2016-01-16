@@ -7,9 +7,12 @@ used in tests of the frontends.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from mopidy import backend
+from mopidy import listener
 from mopidy.models import Ref, SearchResult
 
 import pykka
+
+from mopidy_pandora.listener import PandoraPlaybackListener
 
 
 def create_proxy(cls, config=None, audio=None):
@@ -84,6 +87,7 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
         """Pass a track with URI 'dummy:error' to force failure"""
         self._uri = track.uri
         self._time_position = 0
+        listener.send(PandoraPlaybackListener, 'track_changing', track=track)
         return True
 
     def prepare_change(self):

@@ -9,6 +9,32 @@ from mopidy import models
 import mopidy_pandora.listener as listener
 
 
+class EventMonitorListenerTest(unittest.TestCase):
+
+    def setUp(self):  # noqa: N802
+        self.listener = listener.EventMonitorListener()
+
+    def test_on_event_forwards_to_specific_handler(self):
+        self.listener.event_triggered = mock.Mock()
+
+        self.listener.on_event('event_triggered', track_uri='pandora:track:id_mock:token_mock',
+                               pandora_event='event_mock')
+
+        self.listener.event_triggered.assert_called_with(track_uri='pandora:track:id_mock:token_mock',
+                                                         pandora_event='event_mock')
+
+    def test_listener_has_default_impl_for_event_triggered(self):
+        self.listener.event_triggered('pandora:track:id_mock:token_mock', 'event_mock')
+
+    def test_listener_has_default_impl_for_track_changed_previous(self):
+        self.listener.track_changed_previous(old_uri='pandora:track:id_mock:token_mock2',
+                                             new_uri='pandora:track:id_mock:token_mock1')
+
+    def test_listener_has_default_impl_for_track_changed_next(self):
+        self.listener.track_changed_next(old_uri='pandora:track:id_mock:token_mock1',
+                                         new_uri='pandora:track:id_mock:token_mock2')
+
+
 class PandoraFrontendListenerTest(unittest.TestCase):
 
     def setUp(self):  # noqa: N802
@@ -24,24 +50,6 @@ class PandoraFrontendListenerTest(unittest.TestCase):
 
     def test_listener_has_default_impl_for_end_of_tracklist_reached(self):
         self.listener.end_of_tracklist_reached(station_id='id_mock', auto_play=False)
-
-
-class PandoraEventHandlingFrontendListenerTest(unittest.TestCase):
-
-    def setUp(self):  # noqa: N802
-        self.listener = listener.PandoraEventHandlingFrontendListener()
-
-    def test_on_event_forwards_to_specific_handler(self):
-        self.listener.event_triggered = mock.Mock()
-
-        self.listener.on_event('event_triggered', track_uri='pandora:track:id_mock:token_mock',
-                               pandora_event='event_mock')
-
-        self.listener.event_triggered.assert_called_with(track_uri='pandora:track:id_mock:token_mock',
-                                                         pandora_event='event_mock')
-
-    def test_listener_has_default_impl_for_event_triggered(self):
-        self.listener.event_triggered('pandora:track:id_mock:token_mock', 'event_mock')
 
 
 class PandoraBackendListenerTest(unittest.TestCase):

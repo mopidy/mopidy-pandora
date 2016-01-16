@@ -16,7 +16,6 @@ import pykka
 
 from mopidy_pandora import frontend
 from mopidy_pandora.frontend import PandoraFrontend
-from mopidy_pandora.listener import PandoraBackendListener
 
 from tests import conftest, dummy_backend
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
@@ -230,7 +229,6 @@ class TestFrontend(BaseTest):
                 self.core.tracklist.clear()
                 self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
 
-                self.frontend.track_changing(self.tl_tracks[0].track).get()
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
                 tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -275,7 +273,6 @@ class TestFrontend(BaseTest):
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
             self.replay_events(self.frontend)
 
-            self.frontend.track_changing(self.tl_tracks[1].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
@@ -283,32 +280,26 @@ class TestFrontend(BaseTest):
 
     def test_changing_track_station_changed(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            self.core.tracklist.clear()
+            self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri, self.tl_tracks[4].track.uri])
+            assert len(self.core.tracklist.get_tl_tracks().get()) == 2
+
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.play(tlid=self.tl_tracks[4].tlid).get()
+            self.core.playback.seek(100)
             self.replay_events(self.frontend)
+            self.core.playback.next().get()
 
-            assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
+            self.replay_events(self.frontend, until='tracklist_changed')
 
-            self.frontend.track_changing(self.tl_tracks[4].track).get()
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
             tl_tracks = self.core.tracklist.get_tl_tracks().get()
             assert len(tl_tracks) == 1  # Tracks were trimmed from the tracklist
-            assert tl_tracks[0] == self.tl_tracks[4]  # Only the track recently changed to is left in the tracklist
+            # Only the track recently changed to is left in the tracklist
+            assert tl_tracks[0].track.uri == self.tl_tracks[4].track.uri
 
             assert all(self.has_events([('end_of_tracklist_reached', {'station_id': 'id_mock_other',
                                                                       'auto_play': False})]))
-
-    def test_delete_station_clears_tracklist_on_finish(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-        assert len(self.core.tracklist.get_tl_tracks().get()) > 0
-
-        listener.send(PandoraBackendListener, 'event_processed',
-                      track_uri=self.tracks[0].uri,
-                      pandora_event='delete_station')
-        self.replay_events(self.frontend)
-
-        assert len(self.core.tracklist.get_tl_tracks().get()) == 0
 
     def test_track_unplayable_removes_tracks_from_tracklist(self):
         tl_tracks = self.core.tracklist.get_tl_tracks().get()

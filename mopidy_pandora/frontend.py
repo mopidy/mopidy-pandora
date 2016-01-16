@@ -13,6 +13,7 @@ from mopidy_pandora.uri import PandoraUri
 logger = logging.getLogger(__name__)
 
 
+# TODO: profile this function for optimisation?
 def only_execute_for_pandora_uris(func):
     """ Function decorator intended to ensure that "func" is only executed if a Pandora track
         is currently playing. Allows CoreListener events to be ignored if they are being raised
@@ -33,8 +34,10 @@ def only_execute_for_pandora_uris(func):
         :return: the return value of the function if it was run or 'None' otherwise.
         """
         try:
-            PandoraUri.factory(self.core.playback.get_current_tl_track().get().track.uri)
-            return func(self, *args, **kwargs)
+            tl_track = kwargs.get('tl_track', self.core.playback.get_current_tl_track().get())
+            uri = tl_track.track.uri
+            if uri.startswith(PandoraUri.SCHEME) and PandoraUri.factory(uri):
+                return func(self, *args, **kwargs)
         except (AttributeError, NotImplementedError):
             # Not playing a Pandora track. Don't do anything.
             pass
@@ -78,6 +81,7 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         self.setup_required = True
         self.set_options()
 
+    # TODO: add toggle to disable event monitoring 'event_support_enabled'?
     @only_execute_for_pandora_uris
     def on_event(self, event, **kwargs):
         self.event_monitor.on_event(event, **kwargs)
@@ -94,10 +98,6 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
-
-    def event_processed(self, track_uri, pandora_event):
-        if pandora_event == 'delete_station':
-            self.core.tracklist.clear()
 
     def is_end_of_tracklist_reached(self, track=None):
         length = self.core.tracklist.get_length().get()
@@ -121,6 +121,8 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
             pass
         return False
 
+    # TODO: ideally all of this should be delayed until after the track change has been completed.
+    # Not sure the tracklist / history will always be up to date at this point.
     def track_changing(self, track):
         if self.is_station_changed(track):
             # Station has changed, remove tracks from previous station from tracklist.

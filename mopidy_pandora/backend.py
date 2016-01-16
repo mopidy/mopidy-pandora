@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, listener.PandoraFrontendListener,
-                     listener.PandoraEventHandlingFrontendListener):
+                     listener.EventMonitorListener):
 
     def __init__(self, config, audio):
         super(PandoraBackend, self).__init__()
