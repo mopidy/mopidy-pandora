@@ -166,7 +166,7 @@ class EventMonitor(core.CoreListener,
         history = self.core.history.get_history().get()
         for i, h in enumerate(history):
             # TODO: find a way to eliminate this timing disparity between when 'track_playback_ended' event for
-            # one track is processed, and the next track is added to the history.
+            #       one track is processed, and the next track is added to the history.
             if h[0] + 100 < track_marker.time:
                 if h[1].uri == track_marker.uri:
                     # This is the point in time in the history that the track was played.
@@ -241,9 +241,9 @@ class EventSequence(object):
 
     def start_monitor(self, uri):
         self.monitoring_completed.clear()
-        # TODO: ad checking probably belongs somewhere else.
         if uri and type(PandoraUri.factory(uri)) is AdItemUri:
             logger.info('Ignoring doubleclick event for Pandora advertisement...')
+            self.reset()
             self.monitoring_completed.set()
             return
 

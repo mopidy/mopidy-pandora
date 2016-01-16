@@ -147,6 +147,19 @@ class EventMonitorTest(BaseTest):
                 'new_uri': self.tl_tracks[1].track.uri
             })]))
 
+    def test_detect_track_change_no_op(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            # Next
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.stop()
+            self.replay_events(self.monitor)
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+
+            thread_joiner.wait(timeout=1.0)
+            self.replay_events(self.monitor, until='track_playback_started')
+            assert self.events.empty()
+
     def test_detect_track_change_previous(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Next
