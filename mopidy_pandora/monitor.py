@@ -15,6 +15,7 @@ from difflib import SequenceMatcher
 from functools import total_ordering
 
 from mopidy import core
+from mopidy.audio import PlaybackState
 
 from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
@@ -104,17 +105,20 @@ class EventMonitor(core.CoreListener,
         self._detect_track_change(event, **kwargs)
 
         if self._monitor_lock.acquire(False):
-            if event not in self.trigger_events:
-                # Optimisation: monitor not running and current event will not trigger any starts either, ignore
+            if event in self.trigger_events:
+                # Monitor not running and current event will not trigger any starts either, ignore
+                self.notify_all(event, **kwargs)
+                self.monitor_sequences()
+            else:
                 self._monitor_lock.release()
                 return
-            self._monitor_lock.release()
+        else:
+            # Just pass on the event
+            self.notify_all(event, **kwargs)
 
+    def notify_all(self, event, **kwargs):
         for es in self.event_sequences:
             es.notify(event, **kwargs)
-
-        if self._monitor_lock.acquire(False):
-            self.monitor_sequences()
 
     def _detect_track_change(self, event, **kwargs):
         if not self._track_changed_marker and event in ['track_playback_ended']:
@@ -148,11 +152,9 @@ class EventMonitor(core.CoreListener,
 
         if match and match.ratio > 0.85:
             self._trigger_event_triggered(match.marker.event, match.marker.uri)
-
             # Resume playback...
-            # TODO:  this is matching to the wrong event.
-            # if match.marker.event == 'change_track' and self.core.playback.get_state().get() != PlaybackState.PLAYING:
-            #     self.core.playback.resume()
+            if self.core.playback.get_state().get() != PlaybackState.PLAYING:
+                self.core.playback.resume()
 
         self._monitor_lock.release()
 
@@ -228,10 +230,9 @@ class EventSequence(object):
                 return
             else:
                 tl_track = kwargs.get('tl_track', None)
+                uri = None
                 if tl_track:
                     uri = tl_track.track.uri
-                else:
-                    uri = None
                 self.start_monitor(uri)
                 self.events_seen.append(event)
 

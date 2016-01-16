@@ -9,6 +9,7 @@ import unittest
 from mock import mock
 
 from mopidy import core, listener, models
+from mopidy.audio import PlaybackState
 
 import pykka
 
@@ -251,31 +252,20 @@ class EventMonitorTest(BaseTest):
 
             thread_joiner.wait(timeout=1.0)
             assert self.events.qsize() == 0  # Check that no events were triggered
-#
-#     # TODO: Add this test back again
-#     # def test_process_event_resumes_playback_for_change_track(self):
-#     #     actions = ['stop', 'change_track', 'resume']
-#     #
-#     #     for action in actions:
-#     #         self.events = Queue.Queue()  # Make sure that the queue is empty
-#     #         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-#     #         self.core.playback.seek(100)
-#     #         self.core.playback.pause().get()
-#     #         self.replay_events(self.frontend)
-#     #         assert self.core.playback.get_state().get() == PlaybackState.PAUSED
-#     #
-#     #         if action == 'change_track':
-#     #             self.core.playback.next()
-#     #             self.frontend.process_event(event=action).get()
-#     #
-#     #             self.assertEqual(self.core.playback.get_state().get(),
-#     #                              PlaybackState.PLAYING,
-#     #                              "Failed to set playback for action '{}'".format(action))
-#     #         else:
-#     #             self.frontend.process_event(event=action).get()
-#     #             self.assertEqual(self.core.playback.get_state().get(),
-#     #                              PlaybackState.PAUSED,
-#     #                              "Failed to set playback for action '{}'".format(action))
+
+    def test_monitor_resumes_playback_after_event_trigger(self):
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.seek(100)
+            self.core.playback.pause()
+            self.replay_events(self.monitor)
+            assert self.core.playback.get_state().get() == PlaybackState.PAUSED
+
+            self.core.playback.next().get()
+            self.replay_events(self.monitor, until='track_changed_next')
+
+            thread_joiner.wait(timeout=5.0)
+            assert self.core.playback.get_state().get() == PlaybackState.PLAYING
 
 
 class EventSequenceTest(unittest.TestCase):
