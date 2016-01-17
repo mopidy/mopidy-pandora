@@ -102,7 +102,7 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         return r
 
     def _trigger_next_track_available(self, track, auto_play=False):
-        (listener.PandoraBackendListener.send('next_track_available', track=track, auto_play=auto_play))
+        listener.PandoraBackendListener.send('next_track_available', track=track, auto_play=auto_play)
 
     def _trigger_event_processed(self, track_uri, pandora_event):
         listener.PandoraBackendListener.send('event_processed', track_uri=track_uri, pandora_event=pandora_event)

@@ -124,23 +124,15 @@ class TestFrontend(BaseTest):
         assert len(tl_tracks) == 2
         assert tl_tracks[-1].track == self.tl_tracks[0].track
 
-    def test_only_execute_for_pandora_executes_for_pandora_uri(self):
-        func_mock = mock.PropertyMock()
-        func_mock.__name__ = str('func_mock')
-        func_mock.return_value = True
-
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-        frontend.only_execute_for_pandora_uris(func_mock)(self)
-
-        assert func_mock.called
-
     def test_next_track_available_adds_track_to_playlist(self):
         self.core.tracklist.clear()
         self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.replay_events(self.frontend)
 
         self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
+
         assert tl_tracks[-1].track == self.tl_tracks[1].track
         assert self.core.playback.get_current_track().get() == self.tl_tracks[1].track
 
@@ -173,30 +165,56 @@ class TestFrontend(BaseTest):
 
         assert not func_mock.called
 
+    def test_only_execute_for_pandora_does_not_execute_for_malformed_pandora_uri(self):
+        func_mock = mock.PropertyMock()
+        func_mock.__name__ = str('func_mock')
+        func_mock.return_value = True
+
+        tl_track_mock = mock.Mock(spec=models.TlTrack)
+        track_mock = mock.Mock(spec=models.Track)
+        track_mock.uri = 'pandora:invalid_uri'
+        tl_track_mock.track = track_mock
+        frontend.only_execute_for_pandora_uris(func_mock)(self, tl_track=tl_track_mock)
+
+        assert not func_mock.called
+
+    def test_only_execute_for_pandora_executes_for_pandora_uri(self):
+        func_mock = mock.PropertyMock()
+        func_mock.__name__ = str('func_mock')
+        func_mock.return_value = True
+
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        frontend.only_execute_for_pandora_uris(func_mock)(self)
+
+        assert func_mock.called
+
     def test_options_changed_triggers_setup(self):
         with mock.patch.object(PandoraFrontend, 'set_options', mock.Mock()) as set_options_mock:
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.frontend.setup_required = False
             listener.send(CoreListener, 'options_changed')
             self.replay_events(self.frontend)
             assert set_options_mock.called
 
     def test_set_options_performs_auto_setup(self):
-        assert self.frontend.setup_required.get()
-        self.core.tracklist.set_repeat(True)
-        self.core.tracklist.set_consume(False)
-        self.core.tracklist.set_random(True)
-        self.core.tracklist.set_single(True)
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.replay_events(self.frontend)
+        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
+            assert self.frontend.setup_required.get()
+            self.core.tracklist.set_repeat(True)
+            self.core.tracklist.set_consume(False)
+            self.core.tracklist.set_random(True)
+            self.core.tracklist.set_single(True)
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.replay_events(self.frontend)
 
-        assert self.core.tracklist.get_repeat().get() is False
-        assert self.core.tracklist.get_consume().get() is True
-        assert self.core.tracklist.get_random().get() is False
-        assert self.core.tracklist.get_single().get() is False
-        self.replay_events(self.frontend)
+            thread_joiner.wait(timeout=1.0)
 
-        assert not self.frontend.setup_required.get()
+            assert self.core.tracklist.get_repeat().get() is False
+            assert self.core.tracklist.get_consume().get() is True
+            assert self.core.tracklist.get_random().get() is False
+            assert self.core.tracklist.get_single().get() is False
+            self.replay_events(self.frontend)
+
+            assert not self.frontend.setup_required.get()
 
     def test_set_options_skips_auto_setup_if_not_configured(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -305,7 +323,7 @@ class TestFrontend(BaseTest):
             self.replay_events(self.frontend)
             self.core.playback.next().get()
 
-            self.replay_events(self.frontend, until='tracklist_changed')
+            self.replay_events(self.frontend, until='track_playback_started')
 
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
@@ -314,7 +332,7 @@ class TestFrontend(BaseTest):
             # Only the track recently changed to is left in the tracklist
             assert tl_tracks[0].track.uri == self.tl_tracks[4].track.uri
 
-            assert all(self.has_events([('end_of_tracklist_reached', {'station_id': 'id_mock_other',
+            assert any(self.has_events([('end_of_tracklist_reached', {'station_id': 'id_mock_other',
                                                                       'auto_play': False})]))
 
     def test_track_unplayable_removes_tracks_from_tracklist(self):

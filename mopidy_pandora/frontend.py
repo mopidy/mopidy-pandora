@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import Queue
+
 import logging
 import threading
 
@@ -10,6 +12,7 @@ import pykka
 from mopidy_pandora import listener
 from mopidy_pandora.monitor import EventMonitor
 from mopidy_pandora.uri import PandoraUri
+from mopidy_pandora.utils import run_async
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,9 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
         self.track_change_completed_event = threading.Event()
         self.track_change_completed_event.set()
 
+        self.update_tracklist_lock = threading.Lock()
+        self.update_tracklist_queue = Queue.Queue()
+
     def set_options(self):
         # Setup playback to mirror behaviour of official Pandora front-ends.
         if self.auto_setup and self.setup_required:
@@ -94,18 +100,14 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
     def track_playback_started(self, tl_track):
         self.set_options()
-        if not self.track_change_completed_event.is_set():
-            self.track_change_completed_event.set()
-            self.update_tracklist(tl_track.track)
+        self.track_change_completed_event.set()
 
     def track_playback_ended(self, tl_track, time_position):
         self.set_options()
 
     def track_playback_paused(self, tl_track, time_position):
         self.set_options()
-        if not self.track_change_completed_event.is_set():
-            self.track_change_completed_event.set()
-            self.update_tracklist(tl_track.track)
+        self.track_change_completed_event.set()
 
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
@@ -135,14 +137,27 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def track_changing(self, track):
         self.track_change_completed_event.clear()
 
+        self.update_tracklist_queue.put(track)
+        self.update_tracklist(track)
+
+    @run_async
     def update_tracklist(self, track):
-        self.track_change_completed_event.wait(timeout=10)
-        if self.is_station_changed(track):
-            # Station has changed, remove tracks from previous station from tracklist.
-            self._trim_tracklist(keep_only=track)
-        if self.is_end_of_tracklist_reached(track):
-            self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
-                                                   auto_play=False)
+        # Wait up to one minute for a track to change successfully
+        if self.track_change_completed_event.wait(timeout=60.0):
+
+            if self.update_tracklist_lock.acquire():
+
+                while not self.update_tracklist_queue.empty():
+                    # Only need to perform the update on the most recent track that was queued.
+                    track = self.update_tracklist_queue.get()
+
+                if self.is_station_changed(track):
+                    # Station has changed, remove tracks from previous station from tracklist.
+                    self._trim_tracklist(keep_only=track)
+                if self.is_end_of_tracklist_reached(track):
+                    self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
+                                                           auto_play=False)
+                self.update_tracklist_lock.release()
 
     def track_unplayable(self, track):
         if self.is_end_of_tracklist_reached(track):

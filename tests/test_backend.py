@@ -129,7 +129,7 @@ def test_process_event_calls_method(config, caplog):
 
                 assert mock_call.called
                 mock_call.reset_mock()
-                assert backend._trigger_event_processed.called
+                backend._trigger_event_processed.assert_called_with(uri_mock, event)
                 backend._trigger_event_processed.reset_mock()
 
                 assert "Triggering event '{}'".format(event) in caplog.text()
@@ -145,7 +145,7 @@ def test_process_event_handles_pandora_exception(config, caplog):
             mock_call.side_effect = PandoraException('exception_mock')
 
             assert not backend.process_event(uri_mock, 'thumbs_up')
-            assert mock_call.called
+            mock_call.assert_called_with(uri_mock)
             assert not backend._trigger_event_processed.called
 
             assert 'Error calling Pandora event: thumbs_up.' in caplog.text()
