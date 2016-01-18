@@ -299,7 +299,7 @@ class EventSequenceTest(unittest.TestCase):
 
     def test_events_ignored_if_time_position_is_zero(self):
         for es in self.event_sequences:
-            es.notify('e1')
+            es.notify('e1', tl_track=self.tl_track_mock)
         for es in self.event_sequences:
             assert not es.is_monitoring()
 
@@ -311,13 +311,13 @@ class EventSequenceTest(unittest.TestCase):
 
     def test_start_monitor_handles_no_tl_track(self):
         for es in self.event_sequences:
-            es.notify('e1', time_position=100)
+            es.notify('e1', tl_track=self.tl_track_mock, time_position=100)
         for es in self.event_sequences:
             assert es.is_monitoring()
 
     def test_stop_monitor_adds_result_to_queue(self):
         for es in self.event_sequences[0:2]:
-            es.notify('e1', time_position=100)
+            es.notify('e1', tl_track=self.tl_track_mock, time_position=100)
             es.notify('e2', time_position=100)
             es.notify('e3', time_position=100)
 
@@ -350,7 +350,7 @@ class EventSequenceTest(unittest.TestCase):
         assert self.rq.qsize() == 1
 
     def test_get_stop_monitor_ensures_that_all_events_occurred(self):
-        self.es.notify('e1', time_position=100)
+        self.es.notify('e1', tl_track=self.tl_track_mock, time_position=100)
         self.es.notify('e2', time_position=100)
         self.es.notify('e3', time_position=100)
         assert self.rq.qsize() == 0
@@ -360,13 +360,13 @@ class EventSequenceTest(unittest.TestCase):
         assert self.rq.qsize() > 0
 
     def test_get_stop_monitor_strict_ensures_that_events_were_seen_in_order(self):
-        self.es_strict.notify('e1', time_position=100)
+        self.es_strict.notify('e1', tl_track=self.tl_track_mock, time_position=100)
         self.es_strict.notify('e3', time_position=100)
         self.es_strict.notify('e2', time_position=100)
         self.es_strict.wait(timeout=1.0)
         assert self.rq.qsize() == 0
 
-        self.es_strict.notify('e1', time_position=100)
+        self.es_strict.notify('e1', tl_track=self.tl_track_mock, time_position=100)
         self.es_strict.notify('e2', time_position=100)
         self.es_strict.notify('e3', time_position=100)
         self.es_strict.wait(timeout=1.0)

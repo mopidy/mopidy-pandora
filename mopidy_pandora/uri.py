@@ -103,6 +103,13 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
         else:
             raise NotImplementedError("Unsupported playlist item type '{}'".format(track))
 
+    @classmethod
+    def is_pandora_uri(cls, uri):
+        try:
+            return uri and isinstance(uri, basestring) and uri.startswith(PandoraUri.SCHEME) and PandoraUri.factory(uri)
+        except NotImplementedError:
+            return False
+
 
 class GenreUri(PandoraUri):
     uri_type = 'genre'

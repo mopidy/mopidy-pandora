@@ -101,13 +101,14 @@ class EventMonitor(core.CoreListener,
         self.trigger_events = set(e.target_sequence[0] for e in self.event_sequences)
 
     def on_event(self, event, **kwargs):
+        from mopidy_pandora import frontend
         super(EventMonitor, self).on_event(event, **kwargs)
         self._detect_track_change(event, **kwargs)
 
         if self._monitor_lock.acquire(False):
             if event in self.trigger_events:
                 # Monitor not running and current event will not trigger any starts either, ignore
-                self.notify_all(event, **kwargs)
+                self.notify_all(event, uri=frontend.get_active_uri(self.core, event, **kwargs), **kwargs)
                 self.monitor_sequences()
             else:
                 self._monitor_lock.release()
@@ -174,8 +175,9 @@ class EventMonitor(core.CoreListener,
                 if h[1].uri == track_marker.uri:
                     # This is the point in time in the history that the track was played.
                     if i == 0:
+                        # Just resuming playback of current track without change.
                         return None
-                    if history[i-1][1].uri == track_marker.uri:
+                    elif history[i-1][1].uri == track_marker.uri:
                         # Track was played again immediately.
                         # User clicked 'previous' in consume mode.
                         return 'track_changed_previous'
@@ -232,11 +234,7 @@ class EventSequence(object):
                 # Don't do anything if track playback has not yet started.
                 return
             else:
-                tl_track = kwargs.get('tl_track', None)
-                uri = None
-                if tl_track:
-                    uri = tl_track.track.uri
-                self.start_monitor(uri)
+                self.start_monitor(kwargs.get('uri', None))
                 self.events_seen.append(event)
 
     def is_monitoring(self):

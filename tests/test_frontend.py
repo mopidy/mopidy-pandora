@@ -128,7 +128,7 @@ class TestFrontend(BaseTest):
         self.core.tracklist.clear()
         self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.replay_events(self.frontend)
+        self.replay_events(self.frontend, until='track_playback_started')
 
         self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
