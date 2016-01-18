@@ -128,16 +128,12 @@ class EventMonitor(core.CoreListener,
                                                      int(time.time() * 1000))
 
         elif self._track_changed_marker and event in ['track_playback_paused', 'track_playback_started']:
-            try:
-                change_direction = self._get_track_change_direction(self._track_changed_marker)
-                if change_direction:
-                    self._trigger_track_changed(change_direction,
-                                                old_uri=self._track_changed_marker.uri,
-                                                new_uri=kwargs['tl_track'].track.uri)
-                    self._track_changed_marker = None
-            except KeyError:
-                # Must be playing the first track, ignore
-                pass
+            change_direction = self._get_track_change_direction(self._track_changed_marker)
+            if change_direction:
+                self._trigger_track_changed(change_direction,
+                                            old_uri=self._track_changed_marker.uri,
+                                            new_uri=kwargs['tl_track'].track.uri)
+                self._track_changed_marker = None
 
     @run_async
     def monitor_sequences(self):
@@ -174,12 +170,10 @@ class EventMonitor(core.CoreListener,
             if h[0] + 100 < track_marker.time:
                 if h[1].uri == track_marker.uri:
                     # This is the point in time in the history that the track was played.
-                    if i == 0:
-                        # Just resuming playback of current track without change.
-                        return None
-                    elif history[i-1][1].uri == track_marker.uri:
+                    if history[i-1][1].uri == track_marker.uri:
                         # Track was played again immediately.
-                        # User clicked 'previous' in consume mode.
+                        # User either clicked 'previous' in consume mode or clicked 'stop' -> 'play' for same track.
+                        # Both actions are interpreted as 'previous'.
                         return 'track_changed_previous'
                     else:
                         # Switched to another track, user clicked 'next'.

@@ -10,7 +10,7 @@ from mopidy_pandora import backend as backend_lib
 from mopidy_pandora import frontend as frontend_lib
 
 
-class ExtensionTest(unittest.TestCase):
+class ExtensionTests(unittest.TestCase):
 
     def test_get_default_config(self):
         ext = Extension()

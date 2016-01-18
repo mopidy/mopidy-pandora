@@ -98,9 +98,9 @@ class BaseTest(unittest.TestCase):
         return [e in q for e in events]
 
 
-class EventMonitorTest(BaseTest):
+class EventMonitorTests(BaseTest):
     def setUp(self):  # noqa: N802
-        super(EventMonitorTest, self).setUp()
+        super(EventMonitorTests, self).setUp()
         self.monitor = monitor.EventMonitor(conftest.config(), self.core)
         # Consume mode needs to be enabled to detect 'previous' track changes
         self.core.tracklist.set_consume(True)
@@ -155,9 +155,9 @@ class EventMonitorTest(BaseTest):
             self.core.playback.stop()
             self.replay_events(self.monitor)
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.replay_events(self.monitor, until='track_playback_started')
 
             thread_joiner.wait(timeout=1.0)
-            self.replay_events(self.monitor, until='track_playback_started')
             assert self.events.empty()
 
     def test_detect_track_change_previous(self):
@@ -282,7 +282,7 @@ class EventMonitorTest(BaseTest):
             assert self.core.playback.get_state().get() == PlaybackState.PLAYING
 
 
-class EventSequenceTest(unittest.TestCase):
+class EventSequenceTests(unittest.TestCase):
 
     def setUp(self):
         self.rq = Queue.PriorityQueue()
@@ -385,7 +385,7 @@ class EventSequenceTest(unittest.TestCase):
         assert self.es_strict.get_ratio() == 1
 
 
-class MatchResultTest(unittest.TestCase):
+class MatchResultTests(unittest.TestCase):
 
     def test_match_result_comparison(self):
 

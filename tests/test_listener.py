@@ -9,7 +9,7 @@ from mopidy import models
 import mopidy_pandora.listener as listener
 
 
-class EventMonitorListenerTest(unittest.TestCase):
+class EventMonitorListenerTests(unittest.TestCase):
 
     def setUp(self):  # noqa: N802
         self.listener = listener.EventMonitorListener()
@@ -35,7 +35,7 @@ class EventMonitorListenerTest(unittest.TestCase):
                                          new_uri='pandora:track:id_mock:token_mock2')
 
 
-class PandoraFrontendListenerTest(unittest.TestCase):
+class PandoraFrontendListenerTests(unittest.TestCase):
 
     def setUp(self):  # noqa: N802
         self.listener = listener.PandoraFrontendListener()
@@ -52,7 +52,7 @@ class PandoraFrontendListenerTest(unittest.TestCase):
         self.listener.end_of_tracklist_reached(station_id='id_mock', auto_play=False)
 
 
-class PandoraBackendListenerTest(unittest.TestCase):
+class PandoraBackendListenerTests(unittest.TestCase):
 
     def setUp(self):  # noqa: N802
         self.listener = listener.PandoraBackendListener()
@@ -73,7 +73,7 @@ class PandoraBackendListenerTest(unittest.TestCase):
                                       pandora_event='event_mock')
 
 
-class PandoraPlaybackListenerTest(unittest.TestCase):
+class PandoraPlaybackListenerTests(unittest.TestCase):
 
     def setUp(self):  # noqa: N802
         self.listener = listener.PandoraPlaybackListener()

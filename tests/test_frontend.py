@@ -97,13 +97,13 @@ class BaseTest(unittest.TestCase):
         return [e in q for e in events]
 
 
-class TestFrontend(BaseTest):
+class FrontendTests(BaseTest):
     def setUp(self):  # noqa: N802
-        super(TestFrontend, self).setUp()
+        super(FrontendTests, self).setUp()
         self.frontend = frontend.PandoraFrontend.start(conftest.config(), self.core).proxy()
 
     def tearDown(self):  # noqa: N802
-        super(TestFrontend, self).tearDown()
+        super(FrontendTests, self).tearDown()
 
     def test_add_track_starts_playback(self):
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
@@ -257,14 +257,35 @@ class TestFrontend(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(PandoraFrontend, 'is_station_changed', mock.Mock(return_value=True)):
 
-                self.core.tracklist.clear()
-                self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
+                self.core.playback.play(tlid=self.tl_tracks[4].tlid).get()
+                self.replay_events(self.frontend)
 
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
                 tl_tracks = self.core.tracklist.get_tl_tracks().get()
                 assert len(tl_tracks) == 1
-                assert tl_tracks[0].track == self.tl_tracks[0].track
+                assert tl_tracks[0].track == self.tl_tracks[4].track
+
+    def test_get_active_uri_order_of_precedence(self):
+        # Should be 'track' -> 'tl_track' -> 'current_tl_track' -> 'history[0]'
+        kwargs = {}
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.replay_events(self.frontend)
+        assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[0].track.uri
+
+        # No easy way to test retrieving from history as it is not possible to set core.playback_current_tl_track
+        # to None
+
+        # self.core.playback.next()
+        # self.core.playback.stop()
+        # self.replay_events(self.frontend)
+        # assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[1].track.uri
+
+        kwargs['tl_track'] = self.tl_tracks[2]
+        assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[2].track.uri
+
+        kwargs = {'track': self.tl_tracks[3].track}
+        assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[3].track.uri
 
     def test_is_end_of_tracklist_reached(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
