@@ -1,4 +1,9 @@
-import Queue
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 import json
 
@@ -17,19 +22,19 @@ logger = logging.getLogger(__name__)
 def test_format_proxy():
     config = {
         'proxy': {
-            'hostname': 'mock_host',
+            'hostname': 'host_mock',
             'port': '8080'
         }
     }
 
-    assert utils.format_proxy(config['proxy']) == 'mock_host:8080'
+    assert utils.format_proxy(config['proxy']) == 'host_mock:8080'
 
 
 def test_format_proxy_no_hostname():
     config = {
         'proxy': {
             'hostname': '',
-            'port': 'mock_port'
+            'port': 'port_mock'
         }
     }
 
@@ -41,14 +46,14 @@ def test_format_proxy_no_hostname():
 def test_format_proxy_no_port():
     config = {
         'proxy': {
-            'hostname': 'mock_host',
+            'hostname': 'host_mock',
             'port': ''
         }
     }
 
-    assert utils.format_proxy(config['proxy']) == 'mock_host:80'
+    assert utils.format_proxy(config['proxy']) == 'host_mock:80'
     config['proxy'].pop('port')
-    assert utils.format_proxy(config['proxy']) == 'mock_host:80'
+    assert utils.format_proxy(config['proxy']) == 'host_mock:80'
 
 
 def test_rpc_client_uses_mopidy_defaults():
@@ -59,20 +64,20 @@ def test_rpc_client_uses_mopidy_defaults():
 
 
 def test_do_rpc():
-    utils.RPCClient.configure('mock_host', 'mock_port')
-    assert utils.RPCClient.hostname == 'mock_host'
-    assert utils.RPCClient.port == 'mock_port'
+    utils.RPCClient.configure('host_mock', 'port_mock')
+    assert utils.RPCClient.hostname == 'host_mock'
+    assert utils.RPCClient.port == 'port_mock'
 
     response_mock = mock.PropertyMock(spec=requests.Response)
-    response_mock.text = '{"result": "mock_result"}'
+    response_mock.text = '{"result": "result_mock"}'
     requests.request = mock.PropertyMock(return_value=response_mock)
 
-    q = Queue.Queue()
-    utils.RPCClient._do_rpc('mock_method',
-                            params={'mock_param_1': 'mock_value_1', 'mock_param_2': 'mock_value_2'},
+    q = queue.Queue()
+    utils.RPCClient._do_rpc('method_mock',
+                            params={'param_mock_1': 'value_mock_1', 'param_mock_2': 'value_mock_2'},
                             queue=q)
 
-    assert q.get() == 'mock_result'
+    assert q.get() == 'result_mock'
 
 
 def test_do_rpc_increments_id():
@@ -80,7 +85,7 @@ def test_do_rpc_increments_id():
     json.loads = mock.PropertyMock()
 
     current_id = utils.RPCClient.id
-    t = utils.RPCClient._do_rpc('mock_method')
+    t = utils.RPCClient._do_rpc('method_mock')
     t.join()
     assert utils.RPCClient.id == current_id + 1
 
@@ -92,7 +97,7 @@ def test_run_async(caplog):
 
 
 def test_run_async_queue(caplog):
-    q = Queue.Queue()
+    q = queue.Queue()
     async_func('test_2_async', queue=q)
     assert q.get() == 'test_value'
     assert 'test_2_async' in caplog.text()

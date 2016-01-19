@@ -1,9 +1,20 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging
-import urllib
+
+import re
+
+from mopidy import compat, models
 
 from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
 
+from requests.utils import quote, unquote
+
 logger = logging.getLogger(__name__)
+
+
+def with_metaclass(meta, *bases):
+    return meta(str('NewBase'), bases, {})
 
 
 class _PandoraUriMeta(type):
@@ -13,8 +24,7 @@ class _PandoraUriMeta(type):
             cls.TYPES[cls.uri_type] = cls
 
 
-class PandoraUri(object):
-    __metaclass__ = _PandoraUriMeta
+class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     TYPES = {}
     SCHEME = 'pandora'
 
@@ -27,8 +37,8 @@ class PandoraUri(object):
     @property
     def encoded_attributes(self):
         encoded_dict = {}
-        for k, v in self.__dict__.items():
-            encoded_dict[k] = PandoraUri.encode(v)
+        for k, v in list(self.__dict__.items()):
+            encoded_dict[k] = quote(PandoraUri.encode(v))
 
         return encoded_dict
 
@@ -40,29 +50,33 @@ class PandoraUri(object):
     def encode(cls, value):
         if value is None:
             value = ''
-
-        if not isinstance(value, basestring):
-            value = str(value)
-        return urllib.quote(value.encode('utf8'))
-
-    @classmethod
-    def decode(cls, value):
-        return urllib.unquote(value).decode('utf8')
+        if isinstance(value, compat.text_type):
+            value = value.encode('utf-8')
+        return value
 
     @classmethod
     def factory(cls, obj):
         if isinstance(obj, basestring):
+            # A string
             return PandoraUri._from_uri(obj)
+
+        if isinstance(obj, models.Ref) or isinstance(obj, models.Track):
+            # A mopidy track or track reference
+            return PandoraUri._from_uri(obj.uri)
+
         elif isinstance(obj, Station) or isinstance(obj, GenreStation):
+            # One of the station types
             return PandoraUri._from_station(obj)
+
         elif isinstance(obj, PlaylistItem) or isinstance(obj, AdItem):
+            # One of the playlist item (track) types
             return PandoraUri._from_track(obj)
         else:
-            raise NotImplementedError("Unsupported URI object type '{}'".format(obj))
+            raise NotImplementedError("Unsupported URI object type '{}'".format(type(obj)))
 
     @classmethod
     def _from_uri(cls, uri):
-        parts = [cls.decode(p) for p in uri.split(':')]
+        parts = [unquote(cls.encode(p)) for p in uri.split(':')]
         if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
             raise NotImplementedError('Not a Pandora URI: {}'.format(uri))
         uri_cls = cls.TYPES.get(parts[1])
@@ -74,7 +88,7 @@ class PandoraUri(object):
     @classmethod
     def _from_station(cls, station):
         if isinstance(station, Station) or isinstance(station, GenreStation):
-            if station.id.startswith('G') and station.id == station.token:
+            if GenreStationUri.pattern.match(station.id) and station.id == station.token:
                 return GenreStationUri(station.id, station.token)
             return StationUri(station.id, station.token)
         else:
@@ -85,9 +99,16 @@ class PandoraUri(object):
         if isinstance(track, PlaylistItem):
             return PlaylistItemUri(track.station_id, track.track_token)
         elif isinstance(track, AdItem):
-            return AdItemUri(track.station_id)
+            return AdItemUri(track.station_id, track.ad_token)
         else:
             raise NotImplementedError("Unsupported playlist item type '{}'".format(track))
+
+    @classmethod
+    def is_pandora_uri(cls, uri):
+        try:
+            return uri and isinstance(uri, basestring) and uri.startswith(PandoraUri.SCHEME) and PandoraUri.factory(uri)
+        except NotImplementedError:
+            return False
 
 
 class GenreUri(PandoraUri):
@@ -121,12 +142,14 @@ class StationUri(PandoraUri):
 
 class GenreStationUri(StationUri):
     uri_type = 'genre_station'
+    pattern = re.compile('^([G])(\d*)$')
 
     def __init__(self, station_id, token):
-        # Check that this really is a Genre station ass opposed to a regular station.
-        # Genre station IDs always start with 'G'.
-        assert station_id.startswith('G')
-        assert station_id == token
+        # Check that this really is a Genre station as opposed to a regular station.
+        # Genre station IDs and tokens always start with 'G'.
+
+        assert GenreStationUri.pattern.match(station_id)
+        assert GenreStationUri.pattern.match(token)
         super(GenreStationUri, self).__init__(station_id, token)
 
 
@@ -151,12 +174,13 @@ class PlaylistItemUri(TrackUri):
 class AdItemUri(TrackUri):
     uri_type = 'ad'
 
-    def __init__(self, station_id):
+    def __init__(self, station_id, ad_token):
         super(AdItemUri, self).__init__(self.uri_type)
         self.station_id = station_id
+        self.ad_token = ad_token
 
     def __repr__(self):
-        return '{}:{station_id}'.format(
+        return '{}:{station_id}:{ad_token}'.format(
             super(AdItemUri, self).__repr__(),
             **self.encoded_attributes
         )

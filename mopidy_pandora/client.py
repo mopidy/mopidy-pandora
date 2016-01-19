@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging
 import time
 
@@ -43,52 +45,50 @@ class MopidyAPIClient(pandora.APIClient):
         super(MopidyAPIClient, self).__init__(transport, partner_user, partner_password, device,
                                               default_audio_quality)
 
-        self._station_list_cache = TTLCache(1, cache_ttl)
-        self._genre_stations_cache = TTLCache(1, cache_ttl)
+        self.station_list_cache = TTLCache(1, cache_ttl)
+        self.genre_stations_cache = TTLCache(1, cache_ttl)
 
     def get_station_list(self, force_refresh=False):
-
-        list = []
+        station_list = []
         try:
-            if (self._station_list_cache.currsize == 0 or
-                    (force_refresh and self._station_list_cache.itervalues().next().has_changed())):
+            if (self.station_list_cache.currsize == 0 or
+                    (force_refresh and self.station_list_cache.values()[0].has_changed())):
 
-                list = super(MopidyAPIClient, self).get_station_list()
-                self._station_list_cache[time.time()] = list
+                station_list = super(MopidyAPIClient, self).get_station_list()
+                self.station_list_cache[time.time()] = station_list
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora station list.')
-            return list
+            station_list = []
 
         try:
-            return self._station_list_cache.itervalues().next()
-        except StopIteration:
+            return self.station_list_cache.values()[0]
+        except IndexError:
             # Cache disabled
-            return list
+            return station_list
 
-    def get_station(self, station_id):
-
+    def get_station(self, station_token):
         try:
-            return self.get_station_list()[station_id]
+            return self.get_station_list()[station_token]
         except TypeError:
-            # Could not find station_id in cached list, try retrieving from Pandora server.
-            return super(MopidyAPIClient, self).get_station(station_id)
+            # Could not find station_token in cached list, try retrieving from Pandora server.
+            return super(MopidyAPIClient, self).get_station(station_token)
 
     def get_genre_stations(self, force_refresh=False):
-
-        list = []
+        genre_stations = []
         try:
-            if (self._genre_stations_cache.currsize == 0 or
-                    (force_refresh and self._genre_stations_cache.itervalues().next().has_changed())):
+            if (self.genre_stations_cache.currsize == 0 or
+                    (force_refresh and self.genre_stations_cache.values()[0].has_changed())):
 
-                self._genre_stations_cache[time.time()] = super(MopidyAPIClient, self).get_genre_stations()
+                genre_stations = super(MopidyAPIClient, self).get_genre_stations()
+                self.genre_stations_cache[time.time()] = genre_stations
 
         except requests.exceptions.RequestException:
             logger.exception('Error retrieving Pandora genre stations.')
-            return list
+            return genre_stations
 
         try:
-            return self._genre_stations_cache.itervalues().next()
-        except StopIteration:
+            return self.genre_stations_cache.values()[0]
+        except IndexError:
             # Cache disabled
-            return list
+            return genre_stations

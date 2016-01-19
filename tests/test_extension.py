@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import unittest
 
@@ -10,7 +10,7 @@ from mopidy_pandora import backend as backend_lib
 from mopidy_pandora import frontend as frontend_lib
 
 
-class ExtensionTest(unittest.TestCase):
+class ExtensionTests(unittest.TestCase):
 
     def test_get_default_config(self):
         ext = Extension()
@@ -32,10 +32,11 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('auto_setup = true', config)
         self.assertIn('cache_time_to_live = 1800', config)
         self.assertIn('event_support_enabled = false', config)
-        self.assertIn('double_click_interval = 2.00', config)
+        self.assertIn('double_click_interval = 2.50', config)
         self.assertIn('on_pause_resume_click = thumbs_up', config)
         self.assertIn('on_pause_next_click = thumbs_down', config)
         self.assertIn('on_pause_previous_click = sleep', config)
+        self.assertIn('on_pause_resume_pause_click = delete_station', config)
 
     def test_get_config_schema(self):
         ext = Extension()
@@ -60,12 +61,13 @@ class ExtensionTest(unittest.TestCase):
         self.assertIn('on_pause_resume_click', schema)
         self.assertIn('on_pause_next_click', schema)
         self.assertIn('on_pause_previous_click', schema)
+        self.assertIn('on_pause_resume_pause_click', schema)
 
     def test_setup(self):
         registry = mock.Mock()
 
         ext = Extension()
         ext.setup(registry)
-        calls = [mock.call('frontend', frontend_lib.PandoraFrontendFactory),
+        calls = [mock.call('frontend', frontend_lib.PandoraFrontend),
                  mock.call('backend',  backend_lib.PandoraBackend)]
         registry.add.assert_has_calls(calls, any_order=True)

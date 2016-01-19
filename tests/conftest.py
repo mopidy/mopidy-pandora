@@ -1,10 +1,13 @@
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
+import threading
 
-from mock import Mock
+import mock
 
-from pandora.models.pandora import AdItem, Playlist, PlaylistItem, Station, StationList
+from pandora import APIClient
+
+from pandora.models.pandora import AdItem, GenreStation, GenreStationList, PlaylistItem, Station, StationList
 
 import pytest
 
@@ -15,7 +18,7 @@ from mopidy_pandora import backend
 MOCK_STATION_TYPE = 'station'
 MOCK_STATION_NAME = 'Mock Station'
 MOCK_STATION_ID = '0000000000000000001'
-MOCK_STATION_TOKEN = '0000000000000000010'
+MOCK_STATION_TOKEN = '0000000000000000001'
 MOCK_STATION_DETAIL_URL = 'http://mockup.com/station/detail_url?...'
 MOCK_STATION_ART_URL = 'http://mockup.com/station/art_url?...'
 
@@ -37,7 +40,7 @@ MOCK_DEFAULT_AUDIO_QUALITY = 'highQuality'
 MOCK_AD_TYPE = 'ad'
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def config():
     return {
         'http': {
@@ -45,8 +48,8 @@ def config():
             'port': '6680'
         },
         'proxy': {
-            'hostname': 'mock_host',
-            'port': 'mock_port'
+            'hostname': 'host_mock',
+            'port': 'port_mock'
         },
         'pandora': {
             'enabled': True,
@@ -63,17 +66,18 @@ def config():
             'auto_setup': True,
             'cache_time_to_live': 1800,
 
-            'event_support_enabled': True,
-            'double_click_interval': '0.1',
+            'event_support_enabled': False,
+            'double_click_interval': '0.5',
             'on_pause_resume_click': 'thumbs_up',
             'on_pause_next_click': 'thumbs_down',
             'on_pause_previous_click': 'sleep',
+            'on_pause_resume_pause_click': 'delete_station',
         }
     }
 
 
 def get_backend(config, simulate_request_exceptions=False):
-    obj = backend.PandoraBackend(config=config, audio=Mock())
+    obj = backend.PandoraBackend(config=config, audio=mock.Mock())
 
     if simulate_request_exceptions:
         type(obj.api.transport).__call__ = request_exception_mock
@@ -82,8 +86,14 @@ def get_backend(config, simulate_request_exceptions=False):
         # running tests
         type(obj.api.transport).__call__ = transport_call_not_implemented_mock
 
-    obj._event_loop = Mock()
+    obj._event_loop = mock.Mock()
     return obj
+
+
+@pytest.fixture(scope='session')
+def genre_station_mock(simulate_request_exceptions=False):
+    return GenreStation.from_json(get_backend(config(), simulate_request_exceptions).api,
+                                  genre_stations_result_mock()['categories'][0]['stations'][0])
 
 
 @pytest.fixture(scope='session')
@@ -148,36 +158,8 @@ def playlist_result_mock():
 
                        # Also add an advertisement to the playlist.
                        {
-                           'trackToken': None,
-                           'artistName': None,
-                           'albumName': None,
-                           'imageUrl': None,
-                           'audioUrlMap': {
-                               'highQuality': {
-                                   'bitrate': '64',
-                                   'encoding': 'aacplus',
-                                   'audioUrl': MOCK_TRACK_AUDIO_HIGH,
-                                   'protocol': 'http'
-                               },
-                               'mediumQuality': {
-                                   'bitrate': '64',
-                                   'encoding': 'aacplus',
-                                   'audioUrl': MOCK_TRACK_AUDIO_MED,
-                                   'protocol': 'http'
-                               },
-                               'lowQuality': {
-                                   'bitrate': '32',
-                                   'encoding': 'aacplus',
-                                   'audioUrl': MOCK_TRACK_AUDIO_LOW,
-                                   'protocol': 'http'
-                               }
-                           },
-                           'trackLength': 0,
-                           'songName': None,
-                           'songDetailUrl': None,
-                           'stationId': None,
-                           'songRating': None,
-                           'adToken': MOCK_TRACK_AD_TOKEN}
+                           'adToken': MOCK_TRACK_AD_TOKEN
+                       },
                    ])}
 
     return mock_result
@@ -188,8 +170,8 @@ def ad_metadata_result_mock():
     mock_result = {'stat': 'ok',
                    'result': dict(title=MOCK_TRACK_NAME,
                                   companyName='Mock Company Name',
-                                  clickThroughUrl='mock_click_url',
-                                  imageUrl='mock_img_url',
+                                  clickThroughUrl='click_url_mock',
+                                  imageUrl='img_url_mock',
                                   trackGain='0.0',
                                   audioUrlMap={
                                       'highQuality': {
@@ -222,7 +204,10 @@ def ad_metadata_result_mock():
 
 @pytest.fixture(scope='session')
 def playlist_mock(simulate_request_exceptions=False):
-    return Playlist.from_json(get_backend(config(), simulate_request_exceptions).api, playlist_result_mock()['result'])
+    with mock.patch.object(APIClient, '__call__', mock.Mock()) as call_mock:
+
+        call_mock.return_value = playlist_result_mock()['result']
+        return get_backend(config(), simulate_request_exceptions).api.get_playlist(MOCK_STATION_TOKEN)
 
 
 @pytest.fixture(scope='session')
@@ -246,6 +231,7 @@ def ad_item_mock():
     ad_item = AdItem.from_json(get_backend(
         config()).api, ad_metadata_result_mock()['result'])
     ad_item.station_id = MOCK_STATION_ID
+    ad_item.ad_token = MOCK_TRACK_AD_TOKEN
     return ad_item
 
 
@@ -255,18 +241,37 @@ def get_ad_item_mock(self, token):
 
 
 @pytest.fixture(scope='session')
+def genre_stations_result_mock():
+    mock_result = {'stat': 'ok',
+                   'result': {
+                       'categories': [{
+                           'stations': [{
+                               'stationToken': 'G100',
+                               'stationName': 'Genre mock',
+                               'stationId': 'G100'
+                           }],
+                           'categoryName': 'Category mock'
+                       }],
+                   }}
+
+    return mock_result['result']
+
+
+@pytest.fixture(scope='session')
 def station_list_result_mock():
+    quickmix_station_id = MOCK_STATION_ID.replace('1', '2')
     mock_result = {'stat': 'ok',
                    'result': {'stations': [
-                       {'stationId': MOCK_STATION_ID.replace('1', '2'),
-                        'stationToken': MOCK_STATION_TOKEN.replace('010', '100'),
+                       {'stationId': quickmix_station_id,
+                        'stationToken': MOCK_STATION_TOKEN.replace('1', '2'),
                         'stationName': MOCK_STATION_NAME + ' 2'},
                        {'stationId': MOCK_STATION_ID,
                         'stationToken': MOCK_STATION_TOKEN,
                         'stationName': MOCK_STATION_NAME + ' 1'},
                        {'stationId': MOCK_STATION_ID.replace('1', '3'),
-                        'stationToken': MOCK_STATION_TOKEN.replace('0010', '1000'),
-                        'stationName': 'QuickMix', 'isQuickMix': True},
+                        'stationToken': MOCK_STATION_TOKEN.replace('1', '3'),
+                        'stationName': 'QuickMix', 'isQuickMix': True,
+                        'quickMixStationIds': [quickmix_station_id]},
                    ], 'checksum': MOCK_STATION_LIST_CHECKSUM},
                    }
 
@@ -274,8 +279,13 @@ def station_list_result_mock():
 
 
 @pytest.fixture
-def get_station_list_mock(self):
+def get_station_list_mock(self, force_refresh=False):
     return StationList.from_json(get_backend(config()).api, station_list_result_mock())
+
+
+@pytest.fixture
+def get_genre_stations_mock(self, force_refresh=False):
+    return GenreStationList.from_json(get_backend(config()).api, genre_stations_result_mock())
 
 
 @pytest.fixture(scope='session')
@@ -290,3 +300,45 @@ def transport_call_not_implemented_mock(self, method, **data):
 
 class TransportCallTestNotImplemented(Exception):
     pass
+
+
+# Based on https://pypi.python.org/pypi/tl.testing/0.5
+# Copyright (c) 2011-2012 Thomas Lotze
+class ThreadJoiner(object):
+    """Context manager that tries to join any threads started by its suite.
+
+    This context manager is instantiated with a mandatory ``timeout``
+    parameter and an optional ``check_alive`` switch. The time-out is applied
+    when joining each of the new threads started while executing the context
+    manager's code suite. If ``check_alive`` has a true value (the default),
+    a ``RuntimeError`` is raised if a thread is still alive after the attempt
+    to join timed out.
+
+    Returns an instance of itself upon entering. This instance has a
+    ``before`` attribute that is a collection of all threads active when the
+    manager was entered. After the manager exited, the instance has another
+    attribute, ``left_behind``, that is a collection of any threads that could
+    not be joined within the time-out period. The latter is obviously only
+    useful if ``check_alive`` is set to a false value.
+
+    """
+
+    def __init__(self, timeout, check_alive=True):
+        self.timeout = timeout
+        self.check_alive = check_alive
+
+    def __enter__(self):
+        self.before = set(threading.enumerate())
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for thread in set(threading.enumerate()) - self.before:
+            thread.join(self.timeout)
+            if self.check_alive and thread.is_alive():
+                raise RuntimeError('Timeout joining thread %r' % thread)
+        self.left_behind = sorted(
+            set(threading.enumerate()) - self.before, key=lambda t: t.name)
+
+    def wait(self, timeout):
+        for thread in set(threading.enumerate()) - self.before:
+            thread.join(timeout)
