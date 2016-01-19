@@ -14,7 +14,7 @@ from mopidy.audio import PlaybackState
 import pykka
 
 from mopidy_pandora import monitor
-from mopidy_pandora.listener import PandoraBackendListener
+from mopidy_pandora.listener import EventMonitorListener, PandoraBackendListener
 
 from mopidy_pandora.monitor import EventMarker, EventSequence, MatchResult
 
@@ -65,43 +65,42 @@ class BaseTest(unittest.TestCase):
         self.core_send_mock = self.core_patcher.start()
 
         def send(cls, event, **kwargs):
-            self.events.put((event, kwargs))
+            self.events.put((cls, event, kwargs))
 
         self.send_mock.side_effect = send
         self.core_send_mock.side_effect = send
+
+        self.actor_register = [self.backend, self.non_pandora_backend, self.core]
 
     def tearDown(self):
         pykka.ActorRegistry.stop_all()
         mock.patch.stopall()
 
-    def replay_events(self, listener, until=None):
+    def replay_events(self, until=None):
         while True:
             try:
                 e = self.events.get(timeout=0.1)
-                event, kwargs = e
-                listener.on_event(event, **kwargs)
+                cls, event, kwargs = e
+                for actor in self.actor_register:
+                    if isinstance(actor, pykka.ActorProxy):
+                        if isinstance(actor._actor, cls):
+                            actor.on_event(event, **kwargs).get()
+                    else:
+                        actor.on_event(event, **kwargs)
                 if e[0] == until:
                     break
             except Queue.Empty:
                 # All events replayed.
                 break
 
-    def has_events(self, events):
-        q = []
-        while True:
-            try:
-                q.append(self.events.get(timeout=0.1))
-            except Queue.Empty:
-                # All events replayed.
-                break
-
-        return [e in q for e in events]
-
 
 class EventMonitorTests(BaseTest):
     def setUp(self):  # noqa: N802
         super(EventMonitorTests, self).setUp()
         self.monitor = monitor.EventMonitor(conftest.config(), self.core)
+
+        self.actor_register.append(self.monitor)
+
         # Consume mode needs to be enabled to detect 'previous' track changes
         self.core.tracklist.set_consume(True)
 
@@ -112,7 +111,7 @@ class EventMonitorTests(BaseTest):
         listener.send(PandoraBackendListener, 'event_processed',
                       track_uri=self.tracks[0].uri,
                       pandora_event='delete_station')
-        self.replay_events(self.monitor)
+        self.replay_events()
 
         assert len(self.core.tracklist.get_tl_tracks().get()) == 0
 
@@ -121,15 +120,17 @@ class EventMonitorTests(BaseTest):
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.next().get()
-            self.replay_events(self.monitor, until='track_playback_started')
+            self.replay_events(until='track_playback_started')
 
             thread_joiner.wait(timeout=1.0)
-            assert all(self.has_events([('track_changed_next', {
-                'old_uri': self.tl_tracks[0].track.uri,
-                'new_uri': self.tl_tracks[1].track.uri
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'track_changed_next',
+                             old_uri=self.tl_tracks[0].track.uri,
+                             new_uri=self.tl_tracks[1].track.uri)
+
+            assert call in self.send_mock.mock_calls
 
     def test_detect_track_change_next_from_paused(self):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
@@ -137,15 +138,17 @@ class EventMonitorTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.next().get()
-            self.replay_events(self.monitor, until='track_playback_paused')
+            self.replay_events(until='track_playback_paused')
 
             thread_joiner.wait(timeout=5.0)
-            assert all(self.has_events([('track_changed_next', {
-                'old_uri': self.tl_tracks[0].track.uri,
-                'new_uri': self.tl_tracks[1].track.uri
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'track_changed_next',
+                             old_uri=self.tl_tracks[0].track.uri,
+                             new_uri=self.tl_tracks[1].track.uri)
+
+            assert call in self.send_mock.mock_calls
 
     def test_detect_track_change_no_op(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -153,9 +156,9 @@ class EventMonitorTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.stop()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.replay_events(self.monitor, until='track_playback_started')
+            self.replay_events(until='track_playback_started')
 
             thread_joiner.wait(timeout=1.0)
             assert self.events.empty()
@@ -165,15 +168,17 @@ class EventMonitorTests(BaseTest):
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.previous().get()
-            self.replay_events(self.monitor, until='track_playback_started')
+            self.replay_events(until='track_playback_started')
 
             thread_joiner.wait(timeout=1.0)
-            assert all(self.has_events([('track_changed_previous', {
-                'old_uri': self.tl_tracks[0].track.uri,
-                'new_uri': self.tl_tracks[0].track.uri
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'track_changed_previous',
+                             old_uri=self.tl_tracks[0].track.uri,
+                             new_uri=self.tl_tracks[0].track.uri)
+
+            assert call in self.send_mock.mock_calls
 
     def test_detect_track_change_previous_from_paused(self):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
@@ -181,15 +186,17 @@ class EventMonitorTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.previous().get()
-            self.replay_events(self.monitor, until='track_playback_paused')
+            self.replay_events(until='track_playback_paused')
 
             thread_joiner.wait(timeout=5.0)
-            assert all(self.has_events([('track_changed_previous', {
-                'old_uri': self.tl_tracks[0].track.uri,
-                'new_uri': self.tl_tracks[0].track.uri
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'track_changed_previous',
+                             old_uri=self.tl_tracks[0].track.uri,
+                             new_uri=self.tl_tracks[0].track.uri)
+
+            assert call in self.send_mock.mock_calls
 
     def test_events_triggered_on_next_action(self):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
@@ -197,15 +204,17 @@ class EventMonitorTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.next().get()
-            self.replay_events(self.monitor, until='track_changed_next')
+            self.replay_events(until='track_changed_next')
 
             thread_joiner.wait(timeout=5.0)
-            assert all(self.has_events([('event_triggered', {
-                'track_uri': self.tl_tracks[0].track.uri,
-                'pandora_event': conftest.config()['pandora']['on_pause_next_click']
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'event_triggered',
+                             track_uri=self.tl_tracks[0].track.uri,
+                             pandora_event=conftest.config()['pandora']['on_pause_next_click'])
+
+            assert call in self.send_mock.mock_calls
 
     def test_events_triggered_on_previous_action(self):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
@@ -213,15 +222,17 @@ class EventMonitorTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.previous().get()
-            self.replay_events(self.monitor, until='track_changed_previous')
+            self.replay_events(until='track_changed_previous')
 
             thread_joiner.wait(timeout=5.0)
-            assert all(self.has_events([('event_triggered', {
-                'track_uri': self.tl_tracks[0].track.uri,
-                'pandora_event': conftest.config()['pandora']['on_pause_previous_click']
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'event_triggered',
+                             track_uri=self.tl_tracks[0].track.uri,
+                             pandora_event=conftest.config()['pandora']['on_pause_previous_click'])
+
+            assert call in self.send_mock.mock_calls
 
     def test_events_triggered_on_resume_action(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -230,13 +241,15 @@ class EventMonitorTests(BaseTest):
             self.core.playback.seek(100)
             self.core.playback.pause()
             self.core.playback.resume().get()
-            self.replay_events(self.monitor, until='track_playback_resumed')
+            self.replay_events(until='track_playback_resumed')
 
             thread_joiner.wait(timeout=1.0)
-            assert all(self.has_events([('event_triggered', {
-                'track_uri': self.tl_tracks[0].track.uri,
-                'pandora_event': conftest.config()['pandora']['on_pause_resume_click']
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'event_triggered',
+                             track_uri=self.tl_tracks[0].track.uri,
+                             pandora_event=conftest.config()['pandora']['on_pause_resume_click'])
+
+            assert call in self.send_mock.mock_calls
 
     def test_events_triggered_on_triple_click_action(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -245,24 +258,26 @@ class EventMonitorTests(BaseTest):
             self.core.playback.seek(100)
             self.core.playback.pause()
             self.core.playback.resume()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.pause().get()
-            self.replay_events(self.monitor, until='track_playback_resumed')
+            self.replay_events(until='track_playback_resumed')
 
             thread_joiner.wait(timeout=1.0)
-            assert all(self.has_events([('event_triggered', {
-                'track_uri': self.tl_tracks[0].track.uri,
-                'pandora_event': conftest.config()['pandora']['on_pause_resume_pause_click']
-            })]))
+            call = mock.call(EventMonitorListener,
+                             'event_triggered',
+                             track_uri=self.tl_tracks[0].track.uri,
+                             pandora_event=conftest.config()['pandora']['on_pause_resume_pause_click'])
+
+            assert call in self.send_mock.mock_calls
 
     def test_monitor_ignores_ads(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[2].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.replay_events(self.monitor)
+            self.replay_events()
             self.core.playback.resume().get()
-            self.replay_events(self.monitor, until='track_playback_resumed')
+            self.replay_events(until='track_playback_resumed')
 
             thread_joiner.wait(timeout=1.0)
             assert self.events.qsize() == 0  # Check that no events were triggered
@@ -272,11 +287,11 @@ class EventMonitorTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
             self.core.playback.pause()
-            self.replay_events(self.monitor)
+            self.replay_events()
             assert self.core.playback.get_state().get() == PlaybackState.PAUSED
 
             self.core.playback.next().get()
-            self.replay_events(self.monitor, until='track_changed_next')
+            self.replay_events(until='track_changed_next')
 
             thread_joiner.wait(timeout=5.0)
             assert self.core.playback.get_state().get() == PlaybackState.PLAYING

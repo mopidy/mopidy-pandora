@@ -16,6 +16,7 @@ import pykka
 
 from mopidy_pandora import frontend
 from mopidy_pandora.frontend import PandoraFrontend
+from mopidy_pandora.listener import PandoraFrontendListener
 from mopidy_pandora.monitor import EventMonitor
 
 from tests import conftest, dummy_backend
@@ -64,43 +65,47 @@ class BaseTest(unittest.TestCase):
         self.core_send_mock = self.core_patcher.start()
 
         def send(cls, event, **kwargs):
-            self.events.put((event, kwargs))
+            self.events.put((cls, event, kwargs))
 
         self.send_mock.side_effect = send
         self.core_send_mock.side_effect = send
+
+        self.actor_register = [self.backend, self.core]
 
     def tearDown(self):
         pykka.ActorRegistry.stop_all()
         mock.patch.stopall()
 
-    def replay_events(self, listener, until=None):
+    def replay_events(self, until=None):
         while True:
             try:
                 e = self.events.get(timeout=0.1)
-                event, kwargs = e
-                listener.on_event(event, **kwargs).get()
+                cls, event, kwargs = e
+                for actor in self.actor_register:
+                    if isinstance(actor, pykka.ActorProxy):
+                        if isinstance(actor._actor, cls):
+                            actor.on_event(event, **kwargs).get()
+                    else:
+                        actor.on_event(event, **kwargs)
                 if e[0] == until:
                     break
             except Queue.Empty:
                 # All events replayed.
                 break
 
-    def has_events(self, events):
-        q = []
-        while True:
-            try:
-                q.append(self.events.get(timeout=0.1))
-            except Queue.Empty:
-                # All events replayed.
-                break
-
-        return [e in q for e in events]
+    def trigger_about_to_finish(self, replay_until=None):
+        self.replay_events()
+        callback = self.audio.get_about_to_finish_callback().get()
+        callback()
+        self.replay_events(until=replay_until)
 
 
 class FrontendTests(BaseTest):
     def setUp(self):  # noqa: N802
         super(FrontendTests, self).setUp()
         self.frontend = frontend.PandoraFrontend.start(conftest.config(), self.core).proxy()
+
+        self.actor_register.append(self.frontend)
 
     def tearDown(self):  # noqa: N802
         super(FrontendTests, self).tearDown()
@@ -128,7 +133,7 @@ class FrontendTests(BaseTest):
         self.core.tracklist.clear()
         self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.replay_events(self.frontend, until='track_playback_started')
+        self.replay_events(until='track_playback_started')
 
         self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -193,7 +198,7 @@ class FrontendTests(BaseTest):
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
             self.frontend.setup_required = False
             listener.send(CoreListener, 'options_changed')
-            self.replay_events(self.frontend)
+            self.replay_events()
             assert set_options_mock.called
 
     def test_set_options_performs_auto_setup(self):
@@ -204,7 +209,7 @@ class FrontendTests(BaseTest):
             self.core.tracklist.set_random(True)
             self.core.tracklist.set_single(True)
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-            self.replay_events(self.frontend)
+            self.replay_events()
 
             thread_joiner.wait(timeout=1.0)
 
@@ -212,7 +217,7 @@ class FrontendTests(BaseTest):
             assert self.core.tracklist.get_consume().get() is True
             assert self.core.tracklist.get_random().get() is False
             assert self.core.tracklist.get_single().get() is False
-            self.replay_events(self.frontend)
+            self.replay_events()
 
             assert not self.frontend.setup_required.get()
 
@@ -223,7 +228,7 @@ class FrontendTests(BaseTest):
         config['pandora']['auto_setup'] = False
         self.frontend.setup_required = True
 
-        self.replay_events(self.frontend)
+        self.replay_events()
         assert self.frontend.setup_required
 
     def test_set_options_triggered_on_core_events(self):
@@ -242,7 +247,7 @@ class FrontendTests(BaseTest):
             for (event, kwargs) in core_events.items():
                 self.frontend.setup_required = True
                 listener.send(CoreListener, event, **kwargs)
-                self.replay_events(self.frontend)
+                self.replay_events()
                 self.assertEqual(set_options_mock.called, True, "Setup not done for event '{}'".format(event))
                 set_options_mock.reset_mock()
 
@@ -258,7 +263,7 @@ class FrontendTests(BaseTest):
             with mock.patch.object(PandoraFrontend, 'is_station_changed', mock.Mock(return_value=True)):
 
                 self.core.playback.play(tlid=self.tl_tracks[4].tlid).get()
-                self.replay_events(self.frontend)
+                self.replay_events()
 
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
@@ -270,7 +275,7 @@ class FrontendTests(BaseTest):
         # Should be 'track' -> 'tl_track' -> 'current_tl_track' -> 'history[0]'
         kwargs = {}
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.replay_events(self.frontend)
+        self.replay_events()
         assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[0].track.uri
 
         # No easy way to test retrieving from history as it is not possible to set core.playback_current_tl_track
@@ -278,7 +283,7 @@ class FrontendTests(BaseTest):
 
         # self.core.playback.next()
         # self.core.playback.stop()
-        # self.replay_events(self.frontend)
+        # self.replay_events()
         # assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[1].track.uri
 
         kwargs['tl_track'] = self.tl_tracks[2]
@@ -326,7 +331,7 @@ class FrontendTests(BaseTest):
             self.core.playback.next()
 
             assert len(self.core.tracklist.get_tl_tracks().get()) == len(self.tl_tracks)
-            self.replay_events(self.frontend)
+            self.replay_events()
 
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
@@ -341,10 +346,10 @@ class FrontendTests(BaseTest):
 
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
             self.core.playback.seek(100)
-            self.replay_events(self.frontend)
+            self.replay_events()
             self.core.playback.next().get()
 
-            self.replay_events(self.frontend, until='track_playback_started')
+            self.replay_events(until='track_playback_started')
 
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
@@ -353,8 +358,10 @@ class FrontendTests(BaseTest):
             # Only the track recently changed to is left in the tracklist
             assert tl_tracks[0].track.uri == self.tl_tracks[4].track.uri
 
-            assert any(self.has_events([('end_of_tracklist_reached', {'station_id': 'id_mock_other',
-                                                                      'auto_play': False})]))
+            call = mock.call(PandoraFrontendListener,
+                             'end_of_tracklist_reached', station_id='id_mock_other', auto_play=False)
+
+            assert call in self.send_mock.mock_calls
 
     def test_track_unplayable_removes_tracks_from_tracklist(self):
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
@@ -365,8 +372,15 @@ class FrontendTests(BaseTest):
 
     def test_track_unplayable_triggers_end_of_tracklist_event(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
-        self.replay_events(self.frontend)
+        self.replay_events()
 
         self.frontend.track_unplayable(self.tl_tracks[-1].track).get()
-        assert all([self.has_events('end_of_tracklist_reached')])
+
+        call = mock.call(PandoraFrontendListener,
+                         'end_of_tracklist_reached',
+                         station_id='id_mock',
+                         auto_play=True)
+
+        assert call in self.send_mock.mock_calls
+
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
