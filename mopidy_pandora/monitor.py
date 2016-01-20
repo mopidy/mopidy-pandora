@@ -14,7 +14,6 @@ from difflib import SequenceMatcher
 
 from functools import total_ordering
 
-from mopidy import core
 from mopidy.audio import PlaybackState
 
 from mopidy_pandora import listener
@@ -41,11 +40,7 @@ class MatchResult(object):
         return self.ratio < other.ratio
 
 
-class EventMonitor(core.CoreListener,
-                   listener.PandoraBackendListener,
-                   listener.PandoraPlaybackListener,
-                   listener.PandoraFrontendListener,
-                   listener.EventMonitorListener):
+class EventMonitor(listener.PandoraBackendListener):
 
     pykka_traversable = True
 
@@ -66,23 +61,40 @@ class EventMonitor(core.CoreListener,
 
         self.event_sequences.append(EventSequence(self.config['on_pause_resume_click'],
                                                   ['track_playback_paused',
-                                                   'playback_state_changed',
-                                                   'track_playback_resumed'], self.sequence_match_results,
-                                                  interval=interval))
-
-        self.event_sequences.append(EventSequence(self.config['on_pause_resume_pause_click'],
-                                                  ['track_playback_paused',
+                                                   'position_changed',
+                                                   'state_changed',
+                                                   'tags_changed',
                                                    'playback_state_changed',
                                                    'track_playback_resumed',
                                                    'playback_state_changed',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   interval=interval))
 
+        self.event_sequences.append(EventSequence(self.config['on_pause_resume_pause_click'],
+                                                  ['track_playback_paused',
+                                                   'position_changed',
+                                                   'state_changed',
+                                                   'tags_changed',
+                                                   'playback_state_changed',
+                                                   'track_playback_resumed',
+                                                   'playback_state_changed',
+                                                   'track_playback_paused',
+                                                   'position_changed',
+                                                   'state_changed',
+                                                   'playback_state_changed',
+                                                   'track_playback_paused'], self.sequence_match_results,
+                                                  interval=interval))
+
         self.event_sequences.append(EventSequence(self.config['on_pause_previous_click'],
                                                   ['track_playback_paused',
+                                                   'stream_changed',
+                                                   'state_changed',
                                                    'playback_state_changed',
                                                    'track_playback_ended',
                                                    'track_changing',
+                                                   'position_changed',
+                                                   'stream_changed',
+                                                   'state_changed',
                                                    'playback_state_changed',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_previous',
@@ -90,9 +102,14 @@ class EventMonitor(core.CoreListener,
 
         self.event_sequences.append(EventSequence(self.config['on_pause_next_click'],
                                                   ['track_playback_paused',
+                                                   'stream_changed',
+                                                   'state_changed',
                                                    'playback_state_changed',
                                                    'track_playback_ended',
                                                    'track_changing',
+                                                   'position_changed',
+                                                   'stream_changed',
+                                                   'state_changed',
                                                    'playback_state_changed',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_next',
