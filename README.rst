@@ -56,7 +56,7 @@ Dependencies
 - Requires a Pandora user account. Users with a Pandora One subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.6.5. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
+- ``pydora`` >= 1.6.6. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
 - ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
