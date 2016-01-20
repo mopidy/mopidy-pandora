@@ -6,9 +6,9 @@ tests of the core and backends.
 
 from __future__ import absolute_import, unicode_literals
 
-import pykka
-
 from mopidy import audio
+
+import pykka
 
 
 def create_proxy(config=None, mixer=None):

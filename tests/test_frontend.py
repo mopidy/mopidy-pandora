@@ -61,13 +61,16 @@ class BaseTest(unittest.TestCase):
 
         self.events = Queue.Queue()
         self.patcher = mock.patch('mopidy.listener.send')
+        self.core_patcher = mock.patch('mopidy.listener.send_async')
 
         self.send_mock = self.patcher.start()
+        self.core_send_mock = self.core_patcher.start()
 
         def send(cls, event, **kwargs):
             self.events.put((cls, event, kwargs))
 
         self.send_mock.side_effect = send
+        self.core_send_mock.side_effect = send
 
         self.actor_register = [self.backend, self.core, self.audio]
 
@@ -364,7 +367,6 @@ class FrontendTests(BaseTest):
 
             call = mock.call(PandoraFrontendListener,
                              'end_of_tracklist_reached', station_id='id_mock_other', auto_play=False)
-            calls = self.send_mock.mock_calls
 
             assert call in self.send_mock.mock_calls
 
