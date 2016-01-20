@@ -40,7 +40,7 @@ MOCK_DEFAULT_AUDIO_QUALITY = 'highQuality'
 MOCK_AD_TYPE = 'ad'
 
 
-@pytest.fixture()
+@pytest.fixture
 def config():
     return {
         'http': {

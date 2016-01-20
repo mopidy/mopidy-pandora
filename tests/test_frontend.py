@@ -19,7 +19,8 @@ from mopidy_pandora.frontend import PandoraFrontend
 from mopidy_pandora.listener import PandoraFrontendListener
 from mopidy_pandora.monitor import EventMonitor
 
-from tests import conftest, dummy_backend
+from tests import conftest, dummy_audio, dummy_backend
+from tests.dummy_audio import DummyAudio
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
 
 
@@ -41,11 +42,12 @@ class BaseTest(unittest.TestCase):
     def setUp(self):
         config = {'core': {'max_tracklist_length': 10000}}
 
-        self.backend = dummy_backend.create_proxy(DummyPandoraBackend)
-        self.non_pandora_backend = dummy_backend.create_proxy(DummyBackend)
+        self.audio = dummy_audio.create_proxy(DummyAudio)
+        self.backend = dummy_backend.create_proxy(DummyPandoraBackend, audio=self.audio)
+        self.non_pandora_backend = dummy_backend.create_proxy(DummyBackend, audio=self.audio)
 
         self.core = core.Core.start(
-            config, backends=[self.backend, self.non_pandora_backend]).proxy()
+            config, audio=self.audio, backends=[self.backend, self.non_pandora_backend]).proxy()
 
         def lookup(uris):
             result = {uri: [] for uri in uris}
@@ -70,7 +72,7 @@ class BaseTest(unittest.TestCase):
         self.send_mock.side_effect = send
         self.core_send_mock.side_effect = send
 
-        self.actor_register = [self.backend, self.core]
+        self.actor_register = [self.backend, self.core, self.audio]
 
     def tearDown(self):
         pykka.ActorRegistry.stop_all()
@@ -93,12 +95,6 @@ class BaseTest(unittest.TestCase):
                 # All events replayed.
                 break
 
-    def trigger_about_to_finish(self, replay_until=None):
-        self.replay_events()
-        callback = self.audio.get_about_to_finish_callback().get()
-        callback()
-        self.replay_events(until=replay_until)
-
 
 class FrontendTests(BaseTest):
     def setUp(self):  # noqa: N802
@@ -114,6 +110,7 @@ class FrontendTests(BaseTest):
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
         self.core.tracklist.clear()
         self.frontend.add_track(self.tl_tracks[0].track, auto_play=True).get()
+        self.replay_events()
 
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
         assert self.core.playback.get_current_track().get() == self.tl_tracks[0].track
@@ -132,17 +129,20 @@ class FrontendTests(BaseTest):
     def test_next_track_available_adds_track_to_playlist(self):
         self.core.tracklist.clear()
         self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        self.core.playback.play(tlid=tl_tracks[0].tlid).get()
         self.replay_events(until='track_playback_started')
 
         self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
+        self.replay_events()
 
         assert tl_tracks[-1].track == self.tl_tracks[1].track
         assert self.core.playback.get_current_track().get() == self.tl_tracks[1].track
 
     def test_next_track_available_forces_stop_if_no_more_tracks(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.replay_events()
 
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
         self.frontend.next_track_available(None).get()
@@ -188,7 +188,8 @@ class FrontendTests(BaseTest):
         func_mock.__name__ = str('func_mock')
         func_mock.return_value = True
 
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.replay_events()
         frontend.only_execute_for_pandora_uris(func_mock)(self)
 
         assert func_mock.called
@@ -252,7 +253,8 @@ class FrontendTests(BaseTest):
                 set_options_mock.reset_mock()
 
     def test_skip_limit_exceed_stops_playback(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.replay_events()
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
 
         self.frontend.skip_limit_exceeded().get()
@@ -302,6 +304,7 @@ class FrontendTests(BaseTest):
 
     def test_is_end_of_tracklist_reached_last_track(self):
         self.core.playback.play(tlid=self.tl_tracks[-1].tlid)
+        self.replay_events()
 
         assert self.frontend.is_end_of_tracklist_reached().get()
 
@@ -316,8 +319,10 @@ class FrontendTests(BaseTest):
         assert not self.frontend.is_end_of_tracklist_reached(self.tl_tracks[3].track).get()
 
     def test_is_station_changed(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-        self.core.playback.next()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.replay_events()
+        self.core.playback.next().get()
+        self.replay_events()
 
         # Check against track of a different station
         assert self.frontend.is_station_changed(self.tl_tracks[4].track).get()
@@ -342,10 +347,12 @@ class FrontendTests(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             self.core.tracklist.clear()
             self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri, self.tl_tracks[4].track.uri])
-            assert len(self.core.tracklist.get_tl_tracks().get()) == 2
+            tl_tracks = self.core.tracklist.get_tl_tracks().get()
+            assert len(tl_tracks) == 2
 
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.seek(100)
+            self.core.playback.play(tlid=tl_tracks[0].tlid).get()
+            self.replay_events()
+            self.core.playback.seek(100).get()
             self.replay_events()
             self.core.playback.next().get()
 
