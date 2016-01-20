@@ -24,15 +24,15 @@ Mopidy-Pandora
 Features
 ========
 
-- Supports **Pandora One** as well as **free** ad-supported Pandora accounts.
-- Add ratings to tracks (thumbs up, thumbs down, sleep).
+- Supports both Pandora One and ad-supported free accounts.
+- Display album covers.
+- Add ratings to tracks (thumbs up, thumbs down, sleep, etc.).
 - Bookmark songs or artists.
 - Browse and add genre stations.
 - Play QuickMix stations.
 - Sort stations alphabetically or by date added.
 - Delete stations from the user's Pandora profile.
-- Also supports the usual features provided by the Mopidy music server (displaying album covers, scrobbling to last.fm,
-  etc.).
+- Scrobbling to last.fm using the `Mopidy scrobbler <https://github.com/mopidy/mopidy-scrobbler>`_.
 
 
 Usage
@@ -126,10 +126,10 @@ The following configuration values are available:
 It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
 pause/play/previous/next buttons.
 
-- ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers. Eventing is disabled by
-  default as this feature is fairly experimental. It works, but it is not impossible that the wrong events may be
-  triggered for tracks or (in the worst case scenario) that one of your stations may be deleted accidentally. Mileage
-  may vary - **use at your own risk.**
+- ``pandora/event_support_enabled``: setting this to ``true`` will enable the event triggers. Event support is disabled
+  by default as this is still an experimental feature, and not something that is provided for in the Mopidy API. It works,
+  but it is not impossible that the wrong events may be triggered for tracks or (in the worst case scenario) that one of
+  your stations may be deleted accidentally. Mileage may vary - **use at your own risk.**
 - ``pandora/double_click_interval``: successive button clicks that occur within this interval will trigger an event.
   Defaults to ``2.50`` seconds.
 - ``pandora/on_pause_resume_click``: click pause and then play while a song is playing to trigger the event. Defaults
