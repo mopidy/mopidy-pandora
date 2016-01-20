@@ -60,17 +60,22 @@ class BaseTest(unittest.TestCase):
         self.tl_tracks = self.core.tracklist.add(uris=self.uris).get()
 
         self.events = Queue.Queue()
-        self.patcher = mock.patch('mopidy.listener.send')
-        self.core_patcher = mock.patch('mopidy.listener.send_async')
-
-        self.send_mock = self.patcher.start()
-        self.core_send_mock = self.core_patcher.start()
 
         def send(cls, event, **kwargs):
             self.events.put((cls, event, kwargs))
 
+        self.patcher = mock.patch('mopidy.listener.send')
+        self.send_mock = self.patcher.start()
         self.send_mock.side_effect = send
-        self.core_send_mock.side_effect = send
+
+        # TODO: Remove this patch once Mopidy 1.2 has been released.
+        try:
+            self.core_patcher = mock.patch('mopidy.listener.send_async')
+            self.core_send_mock = self.core_patcher.start()
+            self.core_send_mock.side_effect = send
+        except AttributeError:
+            # Mopidy > 1.1 no longer has mopidy.listener.send_async
+            pass
 
         self.actor_register = [self.backend, self.core, self.audio]
 
@@ -130,7 +135,7 @@ class FrontendTests(BaseTest):
         self.core.tracklist.clear()
         self.core.tracklist.add(uris=[self.tl_tracks[0].track.uri])
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
-        self.core.playback.play(tlid=tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=tl_tracks[0].tlid)
         self.replay_events(until='track_playback_started')
 
         self.frontend.next_track_available(self.tl_tracks[1].track, True).get()
@@ -141,7 +146,7 @@ class FrontendTests(BaseTest):
         assert self.core.playback.get_current_track().get() == self.tl_tracks[1].track
 
     def test_next_track_available_forces_stop_if_no_more_tracks(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.replay_events()
 
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
@@ -223,7 +228,7 @@ class FrontendTests(BaseTest):
             assert not self.frontend.setup_required.get()
 
     def test_set_options_skips_auto_setup_if_not_configured(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
 
         config = conftest.config()
         config['pandora']['auto_setup'] = False
@@ -243,7 +248,7 @@ class FrontendTests(BaseTest):
                 'track_playback_resumed': {'tl_track': tl_tracks[0], 'time_position': 100},
             }
 
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
 
             for (event, kwargs) in core_events.items():
                 self.frontend.setup_required = True
@@ -253,7 +258,7 @@ class FrontendTests(BaseTest):
                 set_options_mock.reset_mock()
 
     def test_skip_limit_exceed_stops_playback(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.replay_events()
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
 
@@ -264,7 +269,7 @@ class FrontendTests(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(PandoraFrontend, 'is_station_changed', mock.Mock(return_value=True)):
 
-                self.core.playback.play(tlid=self.tl_tracks[4].tlid).get()
+                self.core.playback.play(tlid=self.tl_tracks[4].tlid)
                 self.replay_events()
 
                 thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
@@ -276,7 +281,7 @@ class FrontendTests(BaseTest):
     def test_get_active_uri_order_of_precedence(self):
         # Should be 'track' -> 'tl_track' -> 'current_tl_track' -> 'history[0]'
         kwargs = {}
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.replay_events()
         assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[0].track.uri
 
@@ -319,9 +324,9 @@ class FrontendTests(BaseTest):
         assert not self.frontend.is_end_of_tracklist_reached(self.tl_tracks[3].track).get()
 
     def test_is_station_changed(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.replay_events()
-        self.core.playback.next().get()
+        self.core.playback.next()
         self.replay_events()
 
         # Check against track of a different station
@@ -350,11 +355,11 @@ class FrontendTests(BaseTest):
             tl_tracks = self.core.tracklist.get_tl_tracks().get()
             assert len(tl_tracks) == 2
 
-            self.core.playback.play(tlid=tl_tracks[0].tlid).get()
+            self.core.playback.play(tlid=tl_tracks[0].tlid)
             self.replay_events()
-            self.core.playback.seek(100).get()
+            self.core.playback.seek(100)
             self.replay_events()
-            self.core.playback.next().get()
+            self.core.playback.next()
 
             self.replay_events(until='track_playback_started')
 
@@ -378,7 +383,7 @@ class FrontendTests(BaseTest):
         self.assertEqual(unplayable_track in self.core.tracklist.get_tl_tracks().get(), False)
 
     def test_track_unplayable_triggers_end_of_tracklist_event(self):
-        self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+        self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.replay_events()
 
         self.frontend.track_unplayable(self.tl_tracks[-1].track).get()

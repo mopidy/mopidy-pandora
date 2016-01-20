@@ -18,8 +18,9 @@ from mopidy_pandora.listener import EventMonitorListener, PandoraBackendListener
 
 from mopidy_pandora.monitor import EventMarker, EventSequence, MatchResult
 
-from tests import conftest, dummy_backend
+from tests import conftest, dummy_audio, dummy_backend
 
+from tests.dummy_audio import DummyAudio
 from tests.dummy_backend import DummyBackend, DummyPandoraBackend
 
 
@@ -41,11 +42,12 @@ class BaseTest(unittest.TestCase):
     def setUp(self):
         config = {'core': {'max_tracklist_length': 10000}}
 
-        self.backend = dummy_backend.create_proxy(DummyPandoraBackend)
-        self.non_pandora_backend = dummy_backend.create_proxy(DummyBackend)
+        self.audio = dummy_audio.create_proxy(DummyAudio)
+        self.backend = dummy_backend.create_proxy(DummyPandoraBackend, audio=self.audio)
+        self.non_pandora_backend = dummy_backend.create_proxy(DummyBackend, audio=self.audio)
 
         self.core = core.Core.start(
-            config, backends=[self.backend, self.non_pandora_backend]).proxy()
+            config, audio=self.audio, backends=[self.backend, self.non_pandora_backend]).proxy()
 
         def lookup(uris):
             result = {uri: [] for uri in uris}
@@ -58,17 +60,22 @@ class BaseTest(unittest.TestCase):
         self.tl_tracks = self.core.tracklist.add(uris=self.uris).get()
 
         self.events = Queue.Queue()
-        self.patcher = mock.patch('mopidy.listener.send')
-        self.core_patcher = mock.patch('mopidy.listener.send_async')
-
-        self.send_mock = self.patcher.start()
-        self.core_send_mock = self.core_patcher.start()
 
         def send(cls, event, **kwargs):
             self.events.put((cls, event, kwargs))
 
+        self.patcher = mock.patch('mopidy.listener.send')
+        self.send_mock = self.patcher.start()
         self.send_mock.side_effect = send
-        self.core_send_mock.side_effect = send
+
+        # TODO: Remove this patch once Mopidy 1.2 has been released.
+        try:
+            self.core_patcher = mock.patch('mopidy.listener.send_async')
+            self.core_send_mock = self.core_patcher.start()
+            self.core_send_mock.side_effect = send
+        except AttributeError:
+            # Mopidy > 1.1 no longer has mopidy.listener.send_async
+            pass
 
         self.actor_register = [self.backend, self.non_pandora_backend, self.core]
 
@@ -106,6 +113,7 @@ class EventMonitorTests(BaseTest):
 
     def test_delete_station_clears_tracklist_on_finish(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+        self.replay_events()
         assert len(self.core.tracklist.get_tl_tracks().get()) > 0
 
         listener.send(PandoraBackendListener, 'event_processed',
@@ -118,13 +126,16 @@ class EventMonitorTests(BaseTest):
     def test_detect_track_change_next(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Next
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.seek(100)
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.replay_events()
+            self.core.playback.seek(100).get()
             self.replay_events()
             self.core.playback.next().get()
-            self.replay_events(until='track_playback_started')
+            self.replay_events()
 
             thread_joiner.wait(timeout=1.0)
+
+            self.replay_events()
             call = mock.call(EventMonitorListener,
                              'track_changed_next',
                              old_uri=self.tl_tracks[0].track.uri,
