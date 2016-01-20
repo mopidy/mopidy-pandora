@@ -6,7 +6,7 @@ from mopidy import backend, listener
 class EventMonitorListener(listener.Listener):
 
     """
-    Marker interface for recipients of events sent by the frontend actor.
+    Marker interface for recipients of events sent by the event monitor.
 
     """
 
@@ -142,8 +142,8 @@ class PandoraPlaybackListener(listener.Listener):
         """
         Called when the playback provider  has skipped over the maximum number of permissible unplayable tracks using
         :func:`~mopidy_pandora.pandora.PandoraPlaybackProvider.change_track`. This lets the frontend know that the
-        player should probably be stopped in order to avoid an infinite loop on the tracklist (which should still be
-        in 'repeat' mode.
+        player should probably be stopped in order to avoid an infinite loop on the tracklist, or to avoid exceeding
+        the maximum number of station playlist requests as determined by the Pandora server.
 
         """
         pass
