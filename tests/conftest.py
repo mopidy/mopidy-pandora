@@ -13,6 +13,8 @@ import pytest
 
 import requests
 
+from mopidy_pandora import backend
+
 MOCK_STATION_TYPE = 'station'
 MOCK_STATION_NAME = 'Mock Station'
 MOCK_STATION_ID = '0000000000000000001'
@@ -75,7 +77,6 @@ def config():
 
 
 def get_backend(config, simulate_request_exceptions=False):
-    from mopidy_pandora import backend
     obj = backend.PandoraBackend(config=config, audio=mock.Mock())
 
     if simulate_request_exceptions:
