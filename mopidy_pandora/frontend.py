@@ -10,69 +10,18 @@ import pykka
 
 from mopidy_pandora import listener
 from mopidy_pandora.uri import PandoraUri
+from mopidy_pandora.utils import only_execute_for_pandora_uris
 
 logger = logging.getLogger(__name__)
 
 
-def only_execute_for_pandora_uris(func):
-    """ Function decorator intended to ensure that "func" is only executed if a Pandora track
-        is currently playing. Allows CoreListener events to be ignored if they are being raised
-        while playing non-Pandora tracks.
-
-    :param func: the function to be executed
-    :return: the return value of the function if it was run, or 'None' otherwise.
-    """
-    from functools import wraps
-
-    @wraps(func)
-    def check_pandora(self, *args, **kwargs):
-        """ Check if a pandora track is currently being played.
-
-        :param args: all arguments will be passed to the target function.
-        :param kwargs: all kwargs will be passed to the target function.
-        :return: the return value of the function if it was run or 'None' otherwise.
-        """
-        uri = get_active_uri(self.core, *args, **kwargs)
-        if uri and PandoraUri.is_pandora_uri(uri):
-            return func(self, *args, **kwargs)
-
-    return check_pandora
-
-
-def get_active_uri(core, *args, **kwargs):
-    """
-    Tries to determine what the currently 'active' Mopidy track is, and returns it's URI. Makes use of a best-effort
-    determination base on:
-    1. looking for 'track' in kwargs, then
-    2. 'tl_track' in kwargs, then
-    3. interrogating the Mopidy core for the currently playing track, and lastly
-    4. checking which track was played last according to the history that Mopidy keeps.
-
-    :param core: the Mopidy core that can be used as a fallback if no suitable arguments are available.
-    :param args: all available arguments from the calling function.
-    :param kwargs: all available kwargs from the calling function.
-    :return: the URI of the active Mopidy track, if it could be determined, or None otherwise.
-    """
-    uri = None
-    track = kwargs.get('track', None)
-    if track:
-        uri = track.uri
-    else:
-        tl_track = kwargs.get('tl_track', core.playback.get_current_tl_track().get())
-        if tl_track:
-            uri = tl_track.track.uri
-    if not uri:
-        history = core.history.get_history().get()
-        if history:
-            uri = history[0]
-    return uri
-
-
-class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraBackendListener,
-                      listener.PandoraPlaybackListener, listener.EventMonitorListener):
+class PandoraFrontend(pykka.ThreadingActor,
+                      core.CoreListener,
+                      listener.PandoraBackendListener,
+                      listener.PandoraPlaybackListener,
+                      listener.EventMonitorListener):
 
     def __init__(self, config, core):
-        from mopidy_pandora.monitor import EventMonitor
         super(PandoraFrontend, self).__init__()
 
         self.config = config['pandora']
@@ -80,10 +29,6 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
 
         self.setup_required = True
         self.core = core
-
-        self.event_monitor = None
-        if self.config['event_support_enabled']:
-            self.event_monitor = EventMonitor(config, core)
 
         self.track_change_completed_event = threading.Event()
         self.track_change_completed_event.set()
@@ -110,12 +55,6 @@ class PandoraFrontend(pykka.ThreadingActor, core.CoreListener, listener.PandoraB
     def options_changed(self):
         self.setup_required = True
         self.set_options()
-
-    @only_execute_for_pandora_uris
-    def on_event(self, event, **kwargs):
-        super(PandoraFrontend, self).on_event(event, **kwargs)
-        if self.event_monitor:
-            self.event_monitor.on_event(event, **kwargs)
 
     @only_execute_for_pandora_uris
     def track_playback_started(self, tl_track):

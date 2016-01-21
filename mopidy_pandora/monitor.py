@@ -14,11 +14,14 @@ from difflib import SequenceMatcher
 
 from functools import total_ordering
 
+from mopidy import audio, core
 from mopidy.audio import PlaybackState
+
+import pykka
 
 from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
-from mopidy_pandora.utils import run_async
+from mopidy_pandora.utils import get_active_uri, only_execute_for_pandora_uris, run_async
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +43,13 @@ class MatchResult(object):
         return self.ratio < other.ratio
 
 
-class EventMonitor(listener.PandoraBackendListener):
-
-    pykka_traversable = True
+class EventMonitor(pykka.ThreadingActor,
+                   core.CoreListener,
+                   audio.AudioListener,
+                   listener.PandoraFrontendListener,
+                   listener.PandoraBackendListener,
+                   listener.PandoraPlaybackListener,
+                   listener.EventMonitorListener):
 
     def __init__(self, config, core):
         super(EventMonitor, self).__init__()
@@ -53,79 +60,56 @@ class EventMonitor(listener.PandoraBackendListener):
         self._monitor_lock = threading.Lock()
 
         self.config = config['pandora']
-        self.on_start()
+        self.is_active = self.config['event_support_enabled']
 
     def on_start(self):
+        if not self.is_active:
+            return
+
         interval = float(self.config['double_click_interval'])
         self.sequence_match_results = Queue.PriorityQueue(maxsize=4)
 
         self.event_sequences.append(EventSequence(self.config['on_pause_resume_click'],
                                                   ['track_playback_paused',
-                                                   'position_changed',
-                                                   'state_changed',
-                                                   'tags_changed',
-                                                   'playback_state_changed',
-                                                   'track_playback_resumed',
-                                                   'playback_state_changed',
-                                                   'track_playback_paused'], self.sequence_match_results,
+                                                   'track_playback_resumed'], self.sequence_match_results,
                                                   interval=interval))
 
         self.event_sequences.append(EventSequence(self.config['on_pause_resume_pause_click'],
                                                   ['track_playback_paused',
-                                                   'position_changed',
-                                                   'state_changed',
-                                                   'tags_changed',
-                                                   'playback_state_changed',
                                                    'track_playback_resumed',
-                                                   'playback_state_changed',
-                                                   'track_playback_paused',
-                                                   'position_changed',
-                                                   'state_changed',
-                                                   'playback_state_changed',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   interval=interval))
 
         self.event_sequences.append(EventSequence(self.config['on_pause_previous_click'],
                                                   ['track_playback_paused',
-                                                   'stream_changed',
-                                                   'state_changed',
-                                                   'playback_state_changed',
                                                    'track_playback_ended',
                                                    'track_changing',
-                                                   'position_changed',
-                                                   'stream_changed',
-                                                   'state_changed',
-                                                   'playback_state_changed',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_previous',
                                                   interval=interval))
 
         self.event_sequences.append(EventSequence(self.config['on_pause_next_click'],
                                                   ['track_playback_paused',
-                                                   'stream_changed',
-                                                   'state_changed',
-                                                   'playback_state_changed',
                                                    'track_playback_ended',
                                                    'track_changing',
-                                                   'position_changed',
-                                                   'stream_changed',
-                                                   'state_changed',
-                                                   'playback_state_changed',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_next',
                                                   interval=interval))
 
         self.trigger_events = set(e.target_sequence[0] for e in self.event_sequences)
 
+    @only_execute_for_pandora_uris
     def on_event(self, event, **kwargs):
-        from mopidy_pandora import frontend
+        if not self.is_active:
+            return
+
         super(EventMonitor, self).on_event(event, **kwargs)
         self._detect_track_change(event, **kwargs)
 
         if self._monitor_lock.acquire(False):
             if event in self.trigger_events:
                 # Monitor not running and current event will not trigger any starts either, ignore
-                self.notify_all(event, uri=frontend.get_active_uri(self.core, event, **kwargs), **kwargs)
+                self.notify_all(event, uri=get_active_uri(self.core, event, **kwargs), **kwargs)
                 self.monitor_sequences()
             else:
                 self._monitor_lock.release()
@@ -296,7 +280,11 @@ class EventSequence(object):
         if self.wait_for:
             # Add 'wait_for' event as well to make ratio more accurate.
             self.target_sequence.append(self.wait_for)
-        ratio = EventSequence.match_sequence(self.events_seen, self.target_sequence)
+        if self.strict:
+            ratio = EventSequence.match_sequence(self.events_seen, self.target_sequence)
+        else:
+            filtered_list = [e for e in self.events_seen if e in self.target_sequence]
+            ratio = EventSequence.match_sequence(filtered_list, self.target_sequence)
         if ratio < 1.0 and self.strict:
             return 0
         return ratio

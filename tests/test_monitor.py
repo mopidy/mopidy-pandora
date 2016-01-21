@@ -88,14 +88,15 @@ class BaseTest(unittest.TestCase):
             try:
                 e = self.events.get(timeout=0.1)
                 cls, event, kwargs = e
+                if event == until:
+                    break
                 for actor in self.actor_register:
                     if isinstance(actor, pykka.ActorProxy):
                         if isinstance(actor._actor, cls):
                             actor.on_event(event, **kwargs).get()
                     else:
-                        actor.on_event(event, **kwargs)
-                if e[0] == until:
-                    break
+                        if isinstance(actor, cls):
+                            actor.on_event(event, **kwargs)
             except Queue.Empty:
                 # All events replayed.
                 break
@@ -104,7 +105,7 @@ class BaseTest(unittest.TestCase):
 class EventMonitorTests(BaseTest):
     def setUp(self):  # noqa: N802
         super(EventMonitorTests, self).setUp()
-        self.monitor = monitor.EventMonitor(conftest.config(), self.core)
+        self.monitor = monitor.EventMonitor.start(conftest.config(), self.core).proxy()
 
         self.actor_register.append(self.monitor)
 
@@ -147,11 +148,13 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.pause()
             self.replay_events()
             self.core.playback.next().get()
-            self.replay_events(until='track_playback_paused')
+            self.replay_events(until='track_changed_next')
 
             thread_joiner.wait(timeout=5.0)
             call = mock.call(EventMonitorListener,
@@ -165,7 +168,9 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.stop()
             self.replay_events()
             self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
@@ -178,10 +183,11 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
             self.replay_events()
             self.core.playback.previous().get()
-            self.replay_events(until='track_playback_started')
+            self.replay_events(until='track_changed_previous')
 
             thread_joiner.wait(timeout=1.0)
             call = mock.call(EventMonitorListener,
@@ -195,11 +201,13 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.pause()
             self.replay_events()
             self.core.playback.previous().get()
-            self.replay_events(until='track_playback_paused')
+            self.replay_events(until='track_changed_previous')
 
             thread_joiner.wait(timeout=5.0)
             call = mock.call(EventMonitorListener,
@@ -213,11 +221,13 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Pause -> Next
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.pause()
             self.replay_events()
             self.core.playback.next().get()
-            self.replay_events(until='track_changed_next')
+            self.replay_events(until='event_triggered')
 
             thread_joiner.wait(timeout=5.0)
             call = mock.call(EventMonitorListener,
@@ -230,12 +240,14 @@ class EventMonitorTests(BaseTest):
     def test_events_triggered_on_previous_action(self):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Pause -> Previous
-            self.core.playback.play(tlid=self.tl_tracks[0].tlid)
-            self.core.playback.seek(100)
-            self.core.playback.pause()
+            self.core.playback.play(tlid=self.tl_tracks[0].tlid).get()
+            self.replay_events()
+            self.core.playback.seek(100).get()
+            self.replay_events()
+            self.core.playback.pause().get()
             self.replay_events()
             self.core.playback.previous().get()
-            self.replay_events(until='track_changed_previous')
+            self.replay_events(until='event_triggered')
 
             thread_joiner.wait(timeout=5.0)
             call = mock.call(EventMonitorListener,
@@ -249,10 +261,13 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Pause -> Resume
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.pause()
+            self.replay_events()
             self.core.playback.resume().get()
-            self.replay_events(until='track_playback_resumed')
+            self.replay_events(until='event_triggered')
 
             thread_joiner.wait(timeout=1.0)
             call = mock.call(EventMonitorListener,
@@ -266,12 +281,15 @@ class EventMonitorTests(BaseTest):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Pause -> Resume -> Pause
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.pause()
+            self.replay_events()
             self.core.playback.resume()
             self.replay_events()
             self.core.playback.pause().get()
-            self.replay_events(until='track_playback_resumed')
+            self.replay_events(until='event_triggered')
 
             thread_joiner.wait(timeout=1.0)
             call = mock.call(EventMonitorListener,
@@ -296,13 +314,15 @@ class EventMonitorTests(BaseTest):
     def test_monitor_resumes_playback_after_event_trigger(self):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             self.core.playback.play(tlid=self.tl_tracks[0].tlid)
+            self.replay_events()
             self.core.playback.seek(100)
+            self.replay_events()
             self.core.playback.pause()
             self.replay_events()
             assert self.core.playback.get_state().get() == PlaybackState.PAUSED
 
             self.core.playback.next().get()
-            self.replay_events(until='track_changed_next')
+            self.replay_events()
 
             thread_joiner.wait(timeout=5.0)
             assert self.core.playback.get_state().get() == PlaybackState.PLAYING

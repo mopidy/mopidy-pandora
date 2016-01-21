@@ -66,7 +66,7 @@ def config():
             'auto_setup': True,
             'cache_time_to_live': 1800,
 
-            'event_support_enabled': False,
+            'event_support_enabled': True,
             'double_click_interval': '0.5',
             'on_pause_resume_click': 'thumbs_up',
             'on_pause_next_click': 'thumbs_down',

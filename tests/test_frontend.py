@@ -14,10 +14,9 @@ from mopidy.core import CoreListener
 
 import pykka
 
-from mopidy_pandora import frontend
+from mopidy_pandora import frontend, utils
 from mopidy_pandora.frontend import PandoraFrontend
 from mopidy_pandora.listener import PandoraFrontendListener
-from mopidy_pandora.monitor import EventMonitor
 
 from tests import conftest, dummy_audio, dummy_backend
 from tests.dummy_audio import DummyAudio
@@ -88,14 +87,15 @@ class BaseTest(unittest.TestCase):
             try:
                 e = self.events.get(timeout=0.1)
                 cls, event, kwargs = e
+                if event == until:
+                    break
                 for actor in self.actor_register:
                     if isinstance(actor, pykka.ActorProxy):
                         if isinstance(actor._actor, cls):
                             actor.on_event(event, **kwargs).get()
                     else:
-                        actor.on_event(event, **kwargs)
-                if e[0] == until:
-                    break
+                        if isinstance(actor, cls):
+                            actor.on_event(event, **kwargs)
             except Queue.Empty:
                 # All events replayed.
                 break
@@ -152,18 +152,6 @@ class FrontendTests(BaseTest):
         assert self.core.playback.get_state().get() == PlaybackState.PLAYING
         self.frontend.next_track_available(None).get()
         assert self.core.playback.get_state().get() == PlaybackState.STOPPED
-
-    def test_on_event_passes_on_calls_to_monitor(self):
-        config = conftest.config()
-        config['pandora']['event_support_enabled'] = True
-
-        self.frontend = frontend.PandoraFrontend.start(config, self.core).proxy()
-
-        assert self.frontend.event_monitor.core.get()
-        monitor_mock = mock.Mock(spec=EventMonitor)
-        self.frontend.event_monitor = monitor_mock
-        self.frontend.on_event('track_playback_started', tl_track=self.core.tracklist.get_tl_tracks().get()[0]).get()
-        assert monitor_mock.on_event.called
 
     def test_only_execute_for_pandora_does_not_execute_for_non_pandora_uri(self):
         func_mock = mock.PropertyMock()
@@ -283,7 +271,7 @@ class FrontendTests(BaseTest):
         kwargs = {}
         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
         self.replay_events()
-        assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[0].track.uri
+        assert utils.get_active_uri(self.core, **kwargs) == self.tl_tracks[0].track.uri
 
         # No easy way to test retrieving from history as it is not possible to set core.playback_current_tl_track
         # to None
@@ -294,10 +282,10 @@ class FrontendTests(BaseTest):
         # assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[1].track.uri
 
         kwargs['tl_track'] = self.tl_tracks[2]
-        assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[2].track.uri
+        assert utils.get_active_uri(self.core, **kwargs) == self.tl_tracks[2].track.uri
 
         kwargs = {'track': self.tl_tracks[3].track}
-        assert frontend.get_active_uri(self.core, **kwargs) == self.tl_tracks[3].track.uri
+        assert utils.get_active_uri(self.core, **kwargs) == self.tl_tracks[3].track.uri
 
     def test_is_end_of_tracklist_reached(self):
         self.core.playback.play(tlid=self.tl_tracks[0].tlid)
@@ -361,7 +349,7 @@ class FrontendTests(BaseTest):
             self.replay_events()
             self.core.playback.next()
 
-            self.replay_events(until='track_playback_started')
+            self.replay_events(until='end_of_tracklist_reached')
 
             thread_joiner.wait(timeout=1.0)  # Wait until threads spawned by frontend have finished.
 
