@@ -24,8 +24,7 @@ Mopidy-Pandora
 Features
 ========
 
-- Supports both Pandora One and ad-supported free accounts.
-- Display album covers.
+- Support for both Pandora One and ad-supported free accounts.
 - Add ratings to tracks (thumbs up, thumbs down, sleep, etc.).
 - Bookmark songs or artists.
 - Browse and add genre stations.
@@ -121,7 +120,7 @@ The following configuration values are available:
   to fiddle with this unless the Mopidy frontend that you are using does not support manually refreshing the library,
   and you want Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other Pandora
   players. Setting this to ``0`` will disable caching completely and ensure that the latest lists are always retrieved
-  directly from the Pandora server.
+  directly from the Pandora server. Defaults to ``1800``.
 
 It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
 pause/play/previous/next buttons.
@@ -141,7 +140,7 @@ pause/play/previous/next buttons.
 - ``pandora/on_pause_resume_pause_click``: click pause, resume, and pause again in quick succession (i.e. triple click).
   Calls event. Defaults to ``delete_station``.
 
-The full list of supported events include: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``,
+The full list of supported events are: ``thumbs_up``, ``thumbs_down``, ``sleep``, ``add_artist_bookmark``,
 ``add_song_bookmark``, and ``delete_station``.
 
 
