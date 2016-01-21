@@ -16,6 +16,10 @@ env:
   - TOX_ENV=py27
   - TOX_ENV=flake8
 
+before_install:
+  - "sudo apt-get update -qq"
+  - "sudo apt-get install -y gstreamer0.10-plugins-good python-gst0.10"
+
 install:
   - "pip install tox"
 
