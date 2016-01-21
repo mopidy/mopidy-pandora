@@ -68,7 +68,7 @@ class BaseTest(unittest.TestCase):
         self.send_mock = self.patcher.start()
         self.send_mock.side_effect = send
 
-        # TODO: Remove this patch once Mopidy 1.2 has been released.
+        # TODO: Remove this patcher once Mopidy 1.2 has been released.
         try:
             self.core_patcher = mock.patch('mopidy.listener.send_async')
             self.core_send_mock = self.core_patcher.start()
