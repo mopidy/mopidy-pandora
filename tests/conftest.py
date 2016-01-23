@@ -62,9 +62,9 @@ def config():
             'username': 'john',
             'password': 'smith',
             'preferred_audio_quality': MOCK_DEFAULT_AUDIO_QUALITY,
-            'sort_order': 'date',
+            'sort_order': 'a-z',
             'auto_setup': True,
-            'cache_time_to_live': 1800,
+            'cache_time_to_live': 86400,
 
             'event_support_enabled': True,
             'double_click_interval': '0.5',

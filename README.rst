@@ -108,8 +108,8 @@ The following configuration values are available:
   If the preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream
   that Pandora supports for the chosen device will be used.
 
-- ``pandora/sort_order``: defaults to the ``date`` that the station was added. Use ``a-z`` to display the list of
-  stations in alphabetical order.
+- ``pandora/sort_order``: defaults to ``a-z``. Use ``date`` to display the list of stations in the order that the
+  stations were added.
 
 - ``pandora/auto_setup``: Specifies if Mopidy-Pandora should automatically configure the Mopidy player for best
   compatibility with the Pandora radio stream. Defaults to ``true`` and turns ``consume`` on and ``repeat``, ``random``,
@@ -120,7 +120,7 @@ The following configuration values are available:
   to fiddle with this unless the Mopidy frontend that you are using does not support manually refreshing the library,
   and you want Mopidy-Pandora to immediately detect changes to your Pandora user profile that are made in other Pandora
   players. Setting this to ``0`` will disable caching completely and ensure that the latest lists are always retrieved
-  directly from the Pandora server. Defaults to ``1800``.
+  directly from the Pandora server. Defaults to ``86400`` (i.e. 24 hours).
 
 It is also possible to apply Pandora ratings and perform other actions on the currently playing track using the standard
 pause/play/previous/next buttons.

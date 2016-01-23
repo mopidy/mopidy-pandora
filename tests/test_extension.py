@@ -28,9 +28,9 @@ class ExtensionTests(unittest.TestCase):
         assert 'username ='in config
         assert 'password ='in config
         assert 'preferred_audio_quality = highQuality'in config
-        assert 'sort_order = date'in config
+        assert 'sort_order = a-z'in config
         assert 'auto_setup = true'in config
-        assert 'cache_time_to_live = 1800'in config
+        assert 'cache_time_to_live = 86400'in config
         assert 'event_support_enabled = false'in config
         assert 'double_click_interval = 2.50'in config
         assert 'on_pause_resume_click = thumbs_up'in config

@@ -199,11 +199,11 @@ def test_browse_directory_uri(config):
 
         assert results[2].type == models.Ref.DIRECTORY
         assert results[2].uri == StationUri._from_station(
-            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][0])).uri
+            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][1])).uri
 
         assert results[3].type == models.Ref.DIRECTORY
         assert results[3].uri == StationUri._from_station(
-            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][1])).uri
+            Station.from_json(backend.api, conftest.station_list_result_mock()['stations'][0])).uri
 
 
 def test_browse_directory_marks_quickmix_stations(config):
