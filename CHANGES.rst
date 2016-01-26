@@ -1,8 +1,8 @@
 Changelog
 =========
 
-v0.2.0 (UNRELEASED)
--------------------
+v0.2.0 (Jan 26, 2016)
+---------------------
 
 **Features and improvements**
 
@@ -25,7 +25,7 @@ v0.2.0 (UNRELEASED)
   more than a few stations.
 - Added link to a short troubleshooting guide on the README page.
 
-** Fixes **
+**Fixes**
 
 - Unplayable tracks are now removed from the tracklist. (Fixes: `#38 <https://github.com/rectalogic/mopidy-pandora/issues/38>`_).
 - Adds are now always assigned a unique URI. (Fixes: `#39 <https://github.com/rectalogic/mopidy-pandora/issues/39>`_).
