@@ -36,6 +36,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self.pandora_track_cache = LRUCache(maxsize=10)
 
     def browse(self, uri):
+        self.backend.playback.reset_skip_limits()
         if uri == self.root_directory.uri:
             return self._browse_stations()
 

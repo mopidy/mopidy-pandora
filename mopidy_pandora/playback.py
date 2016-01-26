@@ -76,6 +76,9 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             raise MaxSkipLimitExceeded(('Maximum track skip limit ({:d}) exceeded.'
                                         .format(self.SKIP_LIMIT)))
 
+    def reset_skip_limits(self):
+        self._consecutive_track_skips = 0
+
     def translate_uri(self, uri):
         return self.backend.library.lookup_pandora_track(uri).audio_url
 

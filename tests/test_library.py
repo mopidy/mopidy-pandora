@@ -263,6 +263,15 @@ def test_browse_raises_exception_for_unsupported_uri_type(config):
         backend.library.browse('pandora:invalid_uri')
 
 
+def test_browse_resets_skip_limits(config):
+    with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+        backend = conftest.get_backend(config)
+        backend.playback._consecutive_track_skips = 5
+        backend.library.browse(backend.library.root_directory.uri)
+
+        assert backend.playback._consecutive_track_skips == 0
+
+
 def test_browse_genre_category(config):
     with mock.patch.object(MopidyAPIClient, 'get_genre_stations', conftest.get_genre_stations_mock):
 

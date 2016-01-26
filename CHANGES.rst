@@ -25,6 +25,12 @@ v0.2.0 (UNRELEASED)
   more than a few stations.
 - Added link to a short troubleshooting guide on the README page.
 
+** Fixes **
+
+- Unplayable tracks are now removed from the tracklist. (Fixes: `#38 <https://github.com/rectalogic/mopidy-pandora/issues/38>`_).
+- Adds are now always assigned a unique URI. (Fixes: `#39 <https://github.com/rectalogic/mopidy-pandora/issues/39>`_).
+- Maximum skip limits are now reset whenever user browses another folder. (Fixes: `#43 <https://github.com/rectalogic/mopidy-pandora/issues/43>`_).
+
 v0.1.8 (Jan 8, 2016)
 --------------------
 
