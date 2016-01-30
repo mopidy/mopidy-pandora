@@ -11,7 +11,7 @@ from pandora.errors import PandoraException
 from mopidy_pandora import client, library, playback
 from mopidy_pandora.backend import PandoraBackend
 from mopidy_pandora.library import PandoraLibraryProvider
-from tests.conftest import get_backend, get_station_list_mock, request_exception_mock
+from tests.conftest import get_backend
 
 
 def test_uri_schemes(config):
@@ -60,38 +60,9 @@ def test_on_start_logs_in(config):
 
     login_mock = mock.Mock()
     backend.api.login = login_mock
-    t = backend.on_start()
-    t.join()
+    backend.on_start()
 
     backend.api.login.assert_called_once_with('john', 'smith')
-
-
-def test_on_start_pre_fetches_lists(config):
-    with mock.patch.object(APIClient, 'get_station_list', get_station_list_mock):
-        backend = get_backend(config)
-
-        backend.api.login = mock.Mock()
-        backend.api.get_genre_stations = mock.Mock()
-
-        assert backend.api.station_list_cache.currsize == 0
-        assert backend.api.genre_stations_cache.currsize == 0
-
-        t = backend.on_start()
-        t.join()
-
-        assert backend.api.station_list_cache.currsize == 1
-        assert backend.api.get_genre_stations.called
-
-
-def test_on_start_handles_request_exception(config, caplog):
-    backend = get_backend(config, True)
-
-    backend.api.login = request_exception_mock
-    t = backend.on_start()
-    t.join()
-
-    # Check that request exceptions are caught and logged
-    assert 'Error logging in to Pandora' in caplog.text()
 
 
 def test_prepare_next_track_triggers_event(config):

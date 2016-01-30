@@ -12,7 +12,6 @@ from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
-from mopidy_pandora import utils
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
 
 logger = logging.getLogger(__name__)
@@ -52,7 +51,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return self._browse_tracks(uri)
 
     def lookup(self, uri):
-
         pandora_uri = PandoraUri.factory(uri)
         if isinstance(pandora_uri, TrackUri):
             try:
@@ -132,9 +130,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return list
 
     def _browse_stations(self):
-        # Prefetch genre category list
-        utils.run_async(self.backend.api.get_genre_stations)()
-
         station_directories = []
 
         stations = self.backend.api.get_station_list()
