@@ -8,8 +8,6 @@ from pandora.errors import PandoraException
 
 import pykka
 
-import requests
-
 from mopidy_pandora import listener, utils
 
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
@@ -44,16 +42,8 @@ class PandoraBackend(pykka.ThreadingActor, backend.Backend, core.CoreListener, l
         self.playback = PandoraPlaybackProvider(audio, self)
         self.uri_schemes = [PandoraUri.SCHEME]
 
-    @utils.run_async
     def on_start(self):
-        try:
-            self.api.login(self.config['username'], self.config['password'])
-            # Prefetch list of stations linked to the user's profile
-            self.api.get_station_list()
-            # Prefetch genre category list
-            self.api.get_genre_stations()
-        except requests.exceptions.RequestException:
-            logger.exception('Error logging in to Pandora.')
+        self.api.login(self.config['username'], self.config['password'])
 
     def end_of_tracklist_reached(self, station_id=None, auto_play=False):
         self.prepare_next_track(station_id, auto_play)
