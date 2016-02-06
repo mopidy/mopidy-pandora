@@ -97,7 +97,7 @@ The following configuration values are available:
 - ``pandora/api_host``: Which of the JSON API `endpoints <http://6xq.net/pandora-apidoc/json/>`_ to use. Note that
   the endpoints are different for Pandora One and free accounts (details in the link provided).
 
-- ``pandora/partner_`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+- ``pandora/partner_*`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
   to use for the Pandora API entry point.
 
 - ``pandora/username``: Your Pandora username. You *must* provide this.
@@ -106,7 +106,9 @@ The following configuration values are available:
 
 - ``pandora/preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default).
   If the preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream
-  that Pandora supports for the chosen device will be used.
+  that Pandora supports for the chosen device will be used. Note that this setting has no effect for partner device types
+  that only provide one audio stream (notably credentials associated with iOS). In such instances, Mopidy-Pandora will
+  always revert to the default stream provided by the Pandora server.
 
 - ``pandora/sort_order``: defaults to ``a-z``. Use ``date`` to display the list of stations in the order that the
   stations were added.
@@ -147,7 +149,7 @@ The full list of supported events are: ``thumbs_up``, ``thumbs_down``, ``sleep``
 Project resources
 =================
 
-- `Change log <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
+- `Changelog <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
 - `Troubleshooting guide <https://github.com/rectalogic/mopidy-pandora/blob/develop/docs/troubleshooting.rst>`_
 - `Source code <https://github.com/rectalogic/mopidy-pandora>`_
 - `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
