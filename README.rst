@@ -147,7 +147,7 @@ The full list of supported events are: ``thumbs_up``, ``thumbs_down``, ``sleep``
 Project resources
 =================
 
-- `Change log <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
+- `Changelog <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
 - `Troubleshooting guide <https://github.com/rectalogic/mopidy-pandora/blob/develop/docs/troubleshooting.rst>`_
 - `Source code <https://github.com/rectalogic/mopidy-pandora>`_
 - `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
