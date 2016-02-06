@@ -276,7 +276,6 @@ class EventMonitorFrontend(pykka.ThreadingActor,
         self.event_sequences.append(EventSequence(self.config['on_pause_previous_click'],
                                                   ['track_playback_paused',
                                                    'track_playback_ended',
-                                                   'track_changing',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_previous',
                                                   interval=interval))
@@ -284,7 +283,6 @@ class EventMonitorFrontend(pykka.ThreadingActor,
         self.event_sequences.append(EventSequence(self.config['on_pause_next_click'],
                                                   ['track_playback_paused',
                                                    'track_playback_ended',
-                                                   'track_changing',
                                                    'track_playback_paused'], self.sequence_match_results,
                                                   wait_for='track_changed_next',
                                                   interval=interval))
@@ -341,7 +339,7 @@ class EventMonitorFrontend(pykka.ThreadingActor,
             match = self.sequence_match_results.get()
             self.sequence_match_results.task_done()
 
-        if match and match.ratio >= 0.80:
+        if match and match.ratio == 1.0:
             if match.marker.uri and type(PandoraUri.factory(match.marker.uri)) is AdItemUri:
                 logger.info('Ignoring doubleclick event for Pandora advertisement...')
             else:
@@ -472,12 +470,14 @@ class EventSequence(object):
     def get_ratio(self):
         if self.wait_for:
             # Add 'wait_for' event as well to make ratio more accurate.
-            self.target_sequence.append(self.wait_for)
-        if self.strict:
-            ratio = EventSequence.match_sequence(self.events_seen, self.target_sequence)
+            match_sequence = self.target_sequence + [self.wait_for]
         else:
-            filtered_list = [e for e in self.events_seen if e in self.target_sequence]
-            ratio = EventSequence.match_sequence(filtered_list, self.target_sequence)
+            match_sequence = self.target_sequence
+        if self.strict:
+            ratio = EventSequence.match_sequence(self.events_seen, match_sequence)
+        else:
+            filtered_list = [e for e in self.events_seen if e in match_sequence]
+            ratio = EventSequence.match_sequence(filtered_list, match_sequence)
         if ratio < 1.0 and self.strict:
             return 0
         return ratio

@@ -2,10 +2,12 @@ Changelog
 =========
 
 
-v0.2.1 (UNRELEASED)
--------------------
+v0.2.1 (Feb 6, 2016)
+--------------------
 
-- Abort backend startup if login to Pandora server fails. (Fixes: `#44 <https://github.com/rectalogic/mopidy-pandora/issues/44>`_).
+- Fix to prevent the Mopidy-Pandora backend from starting up if logging in to the Pandora server failed.
+  (Fixes: `#44 <https://github.com/rectalogic/mopidy-pandora/issues/44>`_).
+- Fixed an issue that would cause only the first few doubleclick events to be processed correctly.
 
 v0.2.0 (Jan 26, 2016)
 ---------------------
