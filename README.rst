@@ -97,7 +97,7 @@ The following configuration values are available:
 - ``pandora/api_host``: Which of the JSON API `endpoints <http://6xq.net/pandora-apidoc/json/>`_ to use. Note that
   the endpoints are different for Pandora One and free accounts (details in the link provided).
 
-- ``pandora/partner_`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+- ``pandora/partner_*`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
   to use for the Pandora API entry point.
 
 - ``pandora/username``: Your Pandora username. You *must* provide this.
