@@ -171,6 +171,22 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     assert track.uri == track_uri.uri
 
 
+# Regression test for https://github.com/rectalogic/mopidy-pandora/issues/48
+def test_lookup_of_track_that_does_not_specify_bitrate(config, playlist_item_mock):
+    backend = conftest.get_backend(config)
+
+    playlist_item_mock.bitrate = None
+    track_uri = PlaylistItemUri._from_track(playlist_item_mock)
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                        playlist_item_mock)
+
+    results = backend.library.lookup(track_uri.uri)
+    assert len(results) == 1
+
+    track = results[0]
+    assert track.uri == track_uri.uri
+
+
 def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     backend = conftest.get_backend(config)
 

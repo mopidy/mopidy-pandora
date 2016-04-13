@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+v0.2.2 (Apr 13, 2016)
+---------------------
+
+- Fix an issue that would cause Mopidy-Pandora to raise an exception if a track did not have the `bitrate` field specified.
+  Please refer to the updated `configuration <https://github.com/rectalogic/mopidy-pandora#configuration>`_ options for
+  ``preferred_audio_quality`` for details on the effect that the chosen partner device has on stream quality options.
+  (Fixes: `#48 <https://github.com/rectalogic/mopidy-pandora/issues/48>`_).
+
 v0.2.1 (Feb 6, 2016)
 --------------------
 

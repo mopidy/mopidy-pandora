@@ -82,7 +82,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     track_kwargs['name'] = track.song_name
                     track_kwargs['length'] = track.track_length * 1000
-                    track_kwargs['bitrate'] = int(track.bitrate)
+                    try:
+                        track_kwargs['bitrate'] = int(track.bitrate)
+                    except TypeError:
+                        # Bitrate not specified for this stream, ignore.
+                        pass
                     artist_kwargs['name'] = track.artist_name
                     album_kwargs['name'] = track.album_name
                     album_kwargs['uri'] = track.album_detail_url
