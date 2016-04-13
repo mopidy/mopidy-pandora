@@ -106,7 +106,9 @@ The following configuration values are available:
 
 - ``pandora/preferred_audio_quality``: can be one of ``lowQuality``, ``mediumQuality``, or ``highQuality`` (default).
   If the preferred audio quality is not available for the partner device specified, then the next-lowest bitrate stream
-  that Pandora supports for the chosen device will be used.
+  that Pandora supports for the chosen device will be used. Note that this setting has no effect for partner device types
+  that only provide one audio stream (notably credentials associated with iOS). In such instances, Mopidy-Pandora will
+  always revert to the default stream provided by the Pandora server.
 
 - ``pandora/sort_order``: defaults to ``a-z``. Use ``date`` to display the list of stations in the order that the
   stations were added.
