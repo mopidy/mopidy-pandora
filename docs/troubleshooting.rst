@@ -36,11 +36,11 @@ If you are behind a proxy, you may have to configure some of Mopidy's
 4. Check the installed versions of OpenSSL and certifi
 ------------------------------------------------------
 
-There is a known problem with cross-signed certificates and versions of
-OpenSSL prior to 1.0.2. If you are running Mopidy on a Raspberry Pi it is
-likely that you still have an older version of OpenSSL installed. You could
-try upgrading OpenSSL, or as a workaround, revert to an older version of
-certifi with `pip install certifi==2015.4.28`.
+There is a `known problem <https://lukasa.co.uk/2015/04/Certifi_State_Of_Union/>`_
+with cross-signed certificates and versions of OpenSSL prior to 1.0.2. If you
+are running Mopidy on a Raspberry Pi it is likely that you still have an older
+version of OpenSSL installed. You could try upgrading OpenSSL, or as a
+workaround, revert to an older version of certifi with ``pip install certifi==2015.4.28``.
 
 
 5. Run pydora directly
