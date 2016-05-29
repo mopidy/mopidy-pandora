@@ -329,6 +329,22 @@ def test_browse_station_uri(config, station_mock):
             assert len(results) == 1
 
 
+def test_formatted_search_query_concatenates_queries_into_free_text(config):
+    backend = conftest.get_backend(config)
+
+    result = backend.library._formatted_search_query({
+        'any': ['any_mock'], 'artist': ['artist_mock'], 'track_name': ['track_mock']
+    })
+    assert 'any_mock' in result and 'artist_mock' in result and 'track_mock' in result
+
+
+def test_formatted_search_query_ignores_unsupported_attributes(config):
+    backend = conftest.get_backend(config)
+
+    result = backend.library._formatted_search_query({'album': ['album_mock']})
+    assert len(result) is 0
+
+
 def test_refresh_without_uri_refreshes_root(config):
     backend = conftest.get_backend(config)
     backend.api.get_station_list = mock.Mock()
@@ -393,3 +409,23 @@ def test_refresh_station_directory_not_in_cache_handles_key_error(config):
     assert backend.library.pandora_station_cache.currsize == 0
     assert not backend.api.get_station_list.called
     assert not backend.api.get_genre_stations.called
+
+
+def test_search_returns_empty_result_for_unsupported_queries(config, caplog):
+    backend = conftest.get_backend(config)
+    assert len(backend.library.search({'album': ['album_name_mock']})) is 0
+    assert 'Unsupported Pandora search query:' in caplog.text()
+
+
+def test_search_(config):
+    with mock.patch.object(APIClient, 'search', conftest.search_mock):
+
+        backend = conftest.get_backend(config)
+        search_result = backend.library.search({'any': 'search_mock'})
+
+        assert len(search_result.tracks) is 1
+        assert search_result.tracks[0].uri == 'pandora:search:S1234567'
+        assert search_result.tracks[0].name == 'Pandora station for track: ' + conftest.MOCK_TRACK_NAME
+
+        assert len(search_result.artists) is 1
+        assert search_result.artists[0].uri == 'pandora:search:R123456'

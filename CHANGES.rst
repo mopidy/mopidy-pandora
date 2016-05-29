@@ -1,6 +1,11 @@
 Changelog
 =========
 
+(UNRELEASED)
+------------
+
+- Add support for searching. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
+
 
 v0.2.2 (Apr 13, 2016)
 ---------------------

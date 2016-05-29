@@ -28,6 +28,7 @@ Features
 - Add ratings to tracks (thumbs up, thumbs down, sleep, etc.).
 - Bookmark songs or artists.
 - Browse and add genre stations.
+- Search for song or artist stations.
 - Play QuickMix stations.
 - Sort stations alphabetically or by date added.
 - Delete stations from the user's Pandora profile.
@@ -55,7 +56,7 @@ Dependencies
 - Requires a Pandora user account. Users with a Pandora One subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.7.0. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
+- ``pydora`` >= 1.7.2. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
 - ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
