@@ -12,7 +12,7 @@ from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
-from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, StationUri, TrackUri  # noqa I101
+from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, SearchUri, StationUri, TrackUri  # noqa I101
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,14 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
+        if isinstance(pandora_uri, SearchUri):
+            # Create the station first so that it can be browsed.
+            station_uri = self._create_station_for_token(pandora_uri.token)
+            track = self._browse_tracks(station_uri.uri)[0]
+
+            # Recursive call to look up first track in station that was searched for.
+            return self.lookup(track.uri)
+
         if isinstance(pandora_uri, TrackUri):
             try:
                 track = self.lookup_pandora_track(uri)
@@ -157,8 +165,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         pandora_uri = PandoraUri.factory(uri)
         return [self.get_next_pandora_track(pandora_uri.station_id)]
 
-    def _create_station_for_genre(self, genre_token):
-        json_result = self.backend.api.create_station(search_token=genre_token)
+    def _create_station_for_token(self, token):
+        json_result = self.backend.api.create_station(search_token=token)
         new_station = Station.from_json(self.backend.api, json_result)
 
         self.refresh()
@@ -178,7 +186,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def get_station_cache_item(self, station_id):
         if GenreStationUri.pattern.match(station_id):
-            pandora_uri = self._create_station_for_genre(station_id)
+            pandora_uri = self._create_station_for_token(station_id)
             station_id = pandora_uri.station_id
 
         station = self.backend.api.get_station(station_id)
@@ -219,3 +227,42 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             else:
                 raise ValueError('Unexpected URI type to perform refresh of Pandora directory: {}.'
                                  .format(pandora_uri.uri_type))
+
+    def search(self, query=None, uris=None, exact=False, **kwargs):
+        search_text = self._formatted_search_query(query)
+
+        if not search_text:
+            # No value provided for search query, abort.
+            logger.info('Unsupported Pandora search query: {}'.format(query))
+            return []
+
+        search_result = self.backend.api.search(search_text)
+
+        tracks = []
+        for song in search_result.songs:
+            tracks.append(models.Track(uri=SearchUri(song.token).uri,
+                                       name='Pandora station for track: {}'.format(song.song_name),
+                                       artists=[models.Artist(name=song.artist)]))
+
+        artists = []
+        for artist in search_result.artists:
+            search_uri = SearchUri(artist.token)
+            if search_uri.is_artist_search:
+                station_name = 'Pandora station for artist: {}'.format(artist.artist)
+            else:
+                station_name = 'Pandora station for composer: {}'.format(artist.artist)
+            artists.append(models.Artist(uri=search_uri.uri,
+                                         name=station_name))
+
+        return models.SearchResult(uri='pandora:search:{}'.format(search_text), tracks=tracks, artists=artists)
+
+    def _formatted_search_query(self, query):
+        search_text = []
+        for (field, values) in iter(query.items()):
+            if not hasattr(values, '__iter__'):
+                values = [values]
+            for value in values:
+                if field == 'any' or field == 'artist' or field == 'track_name':
+                    search_text.append(value)
+        search_text = ' '.join(search_text)
+        return search_text

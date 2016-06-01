@@ -7,7 +7,8 @@ import mock
 
 from pandora import APIClient
 
-from pandora.models.pandora import AdItem, GenreStation, GenreStationList, PlaylistItem, Station, StationList
+from pandora.models.pandora import AdItem, GenreStation, GenreStationList, PlaylistItem, SearchResult, Station,\
+    StationList
 
 import pytest
 
@@ -278,6 +279,28 @@ def station_list_result_mock():
     return mock_result['result']
 
 
+@pytest.fixture(scope='session')
+def search_result_mock():
+    mock_result = {'stat': 'ok',
+                   'result': {'nearMatchesAvailable': True,
+                              'explanation': '',
+                              'songs': [{
+                                  'artistName': 'search_song_artist_mock',
+                                  'musicToken': 'S1234567',
+                                  'songName': MOCK_TRACK_NAME,
+                                  'score': 100
+                              }],
+                              'artists': [{
+                                  'artistName': 'search_artist_artist_mock',
+                                  'musicToken': 'R123456',
+                                  'likelyMatch': False,
+                                  'score': 100
+                              }]}
+                   }
+
+    return mock_result['result']
+
+
 @pytest.fixture
 def get_station_list_mock(self, force_refresh=False):
     return StationList.from_json(get_backend(config()).api, station_list_result_mock())
@@ -296,6 +319,11 @@ def request_exception_mock(self, *args, **kwargs):
 @pytest.fixture
 def transport_call_not_implemented_mock(self, method, **data):
     raise TransportCallTestNotImplemented(method + '(' + json.dumps(self.remove_empty_values(data)) + ')')
+
+
+@pytest.fixture
+def search_mock(self, search_text):
+    return SearchResult.from_json(get_backend(config()).api, search_result_mock())
 
 
 class TransportCallTestNotImplemented(Exception):
