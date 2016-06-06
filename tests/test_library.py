@@ -197,6 +197,19 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     assert "Failed to lookup Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
 
 
+def test_lookup_overrides_album_and_artist_uris(config, playlist_item_mock):
+    backend = conftest.get_backend(config)
+
+    track_uri = PlaylistItemUri._from_track(playlist_item_mock)
+    backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                        playlist_item_mock)
+
+    results = backend.library.lookup(track_uri.uri)
+    track = results[0]
+    assert next(iter(track.artists)).uri == track_uri.uri
+    assert track.album.uri == track_uri.uri
+
+
 def test_browse_directory_uri(config):
     with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
 
