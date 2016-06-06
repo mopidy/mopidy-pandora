@@ -85,8 +85,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     if not track.company_name:
                         track.company_name = '(Company name not specified)'
                     album_kwargs['name'] = track.company_name
-
-                    album_kwargs['uri'] = track.click_through_url
                 else:
                     track_kwargs['name'] = track.song_name
                     track_kwargs['length'] = track.track_length * 1000
@@ -97,11 +95,12 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                         pass
                     artist_kwargs['name'] = track.artist_name
                     album_kwargs['name'] = track.album_name
-                    album_kwargs['uri'] = track.album_detail_url
         else:
             raise ValueError('Unexpected type to perform Pandora track lookup: {}.'.format(pandora_uri.uri_type))
 
+        artist_kwargs['uri'] = uri  # Artist lookups should just point back to the track itself.
         track_kwargs['artists'] = [models.Artist(**artist_kwargs)]
+        album_kwargs['uri'] = uri   # Album lookups should just point back to the track itself.
         track_kwargs['album'] = models.Album(**album_kwargs)
         return [models.Track(**track_kwargs)]
 
