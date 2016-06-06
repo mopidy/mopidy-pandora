@@ -28,7 +28,7 @@ Features
 - Add ratings to tracks (thumbs up, thumbs down, sleep, etc.).
 - Bookmark songs or artists.
 - Browse and add genre stations.
-- Search for song or artist stations.
+- Search for song, artist, and genre stations.
 - Play QuickMix stations.
 - Sort stations alphabetically or by date added.
 - Delete stations from the user's Pandora profile.
