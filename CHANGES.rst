@@ -4,7 +4,13 @@ Changelog
 (UNRELEASED)
 ------------
 
+**Features and improvements**
+
 - Add support for searching. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
+
+**Fixes**
+
+- Album and artist URIs now point back to the Pandora track. (Fixes: `#51 <https://github.com/rectalogic/mopidy-pandora/issues/51>`_).
 
 
 v0.2.2 (Apr 13, 2016)
