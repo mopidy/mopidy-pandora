@@ -436,9 +436,13 @@ def test_search_(config):
         backend = conftest.get_backend(config)
         search_result = backend.library.search({'any': 'search_mock'})
 
-        assert len(search_result.tracks) is 1
-        assert search_result.tracks[0].uri == 'pandora:search:S1234567'
-        assert search_result.tracks[0].name == 'Pandora station for track: ' + conftest.MOCK_TRACK_NAME
+        assert len(search_result.tracks) is 2
+        assert search_result.tracks[0].uri == 'pandora:search:G123'
+        assert search_result.tracks[0].name == 'search_genre_mock (Pandora genre)'
+
+        assert search_result.tracks[1].uri == 'pandora:search:S1234567'
+        assert search_result.tracks[1].name == conftest.MOCK_TRACK_NAME + ' (Pandora station)'
 
         assert len(search_result.artists) is 1
         assert search_result.artists[0].uri == 'pandora:search:R123456'
+        assert search_result.artists[0].name == 'search_artist_artist_mock (Pandora artist)'

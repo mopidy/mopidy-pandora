@@ -6,9 +6,9 @@ Changelog
 
 **Features and improvements**
 
-- Add support for searching. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
+- Add support for searching Pandora stations. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
 
-**Fixes**
+-**Fixes**
 
 - Album and artist URIs now point back to the Pandora track. (Fixes: `#51 <https://github.com/rectalogic/mopidy-pandora/issues/51>`_).
 

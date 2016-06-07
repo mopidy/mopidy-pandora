@@ -140,6 +140,12 @@ def test_search_uri_parse():
     assert obj.uri_type == SearchUri.uri_type
     assert obj.token == 'C12345'
 
+    obj = PandoraUri._from_uri('pandora:search:G123')
+    assert type(obj) is SearchUri
+
+    assert obj.uri_type == SearchUri.uri_type
+    assert obj.token == 'G123'
+
 
 def test_search_uri_is_track_search():
     obj = PandoraUri._from_uri('pandora:search:S1234567')
@@ -163,6 +169,14 @@ def test_search_uri_is_composer_search():
 
     obj.token = 'C12345'
     assert obj.is_composer_search
+
+
+def test_search_uri_is_genre_search():
+    obj = PandoraUri._from_uri('pandora:search:S1234567')
+    assert not obj.is_genre_search
+
+    obj.token = 'G123'
+    assert obj.is_genre_search
 
 
 def test_station_uri_from_station(station_mock):

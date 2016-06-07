@@ -193,8 +193,8 @@ class SearchUri(PandoraUri):
         super(SearchUri, self).__init__(self.uri_type)
 
         # Check that this really is a search result URI as opposed to a regular URI.
-        # Search result tokens always start with 'S' (song), 'R' (artist), or 'C' (composer).
-        assert re.match('^([S,R,C])', token)
+        # Search result tokens always start with 'S' (song), 'R' (artist), 'C' (composer), or 'G' (genre station).
+        assert re.match('^([SRCG])', token)
         self.token = token
 
     def __repr__(self):
@@ -214,3 +214,7 @@ class SearchUri(PandoraUri):
     @property
     def is_composer_search(self):
         return self.token.startswith('C')
+
+    @property
+    def is_genre_search(self):
+        return self.token.startswith('G')

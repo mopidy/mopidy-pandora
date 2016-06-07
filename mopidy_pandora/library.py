@@ -235,21 +235,26 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             logger.info('Unsupported Pandora search query: {}'.format(query))
             return []
 
-        search_result = self.backend.api.search(search_text)
+        search_result = self.backend.api.search(search_text, include_near_matches=False, include_genre_stations=True)
 
         tracks = []
+        for genre in search_result.genre_stations:
+            tracks.append(models.Track(uri=SearchUri(genre.token).uri,
+                                       name='{} (Pandora genre)'.format(genre.station_name),
+                                       artists=[models.Artist(name=genre.station_name)]))
+
         for song in search_result.songs:
             tracks.append(models.Track(uri=SearchUri(song.token).uri,
-                                       name='Pandora station for track: {}'.format(song.song_name),
+                                       name='{} (Pandora station)'.format(song.song_name),
                                        artists=[models.Artist(name=song.artist)]))
 
         artists = []
         for artist in search_result.artists:
             search_uri = SearchUri(artist.token)
             if search_uri.is_artist_search:
-                station_name = 'Pandora station for artist: {}'.format(artist.artist)
+                station_name = '{} (Pandora artist)'.format(artist.artist)
             else:
-                station_name = 'Pandora station for composer: {}'.format(artist.artist)
+                station_name = '{} (Pandora composer)'.format(artist.artist)
             artists.append(models.Artist(uri=search_uri.uri,
                                          name=station_name))
 

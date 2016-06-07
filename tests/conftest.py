@@ -295,6 +295,11 @@ def search_result_mock():
                                   'musicToken': 'R123456',
                                   'likelyMatch': False,
                                   'score': 100
+                              }],
+                              'genreStations': [{
+                                  'musicToken': 'G123',
+                                  'score': 100,
+                                  'stationName': 'search_genre_mock'
                               }]}
                    }
 
@@ -322,7 +327,7 @@ def transport_call_not_implemented_mock(self, method, **data):
 
 
 @pytest.fixture
-def search_mock(self, search_text):
+def search_mock(self, search_text, include_near_matches=False, include_genre_stations=False):
     return SearchResult.from_json(get_backend(config()).api, search_result_mock())
 
 
