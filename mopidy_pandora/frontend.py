@@ -340,7 +340,7 @@ class EventMonitorFrontend(pykka.ThreadingActor,
             self.sequence_match_results.task_done()
 
         if match and match.ratio == 1.0:
-            if match.marker.uri and type(PandoraUri.factory(match.marker.uri)) is AdItemUri:
+            if match.marker.uri and isinstance(PandoraUri.factory(match.marker.uri), AdItemUri):
                 logger.info('Ignoring doubleclick event for Pandora advertisement...')
             else:
                 self._trigger_event_triggered(match.marker.event, match.marker.uri)

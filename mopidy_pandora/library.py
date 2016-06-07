@@ -44,10 +44,10 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         pandora_uri = PandoraUri.factory(uri)
 
-        if type(pandora_uri) is GenreUri:
+        if isinstance(pandora_uri, GenreUri):
             return self._browse_genre_stations(uri)
 
-        if type(pandora_uri) is StationUri or type(pandora_uri) is GenreStationUri:
+        if isinstance(pandora_uri, StationUri):
             return self._browse_tracks(uri)
 
     def lookup(self, uri):
@@ -75,7 +75,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 if len(images) > 0:
                     album_kwargs = {'images': [image.uri for image in images]}
 
-                if type(pandora_uri) is AdItemUri:
+                if isinstance(pandora_uri, AdItemUri):
                     track_kwargs['name'] = 'Advertisement'
 
                     if not track.title:
@@ -202,7 +202,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return None
 
         track_uri = PandoraUri.factory(track)
-        if type(track_uri) is AdItemUri:
+        if isinstance(track_uri, AdItemUri):
             track_name = 'Advertisement'
         else:
             track_name = track.song_name
@@ -218,7 +218,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             self.backend.api.get_genre_stations(force_refresh=True)
         else:
             pandora_uri = PandoraUri.factory(uri)
-            if type(pandora_uri) is StationUri:
+            if isinstance(pandora_uri, StationUri):
                 try:
                     self.pandora_station_cache.pop(pandora_uri.station_id)
                 except KeyError:
