@@ -48,6 +48,15 @@ def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
     assert "Failed to lookup image for Pandora URI '{}'.".format(track_uri.uri) in caplog.text()
 
 
+def test_get_images_for_unsupported_uri_type_issues_warning(config, caplog):
+    backend = conftest.get_backend(config)
+
+    search_uri = PandoraUri.factory('pandora:search:R12345')
+    results = backend.library.get_images([search_uri.uri])
+    assert len(results[search_uri.uri]) == 0
+    assert "No images available for Pandora URIs of type 'search'.".format(search_uri.uri) in caplog.text()
+
+
 def test_get_images_for_track_without_images(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 
@@ -75,7 +84,6 @@ def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
 
     station_mock = mock.Mock(spec=Station)
     station_mock.id = 'id_token_mock'
-    station_mock.id = 'id_token_mock'
     backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([playlist_item_mock]))
 
     ref = backend.library.get_next_pandora_track('id_token_mock')
@@ -88,7 +96,6 @@ def test_get_next_pandora_track_handles_no_more_tracks_available(config, caplog)
     backend = conftest.get_backend(config)
 
     station_mock = mock.Mock(spec=Station)
-    station_mock.id = 'id_token_mock'
     station_mock.id = 'id_token_mock'
     backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([]))
 
@@ -155,6 +162,31 @@ def test_lookup_of_ad_uri_defaults_missing_values(config, ad_item_mock):
     assert track.name == 'Advertisement'
     assert '(Title not specified)' in next(iter(track.artists)).name
     assert track.album.name == '(Company name not specified)'
+
+
+def test_lookup_of_search_uri(config, playlist_item_mock):
+    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(APIClient, 'create_station',
+                               mock.Mock(return_value=conftest.station_result_mock()['result'])) as create_station_mock:
+            with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+
+                backend = conftest.get_backend(config)
+
+                station_mock = mock.Mock(spec=Station)
+                station_mock.id = conftest.MOCK_STATION_ID
+                backend.library.pandora_station_cache[station_mock.id] = \
+                    StationCacheItem(conftest.station_result_mock()['result'],
+                                     iter([playlist_item_mock]))
+
+                track_uri = PlaylistItemUri._from_track(playlist_item_mock)
+                backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
+                                                                                    playlist_item_mock)
+
+                results = backend.library.lookup("pandora:search:S1234567")
+                # Make sure a station is created for the search URI first
+                assert create_station_mock.called
+                # Check that the first track to be played is returned correctly.
+                assert results[0].uri == track_uri.uri
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):
@@ -404,7 +436,6 @@ def test_refresh_station_directory(config):
 
     station_mock = mock.Mock(spec=Station)
     station_mock.id = 'id_token_mock'
-    station_mock.id = 'id_token_mock'
     backend.library.pandora_station_cache[station_mock.id] = StationCacheItem(station_mock, iter([]))
 
     backend.library.refresh('pandora:station:id_token_mock:id_token_mock')
@@ -430,7 +461,7 @@ def test_search_returns_empty_result_for_unsupported_queries(config, caplog):
     assert 'Unsupported Pandora search query:' in caplog.text()
 
 
-def test_search_(config):
+def test_search(config):
     with mock.patch.object(APIClient, 'search', conftest.search_mock):
 
         backend = conftest.get_backend(config)
@@ -443,6 +474,9 @@ def test_search_(config):
         assert search_result.tracks[1].uri == 'pandora:search:S1234567'
         assert search_result.tracks[1].name == conftest.MOCK_TRACK_NAME + ' (Pandora station)'
 
-        assert len(search_result.artists) is 1
+        assert len(search_result.artists) is 2
         assert search_result.artists[0].uri == 'pandora:search:R123456'
         assert search_result.artists[0].name == 'search_artist_artist_mock (Pandora artist)'
+
+        assert search_result.artists[1].uri == 'pandora:search:C123456'
+        assert search_result.artists[1].name == 'search_artist_composer_mock (Pandora composer)'

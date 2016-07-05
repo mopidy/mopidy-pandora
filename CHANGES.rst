@@ -7,8 +7,10 @@ Changelog
 **Features and improvements**
 
 - Add support for searching Pandora stations. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
+- Switch default partner device configuration values from ``IP01`` (iPhone) to ``android-generic``, which provides more
+  stream quality configuration options.
 
--**Fixes**
+**Fixes**
 
 - Album and artist URIs now point back to the Pandora track. (Fixes: `#51 <https://github.com/rectalogic/mopidy-pandora/issues/51>`_).
 

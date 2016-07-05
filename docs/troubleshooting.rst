@@ -47,10 +47,9 @@ workaround, revert to an older version of certifi with ``pip install certifi==20
 ----------------------
 
 Mopidy-Pandora makes use of the pydora API, which comes bundled with its own
-command-line player that can be run completely independently of Mopidy. This
-is often useful for isolating issues to determine if they are Mopidy related,
-or due to problems with your Pandora user account or any of a range of
-technical issues in reaching and logging in to the Pandora servers.
+command-line player. Running pydora completely independently of Mopidy
+is often useful for isolating issues, and can be used to determine if they are
+Mopidy related or not.
 
 Follow the `installation instructions <https://github.com/mcrute/pydora#installing>`_
 and use ``pydora-configure`` to create the necessary configuration file in

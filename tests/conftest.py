@@ -7,8 +7,8 @@ import mock
 
 from pandora import APIClient
 
-from pandora.models.pandora import AdItem, GenreStation, GenreStationList, PlaylistItem, SearchResult, Station,\
-    StationList
+from pandora.models.pandora import AdItem, GenreStation, GenreStationList, PlaylistItem, SearchResult, \
+    SearchResultItem, Station, StationList
 
 import pytest
 
@@ -206,7 +206,6 @@ def ad_metadata_result_mock():
 @pytest.fixture(scope='session')
 def playlist_mock(simulate_request_exceptions=False):
     with mock.patch.object(APIClient, '__call__', mock.Mock()) as call_mock:
-
         call_mock.return_value = playlist_result_mock()['result']
         return get_backend(config(), simulate_request_exceptions).api.get_playlist(MOCK_STATION_TOKEN)
 
@@ -290,12 +289,20 @@ def search_result_mock():
                                   'songName': MOCK_TRACK_NAME,
                                   'score': 100
                               }],
-                              'artists': [{
-                                  'artistName': 'search_artist_artist_mock',
-                                  'musicToken': 'R123456',
-                                  'likelyMatch': False,
-                                  'score': 100
-                              }],
+                              'artists': [
+                                  {
+                                      'artistName': 'search_artist_artist_mock',
+                                      'musicToken': 'R123456',
+                                      'likelyMatch': False,
+                                      'score': 100
+                                  },
+                                  {
+                                      'artistName': 'search_artist_composer_mock',
+                                      'musicToken': 'C123456',
+                                      'likelyMatch': False,
+                                      'score': 100
+                                  },
+                              ],
                               'genreStations': [{
                                   'musicToken': 'G123',
                                   'score': 100,
@@ -324,6 +331,12 @@ def request_exception_mock(self, *args, **kwargs):
 @pytest.fixture
 def transport_call_not_implemented_mock(self, method, **data):
     raise TransportCallTestNotImplemented(method + '(' + json.dumps(self.remove_empty_values(data)) + ')')
+
+
+@pytest.fixture
+def search_item_mock():
+    return SearchResultItem.from_json(get_backend(
+        config()).api, search_result_mock()['genreStations'][0])
 
 
 @pytest.fixture
