@@ -22,9 +22,9 @@ class ExtensionTests(unittest.TestCase):
         assert 'api_host = tuner.pandora.com/services/json/'in config
         assert 'partner_encryption_key ='in config
         assert 'partner_decryption_key ='in config
-        assert 'partner_username ='in config
+        assert 'partner_username = android'in config
         assert 'partner_password ='in config
-        assert 'partner_device ='in config
+        assert 'partner_device = android-generic'in config
         assert 'username ='in config
         assert 'password ='in config
         assert 'preferred_audio_quality = highQuality'in config

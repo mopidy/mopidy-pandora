@@ -18,7 +18,7 @@ def with_metaclass(meta, *bases):
 
 
 class _PandoraUriMeta(type):
-    def __init__(cls, name, bases, clsdict):  # noqa N805
+    def __init__(cls, name, bases, clsdict):  # noqa: N805
         super(_PandoraUriMeta, cls).__init__(name, bases, clsdict)
         if hasattr(cls, 'uri_type'):
             cls.TYPES[cls.uri_type] = cls
@@ -184,3 +184,37 @@ class AdItemUri(TrackUri):
             super(AdItemUri, self).__repr__(),
             **self.encoded_attributes
         )
+
+
+class SearchUri(PandoraUri):
+    uri_type = 'search'
+
+    def __init__(self, token):
+        super(SearchUri, self).__init__(self.uri_type)
+
+        # Check that this really is a search result URI as opposed to a regular URI.
+        # Search result tokens always start with 'S' (song), 'R' (artist), 'C' (composer), or 'G' (genre station).
+        assert re.match('^([SRCG])', token)
+        self.token = token
+
+    def __repr__(self):
+        return '{}:{token}'.format(
+            super(SearchUri, self).__repr__(),
+            **self.encoded_attributes
+        )
+
+    @property
+    def is_track_search(self):
+        return self.token.startswith('S')
+
+    @property
+    def is_artist_search(self):
+        return self.token.startswith('R')
+
+    @property
+    def is_composer_search(self):
+        return self.token.startswith('C')
+
+    @property
+    def is_genre_search(self):
+        return self.token.startswith('G')

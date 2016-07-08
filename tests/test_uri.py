@@ -9,7 +9,8 @@ from pandora.models.pandora import GenreStation, Station
 
 import pytest
 
-from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, PlaylistItemUri, StationUri, TrackUri
+from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, PlaylistItemUri, SearchUri,\
+    StationUri, TrackUri
 
 from . import conftest
 
@@ -117,6 +118,65 @@ def test_pandora_parse_invalid_scheme_raises_exception():
     with pytest.raises(NotImplementedError):
 
         PandoraUri()._from_uri('not_the_pandora_scheme:invalid')
+
+
+def test_search_uri_parse():
+
+    obj = PandoraUri._from_uri('pandora:search:S1234567')
+    assert type(obj) is SearchUri
+
+    assert obj.uri_type == SearchUri.uri_type
+    assert obj.token == 'S1234567'
+
+    obj = PandoraUri._from_uri('pandora:search:R123456')
+    assert type(obj) is SearchUri
+
+    assert obj.uri_type == SearchUri.uri_type
+    assert obj.token == 'R123456'
+
+    obj = PandoraUri._from_uri('pandora:search:C12345')
+    assert type(obj) is SearchUri
+
+    assert obj.uri_type == SearchUri.uri_type
+    assert obj.token == 'C12345'
+
+    obj = PandoraUri._from_uri('pandora:search:G123')
+    assert type(obj) is SearchUri
+
+    assert obj.uri_type == SearchUri.uri_type
+    assert obj.token == 'G123'
+
+
+def test_search_uri_is_track_search():
+    obj = PandoraUri._from_uri('pandora:search:S1234567')
+    assert obj.is_track_search
+
+    obj.token = 'R123456'
+    assert not obj.is_track_search
+
+
+def test_search_uri_is_artist_search():
+    obj = PandoraUri._from_uri('pandora:search:S1234567')
+    assert not obj.is_artist_search
+
+    obj.token = 'R123456'
+    assert obj.is_artist_search
+
+
+def test_search_uri_is_composer_search():
+    obj = PandoraUri._from_uri('pandora:search:S1234567')
+    assert not obj.is_composer_search
+
+    obj.token = 'C12345'
+    assert obj.is_composer_search
+
+
+def test_search_uri_is_genre_search():
+    obj = PandoraUri._from_uri('pandora:search:S1234567')
+    assert not obj.is_genre_search
+
+    obj.token = 'G123'
+    assert obj.is_genre_search
 
 
 def test_station_uri_from_station(station_mock):

@@ -212,6 +212,6 @@ def test_create_genre_station_invalidates_cache(config):
             backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
             assert t in list(backend.api.station_list_cache)
 
-            backend.library._create_station_for_genre('test_token')
+            backend.library._create_station_for_token('test_token')
             assert t not in list(backend.api.station_list_cache)
             assert backend.api.station_list_cache.currsize == 1

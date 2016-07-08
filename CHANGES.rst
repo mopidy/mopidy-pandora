@@ -1,11 +1,24 @@
 Changelog
 =========
 
+v0.3.0 (Jul 8, 2016)
+--------------------
+
+**Features and improvements**
+
+- Add support for searching Pandora stations. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
+- Switch default partner device configuration values from ``IP01`` (iPhone) to ``android-generic``, which provides more
+  stream quality configuration options.
+
+**Fixes**
+
+- Album and artist URIs now point back to the Pandora track. (Fixes: `#51 <https://github.com/rectalogic/mopidy-pandora/issues/51>`_).
+
 
 v0.2.2 (Apr 13, 2016)
 ---------------------
 
-- Fix an issue that would cause Mopidy-Pandora to raise an exception if a track did not have the `bitrate` field specified.
+- Fix an issue that would cause Mopidy-Pandora to raise an exception if a track did not have the ``bitrate`` field specified.
   Please refer to the updated `configuration <https://github.com/rectalogic/mopidy-pandora#configuration>`_ options for
   ``preferred_audio_quality`` for details on the effect that the chosen partner device has on stream quality options.
   (Fixes: `#48 <https://github.com/rectalogic/mopidy-pandora/issues/48>`_).
