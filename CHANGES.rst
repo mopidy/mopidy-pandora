@@ -1,8 +1,8 @@
 Changelog
 =========
 
-(UNRELEASED)
-------------
+v0.3.0 (Jul 8, 2016)
+--------------------
 
 **Features and improvements**
 
