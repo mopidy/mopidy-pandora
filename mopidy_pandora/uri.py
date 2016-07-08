@@ -18,7 +18,7 @@ def with_metaclass(meta, *bases):
 
 
 class _PandoraUriMeta(type):
-    def __init__(cls, name, bases, clsdict):  # noqa N805
+    def __init__(cls, name, bases, clsdict):  # noqa: N805
         super(_PandoraUriMeta, cls).__init__(name, bases, clsdict)
         if hasattr(cls, 'uri_type'):
             cls.TYPES[cls.uri_type] = cls

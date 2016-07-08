@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
+import re
+
 from collections import namedtuple
 
 from cachetools import LRUCache
@@ -12,7 +14,7 @@ from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
-from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, SearchUri, StationUri, TrackUri  # noqa I101
+from mopidy_pandora.uri import AdItemUri, GenreUri, PandoraUri, SearchUri, StationUri, TrackUri  # noqa I101
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +119,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 if image_uri:
                     image_uris.update([image_uri])
             except (TypeError, KeyError):
-                logger.exception("Failed to lookup image for Pandora URI '{}'.".format(uri))
+                pandora_uri = PandoraUri.factory(uri)
+                if isinstance(pandora_uri, TrackUri):
+                    # Could not find the track as expected - exception.
+                    logger.exception("Failed to lookup image for Pandora URI '{}'.".format(uri))
+                else:
+                    # Lookup
+                    logger.warning("No images available for Pandora URIs of type '{}'.".format(pandora_uri.uri_type))
                 pass
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
@@ -184,7 +192,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return self.pandora_track_cache[uri].track
 
     def get_station_cache_item(self, station_id):
-        if GenreStationUri.pattern.match(station_id):
+        if re.match('^([SRCG])', station_id):
             pandora_uri = self._create_station_for_token(station_id)
             station_id = pandora_uri.station_id
 

@@ -56,7 +56,7 @@ Dependencies
 - Requires a Pandora user account. Users with a Pandora One subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.7.2. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
+- ``pydora`` >= 1.7.3. The Python Pandora API Client. The package is available as ``pydora`` on PyPI.
 
 - ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
@@ -85,9 +85,9 @@ configuration also requires that you provide the details of the JSON API endpoin
     api_host = tuner.pandora.com/services/json/
     partner_encryption_key =
     partner_decryption_key =
-    partner_username = iphone
+    partner_username = android
     partner_password =
-    partner_device = IP01
+    partner_device = android-generic
     username =
     password =
 
@@ -99,7 +99,7 @@ The following configuration values are available:
   the endpoints are different for Pandora One and free accounts (details in the link provided).
 
 - ``pandora/partner_*`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
-  to use for the Pandora API entry point.
+  to use for the Pandora API entry point. You *must* provide these values based on your device preferences.
 
 - ``pandora/username``: Your Pandora username. You *must* provide this.
 
