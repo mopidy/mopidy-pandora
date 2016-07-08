@@ -14,7 +14,7 @@ from pandora.models.pandora import Station
 
 from pydora.utils import iterate_forever
 
-from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, SearchUri, StationUri, TrackUri  # noqa I101
+from mopidy_pandora.uri import AdItemUri, GenreUri, PandoraUri, SearchUri, StationUri, TrackUri  # noqa I101
 
 logger = logging.getLogger(__name__)
 
