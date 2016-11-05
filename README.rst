@@ -6,10 +6,6 @@ Mopidy-Pandora
     :target: https://pypi.python.org/pypi/Mopidy-Pandora/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/pypi/dm/Mopidy-Pandora.svg?style=flat
-    :target: https://pypi.python.org/pypi/Mopidy-Pandora/
-    :alt: Number of PyPI downloads
-
 .. image:: https://img.shields.io/travis/rectalogic/mopidy-pandora/develop.svg?style=flat
     :target: https://travis-ci.org/rectalogic/mopidy-pandora
     :alt: Travis CI build status
