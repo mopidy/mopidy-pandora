@@ -182,7 +182,7 @@ def test_lookup_of_search_uri(config, playlist_item_mock):
                 backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(mock.Mock(spec=models.Ref.track),
                                                                                     playlist_item_mock)
 
-                results = backend.library.lookup("pandora:search:S1234567")
+                results = backend.library.lookup('pandora:search:S1234567')
                 # Make sure a station is created for the search URI first
                 assert create_station_mock.called
                 # Check that the first track to be played is returned correctly.

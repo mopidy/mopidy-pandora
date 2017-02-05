@@ -14,7 +14,7 @@ def get_version(filename):
 
 
 class Tox(test):
-    user_options = [(b'tox-args=', b'a', "Arguments to pass to tox")]
+    user_options = [(b'tox-args=', b'a', 'Arguments to pass to tox')]
 
     def initialize_options(self):
         test.initialize_options(self)
@@ -34,6 +34,7 @@ class Tox(test):
             args = shlex.split(self.tox_args)
         errno = tox.cmdline(args=args)
         sys.exit(errno)
+
 
 setup(
     name='Mopidy-Pandora',
