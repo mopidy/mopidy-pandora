@@ -1,6 +1,12 @@
 Changelog
 =========
 
+UNRELEASED
+----------
+
+- Update documentation to refer to new 'Pandora Plus' subscription model instead of the old 'Pandora One'.
+- Update troubleshooting guide with more workarounds for cross-signed certificates using OpenSSL < 1.0.2.
+
 v0.3.0 (Jul 8, 2016)
 --------------------
 
@@ -47,7 +53,7 @@ v0.2.0 (Jan 26, 2016)
 - Station lists are now cached which speeds up startup and browsing of the list of stations dramatically. Configuration
   parameter ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
 - Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
-- Now plays advertisements which should prevent non-Pandora One accounts from being locked after extended use.
+- Now plays advertisements which should prevent non-Pandora Plus accounts from being locked after extended use.
 - Tracks are now played in ``consume`` instead of ``repeat`` mode. This is more in line with how Pandora deals with
   track playback. It also avoids infinite loops on unplayable tracks, which is still an issue in Mopidy 1.1.2.
 - Station sort order now defaults to alphabetical. This makes it easier to find stations if the user profile contains
