@@ -41,11 +41,14 @@ with cross-signed certificates and versions of OpenSSL prior to 1.0.2. If you
 are running Mopidy on a Raspberry Pi it is likely that you still have an older
 version of OpenSSL installed. `certifi/python-certifi#26 <https://github.com/certifi/python-certifi/issues/26>`_ lists
 several workarounds. In order of preference, you could try to:
+
 - Upgrade OpenSSL >= 1.0.2
-- Run ``python -c 'import certifi; print certifi.old_where()'``, and assign the output of this command to the
-  ``REQUESTS_CA_BUNDLE`` environment variable. If running Mopidy as a service, you might have to edit
+
+- Run ``python -c 'import certifi; print certifi.old_where()'``, and assign the output of this command to
+  the ``REQUESTS_CA_BUNDLE`` environment variable. If running Mopidy as a service, you might have to edit
   ``/etc/init.d/mopidy`` so that ``start-stop-daemon`` calls a custom script that sets the variable and wraps
   ``/usr/local/bin/mopidy``.
+
 - Revert to an older version of certifi with ``pip install certifi==2015.4.28``.
 
 
