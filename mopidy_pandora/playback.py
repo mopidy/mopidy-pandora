@@ -6,7 +6,7 @@ from mopidy import backend
 
 import requests
 
-from mopidy_pandora import listener
+from mopidy_pandora import listener, uri
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,20 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if track.uri is None:
             logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
             return False
+
+        pandora_uri = uri.PandoraUri.factory(track.uri)
+        if isinstance(pandora_uri, uri.TrackUri):
+            pass
+        elif isinstance(pandora_uri, uri.StationUri):
+            # Changing to the next track in the station
+            track = self.backend.library.get_next_pandora_track(pandora_uri.station_id)
+        elif isinstance(pandora_uri, uri.PandoraUri):
+            logger.warning("Unexpected Pandora URI type '{}' provided".format(pandora_uri.uri_type))
+            return False
+        else:
+            logger.warning("Unexpected URI provided: {}".format(track))
+            return False
+
         try:
             self._trigger_track_changing(track)
             self.check_skip_limit()
