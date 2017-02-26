@@ -129,8 +129,8 @@ def test_lookup_of_invalid_uri_type(config, caplog):
     with pytest.raises(ValueError):
         backend = conftest.get_backend(config)
 
-        backend.library.lookup('pandora:station:mock_id:mock_token')
-        assert 'Unexpected type to perform Pandora track lookup: station.' in caplog.text()
+        backend.library.lookup('pandora:genre:mock_name')
+        assert 'Unexpected type to perform Pandora track lookup: genre.' in caplog.text()
 
 
 def test_lookup_of_ad_uri(config, ad_item_mock):
@@ -187,6 +187,23 @@ def test_lookup_of_search_uri(config, playlist_item_mock):
                 assert create_station_mock.called
                 # Check that the first track to be played is returned correctly.
                 assert results[0].uri == track_uri.uri
+
+
+def test_lookup_of_station_uri(config):
+    with mock.patch.object(MopidyAPIClient, 'get_station', conftest.get_station_mock):
+        with mock.patch.object(APIClient, 'get_station_list', conftest.get_station_list_mock):
+            backend = conftest.get_backend(config)
+
+            station_uri = PandoraUri.factory(conftest.station_mock())
+            results = backend.library.lookup(station_uri.uri)
+            assert len(results) == 1
+
+            track = results[0]
+            assert track.uri == station_uri.uri
+            assert next(iter(track.album.images)) == conftest.MOCK_STATION_ART_URL
+            assert track.name == conftest.MOCK_STATION_NAME
+            assert next(iter(track.artists)).name == 'Pandora Station'
+            assert track.album.name == conftest.MOCK_STATION_GENRE
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):

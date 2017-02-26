@@ -6,6 +6,7 @@ UNRELEASED
 
 - Update documentation to refer to new 'Pandora Plus' subscription model instead of the old 'Pandora One'.
 - Update troubleshooting guide with more workarounds for cross-signed certificates using OpenSSL < 1.0.2.
+- Allow station URI's to be added to playlists and the Mopidy tracklist. (Addresses: `#58 <https://github.com/rectalogic/mopidy-pandora/issues/58>`_).
 
 v0.3.0 (Jul 8, 2016)
 --------------------
