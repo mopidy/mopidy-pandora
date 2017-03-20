@@ -54,6 +54,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
+        logger.info('Looking up Pandora {} {}...'.format(pandora_uri.uri_type, pandora_uri.uri))
         if isinstance(pandora_uri, SearchUri):
             # Create the station first so that it can be browsed.
             station_uri = self._create_station_for_token(pandora_uri.token)
@@ -62,6 +63,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             # Recursive call to look up first track in station that was searched for.
             return self.lookup(track.uri)
 
+        track_kwargs = {'uri': uri}
+        (album_kwargs, artist_kwargs) = {}, {}
+
         if isinstance(pandora_uri, TrackUri):
             try:
                 track = self.lookup_pandora_track(uri)
@@ -69,8 +73,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
                 return []
             else:
-                track_kwargs = {'uri': uri}
-                (album_kwargs, artist_kwargs) = {}, {}
                 # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
                 #       updated to make use of the newer LibraryController.get_images()
                 images = self.get_images([uri])[uri]
@@ -97,6 +99,12 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                         pass
                     artist_kwargs['name'] = track.artist_name
                     album_kwargs['name'] = track.album_name
+        elif isinstance(pandora_uri, StationUri):
+            station = self.backend.api.get_station(pandora_uri.station_id)
+            album_kwargs = {'images': [station.art_url]}
+            track_kwargs['name'] = station.name
+            artist_kwargs['name'] = 'Pandora Station'
+            album_kwargs['name'] = ', '.join(station.genre)
         else:
             raise ValueError('Unexpected type to perform Pandora track lookup: {}.'.format(pandora_uri.uri_type))
 

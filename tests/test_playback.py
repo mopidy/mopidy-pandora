@@ -117,6 +117,17 @@ def test_change_track_fetches_next_track_if_unplayable(provider, playlist_item_m
         assert 'Error changing Pandora track' in caplog.text()
 
 
+def test_change_track_fetches_next_track_if_station_uri(provider, caplog):
+    station = PandoraUri.factory(conftest.station_mock())
+
+    provider.backend._trigger_next_track_available = mock.PropertyMock()
+
+    assert provider.change_track(station) is False
+    assert 'Cannot play Pandora stations directly. Retrieving tracks for station with ID: {}...'.format(
+        station.station_id) in caplog.text()
+    assert provider.backend._trigger_next_track_available.called
+
+
 def test_change_track_skips_if_no_track_uri(provider):
     track = models.Track(uri=None)
 
