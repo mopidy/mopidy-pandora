@@ -22,6 +22,7 @@ MOCK_STATION_ID = '0000000000000000001'
 MOCK_STATION_TOKEN = '0000000000000000001'
 MOCK_STATION_DETAIL_URL = 'http://mockup.com/station/detail_url?...'
 MOCK_STATION_ART_URL = 'http://mockup.com/station/art_url?...'
+MOCK_STATION_GENRE = 'Genre Mock'
 
 MOCK_STATION_LIST_CHECKSUM = 'aa00aa00aa00aa00aa00aa00aa00aa00'
 
@@ -105,7 +106,8 @@ def station_result_mock():
                         'stationDetailUrl': MOCK_STATION_DETAIL_URL,
                         'artUrl': MOCK_STATION_ART_URL,
                         'stationToken': MOCK_STATION_TOKEN,
-                        'stationName': MOCK_STATION_NAME},
+                        'stationName': MOCK_STATION_NAME,
+                        'genre': [MOCK_STATION_GENRE]},
                    }
 
     return mock_result

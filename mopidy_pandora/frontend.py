@@ -233,6 +233,7 @@ class MatchResult(object):
     def __lt__(self, other):
         return self.ratio < other.ratio
 
+
 EventMarker = namedtuple('EventMarker', 'event, uri, time')
 
 

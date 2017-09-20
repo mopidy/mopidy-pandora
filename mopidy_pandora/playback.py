@@ -7,7 +7,7 @@ from mopidy import backend
 import requests
 
 from mopidy_pandora import listener
-
+from mopidy_pandora.uri import PandoraUri, StationUri
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,14 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def change_track(self, track):
         if track.uri is None:
             logger.warning("No URI for Pandora track '{}'. Track cannot be played.".format(track))
+            return False
+
+        pandora_uri = PandoraUri.factory(track.uri)
+        if isinstance(pandora_uri, StationUri):
+            # Change to first track in station playlist.
+            logger.warning('Cannot play Pandora stations directly. Retrieving tracks for station with ID: {}...'
+                           .format(pandora_uri.station_id))
+            self.backend.end_of_tracklist_reached(station_id=pandora_uri.station_id, auto_play=True)
             return False
         try:
             self._trigger_track_changing(track)
