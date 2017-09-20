@@ -1,8 +1,8 @@
 Changelog
 =========
 
-UNRELEASED
-----------
+v0.4.0 (Sep 20, 2017)
+---------------------
 
 - Update documentation to refer to new 'Pandora Plus' subscription model instead of the old 'Pandora One'.
 - Update troubleshooting guide with more workarounds for cross-signed certificates using OpenSSL < 1.0.2.
