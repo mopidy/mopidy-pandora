@@ -1,0 +1,8 @@
+mock
+mopidy
+pytest
+pytest-capturelog
+pytest-cov
+pytest-xdist
+responses
+tox
