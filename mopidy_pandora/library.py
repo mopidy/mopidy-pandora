@@ -33,7 +33,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         super(PandoraLibraryProvider, self).__init__(backend)
         self.sort_order = sort_order.lower()
 
-        self.pandora_station_cache = LRUCache(maxsize=5, missing=self.get_station_cache_item)
+        self.pandora_station_cache = StationCache(self, maxsize=5)
         self.pandora_track_cache = LRUCache(maxsize=10)
 
     def browse(self, uri):
@@ -199,15 +199,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def lookup_pandora_track(self, uri):
         return self.pandora_track_cache[uri].track
 
-    def get_station_cache_item(self, station_id):
-        if re.match('^([SRCG])', station_id):
-            pandora_uri = self._create_station_for_token(station_id)
-            station_id = pandora_uri.station_id
-
-        station = self.backend.api.get_station(station_id)
-        station_iter = iterate_forever(station.get_playlist)
-        return StationCacheItem(station, station_iter)
-
     def get_next_pandora_track(self, station_id):
         try:
             station_iter = self.pandora_station_cache[station_id].iter
@@ -286,3 +277,22 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     search_text.append(value)
         search_text = ' '.join(search_text)
         return search_text
+
+
+class StationCache(LRUCache):
+    def __init__(self,  library, maxsize, getsizeof=None):
+        super(StationCache, self).__init__(maxsize, getsizeof=getsizeof)
+        self.library = library
+
+    def __missing__(self, station_id):
+        if re.match('^([SRCG])', station_id):
+            pandora_uri = self.library._create_station_for_token(station_id)
+            station_id = pandora_uri.station_id
+
+        station = self.library.backend.api.get_station(station_id)
+        station_iter = iterate_forever(station.get_playlist)
+
+        item = StationCacheItem(station, station_iter)
+        self[station_id] = item
+
+        return item

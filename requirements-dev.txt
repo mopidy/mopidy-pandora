@@ -1,0 +1,5 @@
+mock~=2.0
+pytest~=4.0
+pytest-cov~=2.6
+pytest-sugar~=0.9
+responses~=0.10

@@ -1,9 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import Queue
 import json
 import threading
 
 import mock
+from mopidy import models
+import pykka
 
 from pandora import APIClient
 
@@ -14,7 +17,9 @@ import pytest
 
 import requests
 
-from mopidy_pandora import backend
+from mopidy_pandora import backend, frontend
+from mopidy_pandora.frontend import EventSequence
+from tests.dummy_mopidy import DummyMopidyInstance
 
 MOCK_STATION_TYPE = 'station'
 MOCK_STATION_NAME = 'Mock Station'
@@ -92,13 +97,71 @@ def get_backend(config, simulate_request_exceptions=False):
     return obj
 
 
-@pytest.fixture(scope='session')
-def genre_station_mock(simulate_request_exceptions=False):
-    return GenreStation.from_json(get_backend(config(), simulate_request_exceptions).api,
-                                  genre_stations_result_mock()['categories'][0]['stations'][0])
+@pytest.fixture
+def mopidy(config):
+    mopidy = DummyMopidyInstance()
+    mopidy.frontend = frontend.PandoraFrontend.start(config, mopidy.core).proxy()
+    mopidy.actor_register.append(mopidy.frontend)
+
+    yield mopidy
+
+    pykka.ActorRegistry.stop_all()
+    mock.patch.stopall()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
+def mopidy_with_monitor(config, mopidy):
+    mopidy.monitor = frontend.EventMonitorFrontend.start(config, mopidy.core).proxy()
+    mopidy.actor_register.append(mopidy.monitor)
+
+    # Consume mode needs to be enabled to detect 'previous' track changes
+    mopidy.core.tracklist.set_consume(True)
+
+    yield mopidy
+
+
+@pytest.fixture
+def rq():
+    return Queue.PriorityQueue()
+
+
+@pytest.fixture
+def event_sequence(rq):
+    return EventSequence('match_mock', ['e1', 'e2', 'e3'], rq, 0.1, False)
+
+
+@pytest.fixture
+def event_sequence_strict(rq):
+    return EventSequence('match_mock', ['e1', 'e2', 'e3'], rq, 0.1, True)
+
+
+@pytest.fixture
+def event_sequence_wait(rq):
+    return EventSequence('match_mock', ['e1', 'e2', 'e3'], rq, 0.1, False, 'w1')
+
+
+@pytest.fixture
+def event_sequences(event_sequence, event_sequence_strict, event_sequence_wait):
+    return [event_sequence, event_sequence_strict, event_sequence_wait]
+
+
+@pytest.fixture
+def tl_track_mock():
+    track_mock = mock.Mock(spec=models.Track)
+    track_mock.uri = 'pandora:track:id_mock:token_mock'
+    tl_track_mock = mock.Mock(spec=models.TlTrack)
+    tl_track_mock.track = track_mock
+
+    return tl_track_mock
+
+
+@pytest.fixture
+def genre_station_mock(config, genre_stations_result_mock, simulate_request_exceptions=False):
+    return GenreStation.from_json(get_backend(config, simulate_request_exceptions).api,
+                                  genre_stations_result_mock['categories'][0]['stations'][0])
+
+
+@pytest.fixture
 def station_result_mock():
     mock_result = {'stat': 'ok',
                    'result':
@@ -113,15 +176,10 @@ def station_result_mock():
     return mock_result
 
 
-@pytest.fixture(scope='session')
-def station_mock(simulate_request_exceptions=False):
-    return Station.from_json(get_backend(config(), simulate_request_exceptions).api,
-                             station_result_mock()['result'])
-
-
-@pytest.fixture(scope='session')
-def get_station_mock(self, station_token):
-    return station_mock()
+@pytest.fixture
+def get_station_mock_return_value(config, station_result_mock, simulate_request_exceptions=False):
+    return Station.from_json(get_backend(config, simulate_request_exceptions).api,
+                             station_result_mock['result'])
 
 
 @pytest.fixture(scope='session')
@@ -205,33 +263,33 @@ def ad_metadata_result_mock():
     return mock_result
 
 
-@pytest.fixture(scope='session')
-def playlist_mock(simulate_request_exceptions=False):
+@pytest.fixture
+def playlist_mock(config, playlist_result_mock, simulate_request_exceptions=False):
     with mock.patch.object(APIClient, '__call__', mock.Mock()) as call_mock:
-        call_mock.return_value = playlist_result_mock()['result']
-        return get_backend(config(), simulate_request_exceptions).api.get_playlist(MOCK_STATION_TOKEN)
-
-
-@pytest.fixture(scope='session')
-def get_playlist_mock(self, station_token):
-    return playlist_mock()
-
-
-@pytest.fixture(scope='session')
-def get_station_playlist_mock(self):
-    return iter(get_playlist_mock(self, MOCK_STATION_TOKEN))
+        call_mock.return_value = playlist_result_mock['result']
+        return get_backend(config, simulate_request_exceptions).api.get_playlist(MOCK_STATION_TOKEN)
 
 
 @pytest.fixture
-def playlist_item_mock():
+def get_playlist_mock(playlist_mock):
+    return playlist_mock
+
+
+@pytest.fixture
+def get_station_playlist_mock(get_playlist_mock):
+    return iter(get_playlist_mock)
+
+
+@pytest.fixture
+def playlist_item_mock(config, playlist_result_mock):
     return PlaylistItem.from_json(get_backend(
-        config()).api, playlist_result_mock()['result']['items'][0])
+        config).api, playlist_result_mock['result']['items'][0])
 
 
 @pytest.fixture
-def ad_item_mock():
+def ad_item_mock(config, ad_metadata_result_mock):
     ad_item = AdItem.from_json(get_backend(
-        config()).api, ad_metadata_result_mock()['result'])
+        config).api, ad_metadata_result_mock['result'])
     ad_item.station_id = MOCK_STATION_ID
     ad_item.ad_token = MOCK_TRACK_AD_TOKEN
     return ad_item
@@ -316,21 +374,19 @@ def search_result_mock():
 
 
 @pytest.fixture
-def get_station_list_mock(self, force_refresh=False):
-    return StationList.from_json(get_backend(config()).api, station_list_result_mock())
+def get_station_list_return_value_mock(config, station_list_result_mock,):
+    return StationList.from_json(get_backend(config).api, station_list_result_mock)
 
 
 @pytest.fixture
-def get_genre_stations_mock(self, force_refresh=False):
-    return GenreStationList.from_json(get_backend(config()).api, genre_stations_result_mock())
+def get_genre_stations_return_value_mock(config, genre_stations_result_mock):
+    return GenreStationList.from_json(get_backend(config).api, genre_stations_result_mock)
 
 
-@pytest.fixture(scope='session')
 def request_exception_mock(self, *args, **kwargs):
     raise requests.exceptions.RequestException
 
 
-@pytest.fixture
 def transport_call_not_implemented_mock(self, method, **data):
     raise TransportCallTestNotImplemented(method + '(' + json.dumps(self.remove_empty_values(data)) + ')')
 
@@ -342,8 +398,8 @@ def search_item_mock():
 
 
 @pytest.fixture
-def search_mock(self, search_text, include_near_matches=False, include_genre_stations=False):
-    return SearchResult.from_json(get_backend(config()).api, search_result_mock())
+def search_return_value_mock(config, search_result_mock):
+    return SearchResult.from_json(get_backend(config).api, search_result_mock)
 
 
 class TransportCallTestNotImplemented(Exception):
