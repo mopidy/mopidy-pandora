@@ -9,7 +9,7 @@ import json
 
 import logging
 
-from mock import mock
+import mock
 
 import requests
 
@@ -91,16 +91,18 @@ def test_do_rpc_increments_id():
 
 
 def test_run_async(caplog):
+    caplog.set_level(logging.INFO)
     t = async_func('test_1_async')
     t.join()
-    assert 'test_1_async' in caplog.text()
+    assert 'test_1_async' in caplog.text
 
 
 def test_run_async_queue(caplog):
+    caplog.set_level(logging.INFO)
     q = queue.Queue()
     async_func('test_2_async', queue=q)
     assert q.get() == 'test_value'
-    assert 'test_2_async' in caplog.text()
+    assert 'test_2_async' in caplog.text
 
 
 @run_async

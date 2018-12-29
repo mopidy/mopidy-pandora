@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import unittest
-
 import mock
 
 from mopidy_pandora import Extension
@@ -10,7 +8,7 @@ from mopidy_pandora import backend as backend_lib
 from mopidy_pandora import frontend as frontend_lib
 
 
-class ExtensionTests(unittest.TestCase):
+class TestExtension(object):
 
     def test_get_default_config(self):
         ext = Extension()

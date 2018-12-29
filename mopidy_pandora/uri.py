@@ -142,7 +142,7 @@ class StationUri(PandoraUri):
 
 class GenreStationUri(StationUri):
     uri_type = 'genre_station'
-    pattern = re.compile('^([G])(\d*)$')
+    pattern = re.compile('^([G])(\d*)$')  # noqa: W605
 
     def __init__(self, station_id, token):
         # Check that this really is a Genre station as opposed to a regular station.

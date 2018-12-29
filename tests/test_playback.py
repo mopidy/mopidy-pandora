@@ -56,7 +56,7 @@ def test_change_track_enforces_skip_limit_if_no_track_available(provider, playli
                 assert provider._trigger_skip_limit_exceeded.called
 
         assert 'Maximum track skip limit ({:d}) exceeded.'.format(
-            PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
+            PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text
 
 
 def test_change_track_enforces_skip_limit_if_no_audio_url(provider, playlist_item_mock, caplog):
@@ -79,7 +79,7 @@ def test_change_track_enforces_skip_limit_if_no_audio_url(provider, playlist_ite
                 assert provider._trigger_skip_limit_exceeded.called
 
         assert 'Maximum track skip limit ({:d}) exceeded.'.format(
-            PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
+            PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text
 
 
 def test_change_track_enforces_skip_limit_on_request_exceptions(provider, playlist_item_mock, caplog):
@@ -102,7 +102,7 @@ def test_change_track_enforces_skip_limit_on_request_exceptions(provider, playli
                     assert provider._trigger_skip_limit_exceeded.called
 
             assert 'Maximum track skip limit ({:d}) exceeded.'.format(
-                PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text()
+                PandoraPlaybackProvider.SKIP_LIMIT) in caplog.text
 
 
 def test_change_track_fetches_next_track_if_unplayable(provider, playlist_item_mock, caplog):
@@ -114,17 +114,17 @@ def test_change_track_fetches_next_track_if_unplayable(provider, playlist_item_m
         assert provider.change_track(track) is False
         assert provider._trigger_track_unplayable.called
 
-        assert 'Error changing Pandora track' in caplog.text()
+        assert 'Error changing Pandora track' in caplog.text
 
 
-def test_change_track_fetches_next_track_if_station_uri(provider, caplog):
-    station = PandoraUri.factory(conftest.station_mock())
+def test_change_track_fetches_next_track_if_station_uri(provider, get_station_mock_return_value, caplog):
+    station = PandoraUri.factory(get_station_mock_return_value)
 
     provider.backend._trigger_next_track_available = mock.PropertyMock()
 
     assert provider.change_track(station) is False
     assert 'Cannot play Pandora stations directly. Retrieving tracks for station with ID: {}...'.format(
-        station.station_id) in caplog.text()
+        station.station_id) in caplog.text
     assert provider.backend._trigger_next_track_available.called
 
 
@@ -142,7 +142,7 @@ def test_change_track_skips_if_track_not_available_in_buffer(provider, playlist_
     provider.backend.prepare_next_track = mock.PropertyMock()
 
     assert provider.change_track(track) is False
-    assert "Error changing Pandora track: failed to lookup '{}'.".format(track.uri) in caplog.text()
+    assert "Error changing Pandora track: failed to lookup '{}'.".format(track.uri) in caplog.text
 
 
 def test_change_track_resets_skips_on_success(provider, playlist_item_mock):
