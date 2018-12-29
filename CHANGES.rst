@@ -10,7 +10,8 @@ v0.4.1 (UNRELEASED)
 
 **Fixes**
 
-- Implement ``LRUCache``s' ``__missing__``. (Fixes: `#66 <https://github.com/rectalogic/mopidy-pandora/issues/66>`_).
+- Use the updated Station API introduced in pydora 1.12.0. (Fixes: `#65 <https://github.com/rectalogic/mopidy-pandora/issues/65>`_).
+- Implement ``LRUCache``'s ``__missing__``. (Fixes: `#66 <https://github.com/rectalogic/mopidy-pandora/issues/66>`_).
 
 v0.4.0 (Sep 20, 2017)
 ---------------------

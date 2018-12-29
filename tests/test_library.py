@@ -168,7 +168,10 @@ def test_lookup_of_search_uri(config, get_station_mock_return_value, playlist_it
                               get_station_list_return_value_mock, station_result_mock):
     with mock.patch.object(MopidyAPIClient, 'get_station', return_value=get_station_mock_return_value):
         with mock.patch.object(APIClient, 'create_station',
-                               mock.Mock(return_value=station_result_mock['result'])) as create_station_mock:
+                               mock.Mock(return_value=Station.from_json(
+                                   mock.MagicMock(MopidyAPIClient),
+                                   station_result_mock['result']
+                               ))) as create_station_mock:
             with mock.patch.object(APIClient, 'get_station_list', return_value=get_station_list_return_value_mock):
                 backend = conftest.get_backend(config)
 

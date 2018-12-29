@@ -5,7 +5,7 @@ import time
 import mock
 
 from pandora import APIClient
-from pandora.models.pandora import GenreStationList, StationList
+from pandora.models.pandora import GenreStationList, StationList, Station
 
 import pytest
 
@@ -208,7 +208,10 @@ def test_create_genre_station_invalidates_cache(config, get_station_list_return_
                                return_value=get_genre_stations_return_value_mock):
             backend = conftest.get_backend(config)
 
-            backend.api.create_station = mock.PropertyMock(return_value=station_result_mock['result'])
+            backend.api.create_station = mock.PropertyMock(return_value=Station.from_json(
+                mock.MagicMock(MopidyAPIClient),
+                station_result_mock['result'])
+            )
             t = time.time()
             backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
             assert t in list(backend.api.station_list_cache)
