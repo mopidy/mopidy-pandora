@@ -26,6 +26,7 @@ before_install:
 
 install:
   - "pip install tox"
+  - "pip install -U pyopenssl"
 
 script:
   - "tox -e $TOX_ENV"
