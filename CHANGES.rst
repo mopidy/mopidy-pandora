@@ -1,8 +1,8 @@
 Changelog
 =========
 
-v0.4.1 (UNRELEASED)
--------------------
+v0.4.1 (Dec 29, 2018)
+---------------------
 
 - Update package dependencies used during development to the latest versions.
 - Migrate all tests to pytest. Resolve pytest 4.0 deprecation errors.
