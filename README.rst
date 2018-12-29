@@ -52,7 +52,7 @@ Dependencies
 - Requires a Pandora user account. Users with a Pandora Plus subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.7.3. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
+- ``pydora`` >= 1.12.0. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
   Since Mopidy is still stuck on legacy Python (2.7), there may be some native dependencies on openssl that you will
   need to install beforehand. See the `cryptography installation docs <https://cryptography.io/en/latest/installation/>`_ for details.
 
