@@ -1,6 +1,17 @@
 Changelog
 =========
 
+v0.4.1 (UNRELEASED)
+-------------------
+
+- Update package dependencies used during development to the latest versions.
+- Migrate all tests to pytest. Resolve pytest 4.0 deprecation errors.
+- Switch to Xenial Travis build environment.
+
+**Fixes**
+
+- Implement ``LRUCache``s' ``__missing__``. (Fixes: `#66 <https://github.com/rectalogic/mopidy-pandora/issues/66>`_).
+
 v0.4.0 (Sep 20, 2017)
 ---------------------
 
