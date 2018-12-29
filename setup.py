@@ -9,7 +9,7 @@ from setuptools.command.test import test
 
 def get_version(filename):
     with open(filename) as fh:
-        metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", fh.read()))
+        metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", fh.read()))
         return metadata['version']
 
 
