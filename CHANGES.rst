@@ -1,6 +1,18 @@
 Changelog
 =========
 
+v0.4.1 (Dec 29, 2018)
+---------------------
+
+- Update package dependencies used during development to the latest versions.
+- Migrate all tests to pytest. Resolve pytest 4.0 deprecation errors.
+- Switch to Xenial Travis build environment.
+
+**Fixes**
+
+- Use the updated Station API introduced in pydora 1.12.0. (Fixes: `#65 <https://github.com/rectalogic/mopidy-pandora/issues/65>`_).
+- Implement ``LRUCache``'s ``__missing__``. (Fixes: `#66 <https://github.com/rectalogic/mopidy-pandora/issues/66>`_).
+
 v0.4.0 (Sep 20, 2017)
 ---------------------
 

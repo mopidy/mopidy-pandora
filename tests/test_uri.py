@@ -1,12 +1,11 @@
 # coding=utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from mock import mock
-
 from mopidy import models
 
 from pandora.models.pandora import GenreStation, Station
 
+import mock
 import pytest
 
 from mopidy_pandora.uri import AdItemUri, GenreStationUri, GenreUri, PandoraUri, PlaylistItemUri, SearchUri,\
@@ -179,8 +178,8 @@ def test_search_uri_is_genre_search():
     assert obj.is_genre_search
 
 
-def test_station_uri_from_station(station_mock):
-    station_uri = StationUri._from_station(station_mock)
+def test_station_uri_from_station(get_station_mock_return_value):
+    station_uri = StationUri._from_station(get_station_mock_return_value)
 
     assert station_uri.uri == '{}:{}:{}:{}'.format(PandoraUri.SCHEME,
                                                    station_uri.encode(conftest.MOCK_STATION_TYPE),
@@ -194,8 +193,8 @@ def test_station_uri_from_station_unsupported_type(playlist_result_mock):
         PandoraUri._from_station(playlist_result_mock)
 
 
-def test_station_uri_parse(station_mock):
-    station_uri = StationUri._from_station(station_mock)
+def test_station_uri_parse(get_station_mock_return_value):
+    station_uri = StationUri._from_station(get_station_mock_return_value)
 
     obj = PandoraUri._from_uri(station_uri.uri)
 

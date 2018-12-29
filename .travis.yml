@@ -1,10 +1,13 @@
 sudo: required
-dist: trusty
+dist: xenial
 
 language: python
 
 python:
-  - "2.7_with_system_site_packages"
+  - "2.7"
+
+virtualenv:
+  system_site_packages: true
 
 addons:
   apt:
@@ -20,9 +23,11 @@ env:
 before_install:
   - "sudo apt-get update -qq"
   - "sudo apt-get install -y gir1.2-gst-plugins-base-1.0 gir1.2-gstreamer-1.0 graphviz-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad python-gst-1.0"
+  - "sudo apt-get --auto-remove -y remove python-openssl"
 
 install:
   - "pip install tox"
+  - "pip install -U pyopenssl"
 
 script:
   - "tox -e $TOX_ENV"

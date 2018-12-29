@@ -25,7 +25,7 @@ def run_async(func):
         """
         t = Thread(target=func, args=args, kwargs=kwargs)
 
-        queue = kwargs.get('queue', None)
+        queue = kwargs.get("queue", None)
         if queue is not None:
             t.result_queue = queue
 
@@ -36,23 +36,23 @@ def run_async(func):
 
 
 def format_proxy(proxy_config):
-    if not proxy_config.get('hostname'):
+    if not proxy_config.get("hostname"):
         return None
 
-    port = proxy_config.get('port')
+    port = proxy_config.get("port")
     if not port or port < 0:
         port = 80
 
-    template = '{hostname}:{port}'
+    template = "{hostname}:{port}"
 
-    return template.format(hostname=proxy_config['hostname'], port=port)
+    return template.format(hostname=proxy_config["hostname"], port=port)
 
 
 class RPCClient(object):
-    hostname = '127.0.0.1'
-    port = '6680'
+    hostname = "127.0.0.1"
+    port = "6680"
 
-    url = 'http://' + str(hostname) + ':' + str(port) + '/mopidy/rpc'
+    url = "http://" + str(hostname) + ":" + str(port) + "/mopidy/rpc"
     id = 0
 
     @classmethod
@@ -70,12 +70,18 @@ class RPCClient(object):
         :param queue: a Queue.Queue() object that the results of the thread should be stored in.
         """
         cls.id += 1
-        data = {'method': method, 'jsonrpc': '2.0', 'id': cls.id}
+        data = {"method": method, "jsonrpc": "2.0", "id": cls.id}
 
         if params is not None:
-            data['params'] = params
+            data["params"] = params
 
-        json_data = json.loads(requests.request('POST', cls.url, data=json.dumps(data),
-                                                headers={'Content-Type': 'application/json'}).text)
+        json_data = json.loads(
+            requests.request(
+                "POST",
+                cls.url,
+                data=json.dumps(data),
+                headers={"Content-Type": "application/json"},
+            ).text
+        )
         if queue is not None:
-            queue.put(json_data['result'])
+            queue.put(json_data["result"])

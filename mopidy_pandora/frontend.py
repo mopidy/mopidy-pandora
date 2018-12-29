@@ -64,11 +64,11 @@ def get_active_uri(core, *args, **kwargs):
     :return: the URI of the active Mopidy track, if it could be determined, or None otherwise.
     """
     uri = None
-    track = kwargs.get('track', None)
+    track = kwargs.get("track", None)
     if track:
         uri = track.uri
     else:
-        tl_track = kwargs.get('tl_track', core.playback.get_current_tl_track().get())
+        tl_track = kwargs.get("tl_track", core.playback.get_current_tl_track().get())
         if tl_track:
             uri = tl_track.track.uri
     if not uri:
@@ -78,17 +78,18 @@ def get_active_uri(core, *args, **kwargs):
     return uri
 
 
-class PandoraFrontend(pykka.ThreadingActor,
-                      core.CoreListener,
-                      listener.PandoraBackendListener,
-                      listener.PandoraPlaybackListener,
-                      listener.EventMonitorListener):
-
+class PandoraFrontend(
+    pykka.ThreadingActor,
+    core.CoreListener,
+    listener.PandoraBackendListener,
+    listener.PandoraPlaybackListener,
+    listener.EventMonitorListener,
+):
     def __init__(self, config, core):
         super(PandoraFrontend, self).__init__()
 
-        self.config = config['pandora']
-        self.auto_setup = self.config.get('auto_setup')
+        self.config = config["pandora"]
+        self.auto_setup = self.config.get("auto_setup")
 
         self.setup_required = True
         self.core = core
@@ -146,7 +147,7 @@ class PandoraFrontend(pykka.ThreadingActor,
         if length <= 1:
             return True
         if track:
-            tl_track = self.core.tracklist.filter({'uri': [track.uri]}).get()[0]
+            tl_track = self.core.tracklist.filter({"uri": [track.uri]}).get()[0]
             track_index = self.core.tracklist.index(tl_track).get()
         else:
             track_index = self.core.tracklist.index().get()
@@ -155,8 +156,13 @@ class PandoraFrontend(pykka.ThreadingActor,
 
     def is_station_changed(self, track):
         try:
-            previous_track_uri = PandoraUri.factory(self.core.history.get_history().get()[1][1].uri)
-            if previous_track_uri.station_id != PandoraUri.factory(track.uri).station_id:
+            previous_track_uri = PandoraUri.factory(
+                self.core.history.get_history().get()[1][1].uri
+            )
+            if (
+                previous_track_uri.station_id
+                != PandoraUri.factory(track.uri).station_id
+            ):
                 return True
         except (IndexError, NotImplementedError):
             # No tracks in history, or last played track was not a Pandora track. Ignore
@@ -171,22 +177,24 @@ class PandoraFrontend(pykka.ThreadingActor,
             # Station has changed, remove tracks from previous station from tracklist.
             self._trim_tracklist(keep_only=track)
         if self.is_end_of_tracklist_reached(track):
-            self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
-                                                   auto_play=False)
+            self._trigger_end_of_tracklist_reached(
+                PandoraUri.factory(track).station_id, auto_play=False
+            )
 
     def track_unplayable(self, track):
         if self.is_end_of_tracklist_reached(track):
             self.core.playback.stop()
-            self._trigger_end_of_tracklist_reached(PandoraUri.factory(track).station_id,
-                                                   auto_play=True)
+            self._trigger_end_of_tracklist_reached(
+                PandoraUri.factory(track).station_id, auto_play=True
+            )
 
-        self.core.tracklist.remove({'uri': [track.uri]})
+        self.core.tracklist.remove({"uri": [track.uri]})
 
     def next_track_available(self, track, auto_play=False):
         if track:
             self.add_track(track, auto_play)
         else:
-            logger.warning('No more Pandora tracks available to play.')
+            logger.warning("No more Pandora tracks available to play.")
             self.core.playback.stop()
 
     def skip_limit_exceeded(self):
@@ -205,18 +213,24 @@ class PandoraFrontend(pykka.ThreadingActor,
         if keep_only:
             trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
             if len(trim_tlids) > 0:
-                return self.core.tracklist.remove({'tlid': trim_tlids})
+                return self.core.tracklist.remove({"tlid": trim_tlids})
             else:
                 return 0
 
         elif len(tl_tracks) > maxsize:
             # Only need two tracks in the tracklist at any given time, remove the oldest tracks
             return self.core.tracklist.remove(
-                {'tlid': [tl_tracks[t].tlid for t in range(0, len(tl_tracks)-maxsize)]}
+                {
+                    "tlid": [
+                        tl_tracks[t].tlid for t in range(0, len(tl_tracks) - maxsize)
+                    ]
+                }
             )
 
     def _trigger_end_of_tracklist_reached(self, station_id, auto_play=False):
-        listener.PandoraFrontendListener.send('end_of_tracklist_reached', station_id=station_id, auto_play=auto_play)
+        listener.PandoraFrontendListener.send(
+            "end_of_tracklist_reached", station_id=station_id, auto_play=auto_play
+        )
 
 
 @total_ordering
@@ -234,17 +248,18 @@ class MatchResult(object):
         return self.ratio < other.ratio
 
 
-EventMarker = namedtuple('EventMarker', 'event, uri, time')
+EventMarker = namedtuple("EventMarker", "event, uri, time")
 
 
-class EventMonitorFrontend(pykka.ThreadingActor,
-                           core.CoreListener,
-                           audio.AudioListener,
-                           listener.PandoraFrontendListener,
-                           listener.PandoraBackendListener,
-                           listener.PandoraPlaybackListener,
-                           listener.EventMonitorListener):
-
+class EventMonitorFrontend(
+    pykka.ThreadingActor,
+    core.CoreListener,
+    audio.AudioListener,
+    listener.PandoraFrontendListener,
+    listener.PandoraBackendListener,
+    listener.PandoraPlaybackListener,
+    listener.EventMonitorListener,
+):
     def __init__(self, config, core):
         super(EventMonitorFrontend, self).__init__()
         self.core = core
@@ -253,40 +268,65 @@ class EventMonitorFrontend(pykka.ThreadingActor,
         self._track_changed_marker = None
         self._monitor_lock = threading.Lock()
 
-        self.config = config['pandora']
-        self.is_active = self.config['event_support_enabled']
+        self.config = config["pandora"]
+        self.is_active = self.config["event_support_enabled"]
 
     def on_start(self):
         if not self.is_active:
             return
 
-        interval = float(self.config['double_click_interval'])
+        interval = float(self.config["double_click_interval"])
         self.sequence_match_results = Queue.PriorityQueue(maxsize=4)
 
-        self.event_sequences.append(EventSequence(self.config['on_pause_resume_click'],
-                                                  ['track_playback_paused',
-                                                   'track_playback_resumed'], self.sequence_match_results,
-                                                  interval=interval))
+        self.event_sequences.append(
+            EventSequence(
+                self.config["on_pause_resume_click"],
+                ["track_playback_paused", "track_playback_resumed"],
+                self.sequence_match_results,
+                interval=interval,
+            )
+        )
 
-        self.event_sequences.append(EventSequence(self.config['on_pause_resume_pause_click'],
-                                                  ['track_playback_paused',
-                                                   'track_playback_resumed',
-                                                   'track_playback_paused'], self.sequence_match_results,
-                                                  interval=interval))
+        self.event_sequences.append(
+            EventSequence(
+                self.config["on_pause_resume_pause_click"],
+                [
+                    "track_playback_paused",
+                    "track_playback_resumed",
+                    "track_playback_paused",
+                ],
+                self.sequence_match_results,
+                interval=interval,
+            )
+        )
 
-        self.event_sequences.append(EventSequence(self.config['on_pause_previous_click'],
-                                                  ['track_playback_paused',
-                                                   'track_playback_ended',
-                                                   'track_playback_paused'], self.sequence_match_results,
-                                                  wait_for='track_changed_previous',
-                                                  interval=interval))
+        self.event_sequences.append(
+            EventSequence(
+                self.config["on_pause_previous_click"],
+                [
+                    "track_playback_paused",
+                    "track_playback_ended",
+                    "track_playback_paused",
+                ],
+                self.sequence_match_results,
+                wait_for="track_changed_previous",
+                interval=interval,
+            )
+        )
 
-        self.event_sequences.append(EventSequence(self.config['on_pause_next_click'],
-                                                  ['track_playback_paused',
-                                                   'track_playback_ended',
-                                                   'track_playback_paused'], self.sequence_match_results,
-                                                  wait_for='track_changed_next',
-                                                  interval=interval))
+        self.event_sequences.append(
+            EventSequence(
+                self.config["on_pause_next_click"],
+                [
+                    "track_playback_paused",
+                    "track_playback_ended",
+                    "track_playback_paused",
+                ],
+                self.sequence_match_results,
+                wait_for="track_changed_next",
+                interval=interval,
+            )
+        )
 
         self.trigger_events = set(e.target_sequence[0] for e in self.event_sequences)
 
@@ -301,7 +341,9 @@ class EventMonitorFrontend(pykka.ThreadingActor,
         if self._monitor_lock.acquire(False):
             if event in self.trigger_events:
                 # Monitor not running and current event will not trigger any starts either, ignore
-                self.notify_all(event, uri=get_active_uri(self.core, event, **kwargs), **kwargs)
+                self.notify_all(
+                    event, uri=get_active_uri(self.core, event, **kwargs), **kwargs
+                )
                 self.monitor_sequences()
             else:
                 self._monitor_lock.release()
@@ -315,17 +357,24 @@ class EventMonitorFrontend(pykka.ThreadingActor,
             es.notify(event, **kwargs)
 
     def _detect_track_change(self, event, **kwargs):
-        if not self._track_changed_marker and event == 'track_playback_ended':
-            self._track_changed_marker = EventMarker(event,
-                                                     kwargs['tl_track'].track.uri,
-                                                     int(time.time() * 1000))
+        if not self._track_changed_marker and event == "track_playback_ended":
+            self._track_changed_marker = EventMarker(
+                event, kwargs["tl_track"].track.uri, int(time.time() * 1000)
+            )
 
-        elif self._track_changed_marker and event in ['track_playback_paused', 'track_playback_started']:
-            change_direction = self._get_track_change_direction(self._track_changed_marker)
+        elif self._track_changed_marker and event in [
+            "track_playback_paused",
+            "track_playback_started",
+        ]:
+            change_direction = self._get_track_change_direction(
+                self._track_changed_marker
+            )
             if change_direction:
-                self._trigger_track_changed(change_direction,
-                                            old_uri=self._track_changed_marker.uri,
-                                            new_uri=kwargs['tl_track'].track.uri)
+                self._trigger_track_changed(
+                    change_direction,
+                    old_uri=self._track_changed_marker.uri,
+                    new_uri=kwargs["tl_track"].track.uri,
+                )
                 self._track_changed_marker = None
 
     @run_async
@@ -341,8 +390,10 @@ class EventMonitorFrontend(pykka.ThreadingActor,
             self.sequence_match_results.task_done()
 
         if match and match.ratio == 1.0:
-            if match.marker.uri and isinstance(PandoraUri.factory(match.marker.uri), AdItemUri):
-                logger.info('Ignoring doubleclick event for Pandora advertisement...')
+            if match.marker.uri and isinstance(
+                PandoraUri.factory(match.marker.uri), AdItemUri
+            ):
+                logger.info("Ignoring doubleclick event for Pandora advertisement...")
             else:
                 self._trigger_event_triggered(match.marker.event, match.marker.uri)
             # Resume playback...
@@ -352,7 +403,7 @@ class EventMonitorFrontend(pykka.ThreadingActor,
         self._monitor_lock.release()
 
     def event_processed(self, track_uri, pandora_event):
-        if pandora_event == 'delete_station':
+        if pandora_event == "delete_station":
             self.core.tracklist.clear()
 
     def _get_track_change_direction(self, track_marker):
@@ -363,30 +414,42 @@ class EventMonitorFrontend(pykka.ThreadingActor,
             if h[0] + 100 < track_marker.time:
                 if h[1].uri == track_marker.uri:
                     # This is the point in time in the history that the track was played.
-                    if history[i-1][1].uri == track_marker.uri:
+                    if history[i - 1][1].uri == track_marker.uri:
                         # Track was played again immediately.
                         # User either clicked 'previous' in consume mode or clicked 'stop' -> 'play' for same track.
                         # Both actions are interpreted as 'previous'.
-                        return 'track_changed_previous'
+                        return "track_changed_previous"
                     else:
                         # Switched to another track, user clicked 'next'.
-                        return 'track_changed_next'
+                        return "track_changed_next"
 
     def _trigger_event_triggered(self, event, uri):
-        (listener.EventMonitorListener.send('event_triggered',
-                                            track_uri=uri,
-                                            pandora_event=event))
+        (
+            listener.EventMonitorListener.send(
+                "event_triggered", track_uri=uri, pandora_event=event
+            )
+        )
 
     def _trigger_track_changed(self, track_change_event, old_uri, new_uri):
-        (listener.EventMonitorListener.send(track_change_event,
-                                            old_uri=old_uri,
-                                            new_uri=new_uri))
+        (
+            listener.EventMonitorListener.send(
+                track_change_event, old_uri=old_uri, new_uri=new_uri
+            )
+        )
 
 
 class EventSequence(object):
     pykka_traversable = True
 
-    def __init__(self, on_match_event, target_sequence, result_queue, interval=1.0, strict=False, wait_for=None):
+    def __init__(
+        self,
+        on_match_event,
+        target_sequence,
+        result_queue,
+        interval=1.0,
+        strict=False,
+        wait_for=None,
+    ):
         self.on_match_event = on_match_event
         self.target_sequence = target_sequence
         self.result_queue = result_queue
@@ -407,7 +470,7 @@ class EventSequence(object):
 
     @classmethod
     def match_sequence(cls, a, b):
-        sm = SequenceMatcher(a=' '.join(a), b=' '.join(b))
+        sm = SequenceMatcher(a=" ".join(a), b=" ".join(b))
         return sm.ratio()
 
     def notify(self, event, **kwargs):
@@ -417,11 +480,11 @@ class EventSequence(object):
                 self.wait_for_event.set()
 
         elif self.target_sequence[0] == event:
-            if kwargs.get('time_position', 0) == 0:
+            if kwargs.get("time_position", 0) == 0:
                 # Don't do anything if track playback has not yet started.
                 return
             else:
-                self.start_monitor(kwargs.get('uri', None))
+                self.start_monitor(kwargs.get("uri", None))
                 self.events_seen.append(event)
 
     def is_monitoring(self):
@@ -431,7 +494,9 @@ class EventSequence(object):
         self.monitoring_completed.clear()
 
         self.target_uri = uri
-        self._timer = threading.Timer(self.interval, self.stop_monitor, args=(self.interval,))
+        self._timer = threading.Timer(
+            self.interval, self.stop_monitor, args=(self.interval,)
+        )
         self._timer.daemon = True
         self._timer.start()
 
@@ -452,8 +517,12 @@ class EventSequence(object):
             if self.wait_for_event.wait(timeout=timeout):
                 self.result_queue.put(
                     MatchResult(
-                        EventMarker(self.on_match_event, self.target_uri, int(time.time() * 1000)),
-                        self.get_ratio()
+                        EventMarker(
+                            self.on_match_event,
+                            self.target_uri,
+                            int(time.time() * 1000),
+                        ),
+                        self.get_ratio(),
                     )
                 )
         finally:
