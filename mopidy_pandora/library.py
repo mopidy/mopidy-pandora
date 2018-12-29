@@ -10,8 +10,6 @@ from cachetools import LRUCache
 
 from mopidy import backend, models
 
-from pandora.models.pandora import Station
-
 from pydora.utils import iterate_forever
 
 from mopidy_pandora.uri import AdItemUri, GenreUri, PandoraUri, SearchUri, StationUri, TrackUri  # noqa I101
@@ -181,8 +179,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         return [self.get_next_pandora_track(pandora_uri.station_id)]
 
     def _create_station_for_token(self, token):
-        json_result = self.backend.api.create_station(search_token=token)
-        new_station = Station.from_json(self.backend.api, json_result)
+        new_station = self.backend.api.create_station(search_token=token)
 
         self.refresh()
         return PandoraUri.factory(new_station)
