@@ -11,21 +11,21 @@ class TestEventMonitorListener(object):
         event_monitor_listener.event_triggered = mock.Mock()
 
         event_monitor_listener.on_event('event_triggered', track_uri='pandora:track:id_mock:token_mock',
-                               pandora_event='event_mock')
+                                        pandora_event='event_mock')
 
         event_monitor_listener.event_triggered.assert_called_with(track_uri='pandora:track:id_mock:token_mock',
-                                                         pandora_event='event_mock')
+                                                                  pandora_event='event_mock')
 
     def test_listener_has_default_impl_for_event_triggered(self, event_monitor_listener):
         event_monitor_listener.event_triggered('pandora:track:id_mock:token_mock', 'event_mock')
 
     def test_listener_has_default_impl_for_track_changed_previous(self, event_monitor_listener):
         event_monitor_listener.track_changed_previous(old_uri='pandora:track:id_mock:token_mock2',
-                                             new_uri='pandora:track:id_mock:token_mock1')
+                                                      new_uri='pandora:track:id_mock:token_mock1')
 
     def test_listener_has_default_impl_for_track_changed_next(self, event_monitor_listener):
         event_monitor_listener.track_changed_next(old_uri='pandora:track:id_mock:token_mock1',
-                                         new_uri='pandora:track:id_mock:token_mock2')
+                                                  new_uri='pandora:track:id_mock:token_mock2')
 
 
 class TestPandoraFrontendListener(object):
@@ -57,7 +57,7 @@ class TestPandoraBackendListener(object):
 
     def test_listener_has_default_impl_for_event_processed(self, backend_listener):
         backend_listener.event_processed(track_uri='pandora:track:id_mock:token_mock',
-                                      pandora_event='event_mock')
+                                         pandora_event='event_mock')
 
 
 class TestPandoraPlaybackListener(object):
