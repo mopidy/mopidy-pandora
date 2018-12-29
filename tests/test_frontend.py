@@ -2,8 +2,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import time
 
-import unittest
-
 import mock
 
 from mopidy import listener, models
@@ -17,10 +15,6 @@ from mopidy_pandora.frontend import EventMarker, MatchResult, PandoraFrontend
 from mopidy_pandora.listener import EventMonitorListener, PandoraBackendListener, PandoraFrontendListener
 
 from tests import conftest
-
-
-class BaseTest(unittest.TestCase):
-    pass
 
 
 class TestPandoraFrontend(object):

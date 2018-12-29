@@ -17,7 +17,7 @@ import pytest
 
 import requests
 
-from mopidy_pandora import backend, frontend
+from mopidy_pandora import backend, frontend, listener
 from mopidy_pandora.frontend import EventSequence
 from tests.dummy_mopidy import DummyMopidyInstance
 
@@ -284,6 +284,26 @@ def get_station_playlist_mock(get_playlist_mock):
 def playlist_item_mock(config, playlist_result_mock):
     return PlaylistItem.from_json(get_backend(
         config).api, playlist_result_mock['result']['items'][0])
+
+
+@pytest.fixture
+def event_monitor_listener():
+    return listener.EventMonitorListener()
+
+
+@pytest.fixture
+def frontend_listener():
+    return listener.PandoraFrontendListener()
+
+
+@pytest.fixture
+def backend_listener():
+    return listener.PandoraBackendListener()
+
+
+@pytest.fixture
+def playback_listener():
+    return listener.PandoraPlaybackListener()
 
 
 @pytest.fixture
