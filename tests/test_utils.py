@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 try:
     import queue
 except ImportError:
-    import Queue as queue
+    import Queue as queue  # noqa: N813
 
 import json
 
