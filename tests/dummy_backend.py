@@ -20,7 +20,6 @@ def create_proxy(cls, config=None, audio=None):
 
 
 class DummyBackend(pykka.ThreadingActor, backend.Backend):
-
     def __init__(self, config, audio):
         super(DummyBackend, self).__init__()
 
@@ -28,20 +27,21 @@ class DummyBackend(pykka.ThreadingActor, backend.Backend):
         if audio is None:
             self.playback = DummyPandoraPlaybackProvider(audio=audio, backend=self)
         else:
-            self.playback = DummyPandoraPlaybackProviderWithAudioEvents(audio=audio, backend=self)
+            self.playback = DummyPandoraPlaybackProviderWithAudioEvents(
+                audio=audio, backend=self
+            )
 
-        self.uri_schemes = ['mock']
+        self.uri_schemes = ["mock"]
 
 
 class DummyPandoraBackend(DummyBackend):
-
     def __init__(self, config, audio):
         super(DummyPandoraBackend, self).__init__(config, audio)
-        self.uri_schemes = ['pandora']
+        self.uri_schemes = ["pandora"]
 
 
 class DummyLibraryProvider(backend.LibraryProvider):
-    root_directory = Ref.directory(uri='mock:/', name='mock')
+    root_directory = Ref.directory(uri="mock:/", name="mock")
 
     def __init__(self, *args, **kwargs):
         super(DummyLibraryProvider, self).__init__(*args, **kwargs)
@@ -70,7 +70,6 @@ class DummyLibraryProvider(backend.LibraryProvider):
 
 
 class DummyPlaybackProvider(backend.PlaybackProvider):
-
     def __init__(self, *args, **kwargs):
         super(DummyPlaybackProvider, self).__init__(*args, **kwargs)
         self._uri = None
@@ -80,7 +79,7 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
         return True
 
     def play(self):
-        return self._uri and self._uri != 'mock:error'
+        return self._uri and self._uri != "mock:error"
 
     def change_track(self, track):
         """Pass a track with URI 'dummy:error' to force failure"""
@@ -107,20 +106,22 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
 
 
 class DummyPandoraPlaybackProvider(DummyPlaybackProvider):
-
     def __init__(self, *args, **kwargs):
         super(DummyPandoraPlaybackProvider, self).__init__(*args, **kwargs)
 
     def change_track(self, track):
-        listener.send(PandoraPlaybackListener, 'track_changing', track=track)
+        listener.send(PandoraPlaybackListener, "track_changing", track=track)
         return super(DummyPandoraPlaybackProvider, self).change_track(track)
 
 
 class DummyPandoraPlaybackProviderWithAudioEvents(backend.PlaybackProvider):
-
     def __init__(self, *args, **kwargs):
-        super(DummyPandoraPlaybackProviderWithAudioEvents, self).__init__(*args, **kwargs)
+        super(DummyPandoraPlaybackProviderWithAudioEvents, self).__init__(
+            *args, **kwargs
+        )
 
     def change_track(self, track):
-        listener.send(PandoraPlaybackListener, 'track_changing', track=track)
-        return super(DummyPandoraPlaybackProviderWithAudioEvents, self).change_track(track)
+        listener.send(PandoraPlaybackListener, "track_changing", track=track)
+        return super(DummyPandoraPlaybackProviderWithAudioEvents, self).change_track(
+            track
+        )
