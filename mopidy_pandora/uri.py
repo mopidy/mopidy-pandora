@@ -56,7 +56,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
 
     @classmethod
     def factory(cls, obj):
-        if isinstance(obj, basestring):
+        if isinstance(obj, basestring):  # noqa: F821
             # A string
             return PandoraUri._from_uri(obj)
 
@@ -117,7 +117,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
         try:
             return (
                 uri
-                and isinstance(uri, basestring)
+                and isinstance(uri, basestring)  # noqa: F821
                 and uri.startswith(PandoraUri.SCHEME)
                 and PandoraUri.factory(uri)
             )

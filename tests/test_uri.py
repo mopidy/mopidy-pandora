@@ -66,15 +66,15 @@ def test_factory_track():
 
 
 def test_factory_returns_correct_station_uri_types():
-        station_mock = mock.PropertyMock(spec=GenreStation)
-        station_mock.id = 'G100'
-        station_mock.token = 'G100'
-        assert type(PandoraUri.factory(station_mock)) is GenreStationUri
+    station_mock = mock.PropertyMock(spec=GenreStation)
+    station_mock.id = 'G100'
+    station_mock.token = 'G100'
+    assert type(PandoraUri.factory(station_mock)) is GenreStationUri
 
-        station_mock = mock.PropertyMock(spec=Station)
-        station_mock.id = 'id_mock'
-        station_mock.token = 'token_mock'
-        assert type(PandoraUri.factory(station_mock)) is StationUri
+    station_mock = mock.PropertyMock(spec=Station)
+    station_mock.id = 'id_mock'
+    station_mock.token = 'token_mock'
+    assert type(PandoraUri.factory(station_mock)) is StationUri
 
 
 def test_pandora_parse_mock_uri():
