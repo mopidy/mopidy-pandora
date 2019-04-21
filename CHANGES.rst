@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v0.4.3 (UNRELEASED)
+-------------------
+
+- Switch to Black code formatting.
+
 v0.4.2 (Apr 21, 2019)
 ---------------------
 

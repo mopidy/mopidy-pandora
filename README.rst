@@ -14,6 +14,9 @@ Mopidy-Pandora
    :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=develop
    :alt: Test coverage
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
+
 `Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora Radio <http://www.pandora.com/>`_.
 
 
