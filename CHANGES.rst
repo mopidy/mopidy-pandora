@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v0.4.2 (Apr 21, 2019)
+---------------------
+
+- Pin pydora dependency to pydora>=1.13,<2. (Resolves: `#70 <https://github.com/rectalogic/mopidy-pandora/issues/70>`_).
+
+
 v0.4.1 (Dec 29, 2018)
 ---------------------
 
