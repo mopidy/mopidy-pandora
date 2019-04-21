@@ -9,7 +9,7 @@ from setuptools.command.test import test
 
 def get_version(filename):
     with open(filename) as fh:
-        metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", fh.read()))
+        metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", fh.read()))
         return metadata['version']
 
 
@@ -53,7 +53,7 @@ setup(
         'cachetools >= 1.0.0',
         'Mopidy >= 1.1.2',
         'Pykka >= 1.1',
-        'pydora >= 1.12.0',
+        'pydora >= 1.13,<2',
         'requests >= 2.5.0'
     ],
     tests_require=['tox'],
