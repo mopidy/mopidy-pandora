@@ -9,12 +9,12 @@ from setuptools.command.test import test
 
 def get_version(filename):
     with open(filename) as fh:
-        metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", fh.read()))
+        metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", fh.read()))
         return metadata['version']
 
 
 class Tox(test):
-    user_options = [(b'tox-args=', b'a', "Arguments to pass to tox")]
+    user_options = [(b'tox-args=', b'a', 'Arguments to pass to tox')]
 
     def initialize_options(self):
         test.initialize_options(self)
@@ -35,6 +35,7 @@ class Tox(test):
         errno = tox.cmdline(args=args)
         sys.exit(errno)
 
+
 setup(
     name='Mopidy-Pandora',
     version=get_version('mopidy_pandora/__init__.py'),
@@ -49,9 +50,10 @@ setup(
     include_package_data=True,
     install_requires=[
         'setuptools',
-        'Mopidy >= 1.0.7',
+        'cachetools >= 1.0.0',
+        'Mopidy >= 1.1.2',
         'Pykka >= 1.1',
-        'pydora >= 1.4.0',
+        'pydora >= 1.13,<2',
         'requests >= 2.5.0'
     ],
     tests_require=['tox'],
