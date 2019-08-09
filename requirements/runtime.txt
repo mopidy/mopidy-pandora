@@ -1,0 +1,18 @@
+# Mopidy dependency
+# ------------------------------------------------------------------------------
+# A working Mopidy installation usually requires several dependencies and / or
+# bindings that cannot be installed reliably via pip.
+#
+# It is recommended that you follow the official Mopidy installation
+# instructions for your platform instead.
+#
+# See: https://docs.mopidy.com/en/develop/installation/ for details.
+#
+# Mopidy>=1.1.2  # https://github.com/mopidy/mopidy
+
+# Other runtime dependencies
+# ------------------------------------------------------------------------------
+cachetools>=1.0.0  # https://github.com/tkem/cachetools
+Pykka>=1.1  # https://github.com/jodal/pykka
+pydora>= 1.13,<2  # https://github.com/mcrute/pydora
+requests>= 2.5.0  # https://github.com/psf/requests
