@@ -40,7 +40,7 @@ class Tox(test):
 setup(
     name="Mopidy-Pandora",
     version=get_version("mopidy_pandora/__init__.py"),
-    url="https://github.com/rectalogic/mopidy-pandora",
+    url="https://github.com/jcass77/mopidy-pandora",
     license="Apache License, Version 2.0",
     author="Andrew Wason",
     author_email="rectalogic@rectalogic.com",

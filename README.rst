@@ -6,12 +6,12 @@ Mopidy-Pandora
     :target: https://pypi.python.org/pypi/Mopidy-Pandora/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/travis/rectalogic/mopidy-pandora/develop.svg?style=flat
-    :target: https://travis-ci.org/rectalogic/mopidy-pandora
+.. image:: https://img.shields.io/travis/jcass77/mopidy-pandora/develop.svg?style=flat
+    :target: https://travis-ci.org/jcass77/mopidy-pandora
     :alt: Travis CI build status
 
-.. image:: https://img.shields.io/coveralls/rectalogic/mopidy-pandora/develop.svg?style=flat
-   :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=develop
+.. image:: https://img.shields.io/coveralls/jcass77/mopidy-pandora/develop.svg?style=flat
+   :target: https://coveralls.io/r/jcass77/mopidy-pandora?branch=develop
    :alt: Test coverage
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -151,8 +151,8 @@ The full list of supported events are: ``thumbs_up``, ``thumbs_down``, ``sleep``
 Project resources
 =================
 
-- `Changelog <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
-- `Troubleshooting guide <https://github.com/rectalogic/mopidy-pandora/blob/develop/docs/troubleshooting.rst>`_
-- `Source code <https://github.com/rectalogic/mopidy-pandora>`_
-- `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
-- `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
+- `Changelog <https://github.com/jcass77/mopidy-pandora/blob/develop/CHANGES.rst>`_
+- `Troubleshooting guide <https://github.com/jcass77/mopidy-pandora/blob/develop/docs/troubleshooting.rst>`_
+- `Source code <https://github.com/jcass77/mopidy-pandora>`_
+- `Issue tracker <https://github.com/jcass77/mopidy-pandora/issues>`_
+- `Development branch tarball <https://github.com/jcass77/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
