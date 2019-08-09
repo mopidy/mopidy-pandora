@@ -17,13 +17,13 @@ Mopidy-Pandora
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 
-`Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora Radio <http://www.pandora.com/>`_.
+`Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora <http://www.pandora.com/>`_.
 
 
 Features
 ========
 
-- Support for both Pandora Plus and ad-supported free accounts.
+- Support for both Pandora Premium and ad-supported free accounts.
 - Add ratings to tracks (thumbs up, thumbs down, sleep, etc.).
 - Bookmark songs or artists.
 - Browse and add genre stations.
@@ -52,7 +52,7 @@ idea. And not recommended.
 Dependencies
 ============
 
-- Requires a Pandora user account. Users with a Pandora Plus subscription will have access to the higher quality 192 Kbps
+- Requires a Pandora user account. Users with a Pandora Premium subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
 - ``pydora`` >= 1.13,<2. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
@@ -97,7 +97,7 @@ The following configuration values are available:
 - ``pandora/enabled``: If the Pandora extension should be enabled or not. Defaults to ``true``.
 
 - ``pandora/api_host``: Which of the JSON API `endpoints <http://6xq.net/pandora-apidoc/json/>`_ to use. Note that
-  the endpoints are different for Pandora Plus and free accounts (details in the link provided).
+  the endpoints are different for Pandora Premium and free accounts (details in the link provided).
 
 - ``pandora/partner_*`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
   to use for the Pandora API entry point. You *must* provide these values based on your device preferences.
