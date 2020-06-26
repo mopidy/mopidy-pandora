@@ -88,7 +88,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 #       updated to make use of the newer LibraryController.get_images()
                 images = self.get_images([uri])[uri]
                 if len(images) > 0:
-                    album_kwargs = {"images": [image.uri for image in images]}
+                    # TODO: Fix images (use mopidy.core.LibraryController.get_images - see mopidy changelog
+                    #album_kwargs = {"images": [image.uri for image in images]}
+                    pass
 
                 if isinstance(pandora_uri, AdItemUri):
                     track_kwargs["name"] = "Advertisement"
@@ -112,7 +114,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     album_kwargs["name"] = track.album_name
         elif isinstance(pandora_uri, StationUri):
             station = self.backend.api.get_station(pandora_uri.station_id)
-            album_kwargs = {"images": [station.art_url]}
+            # TODO: Fix images (use mopidy.core.LibraryController.get_images - see mopidy changelog
+            #album_kwargs = {"images": [station.art_url]}
             track_kwargs["name"] = station.name
             artist_kwargs["name"] = "Pandora Station"
             album_kwargs["name"] = ", ".join(station.genre)
@@ -165,7 +168,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _formatted_station_list(self, list):
         # Find QuickMix stations and move QuickMix to top
-        for i, station in enumerate(list[:]):
+        for i, station in enumerate(list):
             if station.is_quickmix:
                 quickmix_stations = station.quickmix_stations
                 if not station.name.endswith(" (marked with *)"):

@@ -18,7 +18,7 @@ class Extension(ext.Extension):
         return config.read(conf_file)
 
     def get_config_schema(self):
-        from pandora import BaseAPIClient
+        from pandora.client import BaseAPIClient
 
         schema = super(Extension, self).get_config_schema()
         schema["api_host"] = config.String()

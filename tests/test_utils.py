@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 def test_format_proxy():
-    config = {"proxy": {"hostname": "host_mock", "port": "8080"}}
+    config = {"proxy": {"hostname": "host_mock", "port": 8080}}
 
     assert utils.format_proxy(config["proxy"]) == "host_mock:8080"
 
 
 def test_format_proxy_no_hostname():
-    config = {"proxy": {"hostname": "", "port": "port_mock"}}
+    config = {"proxy": {"hostname": "", "port": 8080}}
 
     assert utils.format_proxy(config["proxy"]) is None
     config["proxy"].pop("hostname")
@@ -34,7 +34,7 @@ def test_format_proxy_no_hostname():
 
 
 def test_format_proxy_no_port():
-    config = {"proxy": {"hostname": "host_mock", "port": ""}}
+    config = {"proxy": {"hostname": "host_mock", "port": 0}}
 
     assert utils.format_proxy(config["proxy"]) == "host_mock:80"
     config["proxy"].pop("port")

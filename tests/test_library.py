@@ -7,8 +7,8 @@ import mock
 
 from mopidy import models
 
-from pandora import APIClient
-from pandora.models.pandora import Station, StationList
+from pandora.client import APIClient
+from pandora.models.station import Station, StationList
 
 import pytest
 
@@ -268,7 +268,9 @@ def test_lookup_of_station_uri(
 
             track = results[0]
             assert track.uri == station_uri.uri
-            assert next(iter(track.album.images)) == conftest.MOCK_STATION_ART_URL
+            # TODO: this needs to be moved per the mopidy 3.0 upgrade:
+            # Backends should implement :meth:`mopidy.backend.LibraryProvider.get_images`
+            #assert next(iter(track.album.images)) == conftest.MOCK_STATION_ART_URL
             assert track.name == conftest.MOCK_STATION_NAME
             assert next(iter(track.artists)).name == "Pandora Station"
             assert track.album.name == conftest.MOCK_STATION_GENRE

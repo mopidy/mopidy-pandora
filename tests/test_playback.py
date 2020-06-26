@@ -4,8 +4,8 @@ import mock
 
 from mopidy import audio, models
 
-from pandora import APITransport
-from pandora.models.pandora import PlaylistItem
+from pandora.transport import APITransport
+from pandora.models.playlist import PlaylistItem
 
 import pytest
 

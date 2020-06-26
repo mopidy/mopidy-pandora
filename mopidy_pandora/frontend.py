@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import Queue
+from queue import PriorityQueue
 
 import logging
 
@@ -276,7 +276,7 @@ class EventMonitorFrontend(
             return
 
         interval = float(self.config["double_click_interval"])
-        self.sequence_match_results = Queue.PriorityQueue(maxsize=4)
+        self.sequence_match_results = PriorityQueue(maxsize=4)
 
         self.event_sequences.append(
             EventSequence(

@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import Queue
+from queue import PriorityQueue
 import json
 import threading
 
@@ -8,18 +8,12 @@ import mock
 from mopidy import models
 import pykka
 
-from pandora import APIClient
+from pandora.client import APIClient
 
-from pandora.models.pandora import (
-    AdItem,
-    GenreStation,
-    GenreStationList,
-    PlaylistItem,
-    SearchResult,
-    SearchResultItem,
-    Station,
-    StationList,
-)
+from pandora.models.ad import AdItem
+from pandora.models.station import GenreStation, GenreStationList, Station, StationList
+from pandora.models.playlist import PlaylistItem
+from pandora.models.search import SearchResult, SearchResultItem
 
 import pytest
 
@@ -58,8 +52,8 @@ MOCK_AD_TYPE = "ad"
 @pytest.fixture
 def config():
     return {
-        "http": {"hostname": "127.0.0.1", "port": "6680"},
-        "proxy": {"hostname": "host_mock", "port": "port_mock"},
+        "http": {"hostname": "127.0.0.1", "port": 6680},
+        "proxy": {"hostname": "host_mock", "port": 80},
         "pandora": {
             "enabled": True,
             "api_host": "test_host",
@@ -123,7 +117,7 @@ def mopidy_with_monitor(config, mopidy):
 
 @pytest.fixture
 def rq():
-    return Queue.PriorityQueue()
+    return PriorityQueue()
 
 
 @pytest.fixture
