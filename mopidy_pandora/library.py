@@ -84,14 +84,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
                 return []
             else:
-                # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
-                #       updated to make use of the newer LibraryController.get_images()
-                images = self.get_images([uri])[uri]
-                if len(images) > 0:
-                    # TODO: Fix images (use mopidy.core.LibraryController.get_images - see mopidy changelog
-                    #album_kwargs = {"images": [image.uri for image in images]}
-                    pass
-
                 if isinstance(pandora_uri, AdItemUri):
                     track_kwargs["name"] = "Advertisement"
 
@@ -114,8 +106,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     album_kwargs["name"] = track.album_name
         elif isinstance(pandora_uri, StationUri):
             station = self.backend.api.get_station(pandora_uri.station_id)
-            # TODO: Fix images (use mopidy.core.LibraryController.get_images - see mopidy changelog
-            #album_kwargs = {"images": [station.art_url]}
             track_kwargs["name"] = station.name
             artist_kwargs["name"] = "Pandora Station"
             album_kwargs["name"] = ", ".join(station.genre)
@@ -147,7 +137,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     image_uri = track.album_art_url
                 if image_uri:
-                    image_uris.update([image_uri])
+                    image_uris.update([image_uri.replace("http://", "https://", 1)])
             except (TypeError, KeyError):
                 pandora_uri = PandoraUri.factory(uri)
                 if isinstance(pandora_uri, TrackUri):
@@ -164,6 +154,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     )
                 pass
             result[uri] = [models.Image(uri=u) for u in image_uris]
+        print(f"\n\n\nIMAGES: {result}\n\n\n")
         return result
 
     def _formatted_station_list(self, list):
