@@ -74,8 +74,9 @@ def test_get_images_for_unsupported_uri_type_issues_warning(config, caplog):
     search_uri = PandoraUri.factory("pandora:search:R12345")
     results = backend.library.get_images([search_uri.uri])
     assert len(results[search_uri.uri]) == 0
+    print(f"TEXT: {caplog.text}")
     assert (
-        "No images available for Pandora URIs of type 'search'.".format(search_uri.uri)
+        "No images available for Pandora URIs of type 'search'."
         in caplog.text
     )
 
@@ -268,9 +269,6 @@ def test_lookup_of_station_uri(
 
             track = results[0]
             assert track.uri == station_uri.uri
-            # TODO: this needs to be moved per the mopidy 3.0 upgrade:
-            # Backends should implement :meth:`mopidy.backend.LibraryProvider.get_images`
-            #assert next(iter(track.album.images)) == conftest.MOCK_STATION_ART_URL
             assert track.name == conftest.MOCK_STATION_NAME
             assert next(iter(track.artists)).name == "Pandora Station"
             assert track.album.name == conftest.MOCK_STATION_GENRE
