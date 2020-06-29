@@ -156,23 +156,23 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
 
-    def _formatted_station_list(self, list):
+    def _formatted_station_list(self, station_list):
         # Find QuickMix stations and move QuickMix to top
-        for i, station in enumerate(list):
+        for i, station in enumerate(station_list.copy()):
             if station.is_quickmix:
                 quickmix_stations = station.quickmix_stations
                 if not station.name.endswith(" (marked with *)"):
                     station.name += " (marked with *)"
-                list.insert(0, list.pop(i))
+                station_list.insert(0, station_list.pop(i))
                 break
 
         # Mark QuickMix stations
-        for station in list:
+        for station in station_list:
             if station.id in quickmix_stations:
                 if not station.name.endswith("*"):
                     station.name += "*"
 
-        return list
+        return station_list
 
     def _browse_stations(self):
         station_directories = []
