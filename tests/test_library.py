@@ -101,7 +101,10 @@ def test_get_images_for_track_with_images(config, playlist_item_mock):
     )
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 1
-    assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url
+    # chrome blocks getting non https images from Pandora, therefore the
+    # library provider substitutes https for http.  We need to perform
+    # the same substitution here to verify it worked correctly
+    assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url.replace("http://", "https://", 1)
 
 
 def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
