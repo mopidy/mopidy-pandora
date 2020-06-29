@@ -74,7 +74,6 @@ def test_get_images_for_unsupported_uri_type_issues_warning(config, caplog):
     search_uri = PandoraUri.factory("pandora:search:R12345")
     results = backend.library.get_images([search_uri.uri])
     assert len(results[search_uri.uri]) == 0
-    print(f"TEXT: {caplog.text}")
     assert (
         "No images available for Pandora URIs of type 'search'."
         in caplog.text

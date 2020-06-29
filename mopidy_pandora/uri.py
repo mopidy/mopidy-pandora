@@ -40,7 +40,6 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     def encoded_attributes(self):
         encoded_dict = {}
         for k, v in list(self.__dict__.items()):
-            print(f"Ecoding {v}\n")
             encoded_dict[k] = quote(PandoraUri.encode(v))
 
         return encoded_dict

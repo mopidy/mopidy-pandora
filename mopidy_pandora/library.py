@@ -154,7 +154,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     )
                 pass
             result[uri] = [models.Image(uri=u) for u in image_uris]
-        print(f"\n\n\nIMAGES: {result}\n\n\n")
         return result
 
     def _formatted_station_list(self, list):
