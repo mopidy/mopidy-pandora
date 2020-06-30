@@ -53,7 +53,7 @@ MOCK_AD_TYPE = "ad"
 def config():
     return {
         "http": {"hostname": "127.0.0.1", "port": 6680},
-        "proxy": {"hostname": "host_mock", "port": 80},
+        "proxy": {"hostname": "host_mock", "port": 8080},
         "pandora": {
             "enabled": True,
             "api_host": "test_host",
