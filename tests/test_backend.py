@@ -1,18 +1,15 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
-
-import mock
-
-from mopidy import backend as backend_api
-from mopidy import models
+from unittest import mock
 
 from pandora.client import APIClient, BaseAPIClient
 from pandora.errors import PandoraException
 
+from mopidy import backend as backend_api
+from mopidy import models
 from mopidy_pandora import client, library, playback
 from mopidy_pandora.backend import PandoraBackend
 from mopidy_pandora.library import PandoraLibraryProvider
+
 from tests.conftest import get_backend
 
 
@@ -46,7 +43,9 @@ def test_event_triggered_processes_event(config):
     backend = get_backend(config)
 
     backend.process_event = mock.Mock()
-    backend.event_triggered("pandora:track:id_token_mock:id_token_mock", "thumbs_up")
+    backend.event_triggered(
+        "pandora:track:id_token_mock:id_token_mock", "thumbs_up"
+    )
     backend.process_event.assert_called_with(
         "pandora:track:id_token_mock:id_token_mock", "thumbs_up"
     )
@@ -89,7 +88,9 @@ def test_prepare_next_track_triggers_event(config):
 
 def test_process_event_calls_method(config, caplog):
     caplog.set_level(logging.INFO)
-    with mock.patch.object(PandoraLibraryProvider, "lookup_pandora_track", mock.Mock()):
+    with mock.patch.object(
+        PandoraLibraryProvider, "lookup_pandora_track", mock.Mock()
+    ):
         with mock.patch.object(APIClient, "__call__", mock.Mock()) as mock_call:
 
             backend = get_backend(config)
@@ -113,15 +114,21 @@ def test_process_event_calls_method(config, caplog):
 
                 assert mock_call.called
                 mock_call.reset_mock()
-                backend._trigger_event_processed.assert_called_with(uri_mock, event)
+                backend._trigger_event_processed.assert_called_with(
+                    uri_mock, event
+                )
                 backend._trigger_event_processed.reset_mock()
 
-                assert "Triggering event '{}'".format(event) in caplog.text
+                assert f"Triggering event '{event}'" in caplog.text
 
 
 def test_process_event_handles_pandora_exception(config, caplog):
-    with mock.patch.object(PandoraLibraryProvider, "lookup_pandora_track", mock.Mock()):
-        with mock.patch.object(PandoraBackend, "thumbs_up", mock.Mock()) as mock_call:
+    with mock.patch.object(
+        PandoraLibraryProvider, "lookup_pandora_track", mock.Mock()
+    ):
+        with mock.patch.object(
+            PandoraBackend, "thumbs_up", mock.Mock()
+        ) as mock_call:
 
             backend = get_backend(config)
             uri_mock = "pandora:track:id_token_mock:id_token_mock"

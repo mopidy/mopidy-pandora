@@ -1,15 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import time
-
-import mock
+from unittest import mock
 
 from mopidy import listener, models
-
 from mopidy.audio import PlaybackState
-
 from mopidy.core import CoreListener
-
 from mopidy_pandora import frontend
 from mopidy_pandora.frontend import EventMarker, MatchResult, PandoraFrontend
 from mopidy_pandora.listener import (
@@ -21,20 +15,25 @@ from mopidy_pandora.listener import (
 from tests import conftest
 
 
-class TestPandoraFrontend(object):
+class TestPandoraFrontend:
     def test_add_track_starts_playback(self, mopidy):
         assert mopidy.core.playback.get_state().get() == PlaybackState.STOPPED
         mopidy.core.tracklist.clear()
-        mopidy.frontend.add_track(mopidy.tl_tracks[0].track, auto_play=True).get()
+        mopidy.frontend.add_track(
+            mopidy.tl_tracks[0].track, auto_play=True
+        ).get()
         mopidy.replay_events()
 
         assert mopidy.core.playback.get_state().get() == PlaybackState.PLAYING
         assert (
-            mopidy.core.playback.get_current_track().get() == mopidy.tl_tracks[0].track
+            mopidy.core.playback.get_current_track().get()
+            == mopidy.tl_tracks[0].track
         )
 
     def test_add_track_trims_tracklist(self, mopidy):
-        assert len(mopidy.core.tracklist.get_tl_tracks().get()) == len(mopidy.tl_tracks)
+        assert len(mopidy.core.tracklist.get_tl_tracks().get()) == len(
+            mopidy.tl_tracks
+        )
 
         # Remove first track so we can add it again
         mopidy.core.tracklist.remove({"tlid": [mopidy.tl_tracks[0].tlid]})
@@ -51,13 +50,16 @@ class TestPandoraFrontend(object):
         mopidy.core.playback.play(tlid=tl_tracks[0].tlid)
         mopidy.replay_events(until="track_playback_started")
 
-        mopidy.frontend.next_track_available(mopidy.tl_tracks[1].track, True).get()
+        mopidy.frontend.next_track_available(
+            mopidy.tl_tracks[1].track, True
+        ).get()
         tl_tracks = mopidy.core.tracklist.get_tl_tracks().get()
         mopidy.replay_events()
 
         assert tl_tracks[-1].track == mopidy.tl_tracks[1].track
         assert (
-            mopidy.core.playback.get_current_track().get() == mopidy.tl_tracks[1].track
+            mopidy.core.playback.get_current_track().get()
+            == mopidy.tl_tracks[1].track
         )
 
     def test_next_track_available_forces_stop_if_no_more_tracks(self, mopidy):
@@ -72,7 +74,7 @@ class TestPandoraFrontend(object):
         self, mopidy
     ):
         func_mock = mock.PropertyMock()
-        func_mock.__name__ = str("func_mock")
+        func_mock.__name__ = "func_mock"
         func_mock.return_value = True
 
         mopidy.core.playback.play(tlid=mopidy.tl_tracks[3].tlid)
@@ -84,7 +86,7 @@ class TestPandoraFrontend(object):
         self, mopidy
     ):
         func_mock = mock.PropertyMock()
-        func_mock.__name__ = str("func_mock")
+        func_mock.__name__ = "func_mock"
         func_mock.return_value = True
 
         tl_track_mock = mock.Mock(spec=models.TlTrack)
@@ -99,7 +101,7 @@ class TestPandoraFrontend(object):
 
     def test_only_execute_for_pandora_executes_for_pandora_uri(self, mopidy):
         func_mock = mock.PropertyMock()
-        func_mock.__name__ = str("func_mock")
+        func_mock.__name__ = "func_mock"
         func_mock.return_value = True
 
         mopidy.core.playback.play(tlid=mopidy.tl_tracks[0].tlid).get()
@@ -138,7 +140,9 @@ class TestPandoraFrontend(object):
 
             assert not mopidy.frontend.setup_required.get()
 
-    def test_set_options_skips_auto_setup_if_not_configured(self, config, mopidy):
+    def test_set_options_skips_auto_setup_if_not_configured(
+        self, config, mopidy
+    ):
         mopidy.core.playback.play(tlid=mopidy.tl_tracks[0].tlid)
 
         config["pandora"]["auto_setup"] = False
@@ -190,7 +194,9 @@ class TestPandoraFrontend(object):
     ):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             with mock.patch.object(
-                PandoraFrontend, "is_station_changed", mock.Mock(return_value=True)
+                PandoraFrontend,
+                "is_station_changed",
+                mock.Mock(return_value=True),
             ):
                 mopidy.core.playback.play(tlid=mopidy.tl_tracks[4].tlid)
                 mopidy.replay_events()
@@ -213,13 +219,16 @@ class TestPandoraFrontend(object):
             == mopidy.tl_tracks[0].track.uri
         )
 
-        # No easy way to test retrieving from history as it is not possible to set core.playback_current_tl_track
-        # to None
+        # No easy way to test retrieving from history as it is not possible to
+        # set core.playback_current_tl_track to None
 
         # mopidy.core.playback.next()
         # mopidy.core.playback.stop()
         # mopidy.replay_events()
-        # assert frontend.get_active_uri(mopidy.core, **kwargs) == mopidy.tl_tracks[1].track.uri
+        # assert (
+        #     frontend.get_active_uri(mopidy.core, **kwargs) ==
+        #     mopidy.tl_tracks[1].track.uri
+        # )
 
         kwargs["tl_track"] = mopidy.tl_tracks[2]
         assert (
@@ -263,10 +272,14 @@ class TestPandoraFrontend(object):
         mopidy.replay_events()
 
         # Check against track of a different station
-        assert mopidy.frontend.is_station_changed(mopidy.tl_tracks[4].track).get()
+        assert mopidy.frontend.is_station_changed(
+            mopidy.tl_tracks[4].track
+        ).get()
 
     def test_is_station_changed_no_history(self, mopidy):
-        assert not mopidy.frontend.is_station_changed(mopidy.tl_tracks[0].track).get()
+        assert not mopidy.frontend.is_station_changed(
+            mopidy.tl_tracks[0].track
+        ).get()
 
     def test_changing_track_no_op(self, mopidy):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -291,7 +304,10 @@ class TestPandoraFrontend(object):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             mopidy.core.tracklist.clear()
             mopidy.core.tracklist.add(
-                uris=[mopidy.tl_tracks[0].track.uri, mopidy.tl_tracks[4].track.uri]
+                uris=[
+                    mopidy.tl_tracks[0].track.uri,
+                    mopidy.tl_tracks[4].track.uri,
+                ]
             )
             tl_tracks = mopidy.core.tracklist.get_tl_tracks().get()
             assert len(tl_tracks) == 2
@@ -327,7 +343,9 @@ class TestPandoraFrontend(object):
         unplayable_track = tl_tracks[0]
         mopidy.frontend.track_unplayable(unplayable_track.track).get()
 
-        assert unplayable_track not in mopidy.core.tracklist.get_tl_tracks().get()
+        assert (
+            unplayable_track not in mopidy.core.tracklist.get_tl_tracks().get()
+        )
 
     def test_track_unplayable_triggers_end_of_tracklist_event(self, mopidy):
         mopidy.core.playback.play(tlid=mopidy.tl_tracks[0].tlid)
@@ -347,8 +365,10 @@ class TestPandoraFrontend(object):
         assert mopidy.core.playback.get_state().get() == PlaybackState.STOPPED
 
 
-class TestEventMonitorFrontend(object):
-    def test_delete_station_clears_tracklist_on_finish(self, mopidy_with_monitor):
+class TestEventMonitorFrontend:
+    def test_delete_station_clears_tracklist_on_finish(
+        self, mopidy_with_monitor
+    ):
         mopidy_with_monitor.core.playback.play(
             tlid=mopidy_with_monitor.tl_tracks[0].tlid
         )
@@ -363,7 +383,9 @@ class TestEventMonitorFrontend(object):
         )
         mopidy_with_monitor.replay_events()
 
-        assert len(mopidy_with_monitor.core.tracklist.get_tl_tracks().get()) == 0
+        assert (
+            len(mopidy_with_monitor.core.tracklist.get_tl_tracks().get()) == 0
+        )
 
     def test_detect_track_change_next(self, mopidy_with_monitor):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
@@ -454,7 +476,9 @@ class TestEventMonitorFrontend(object):
 
             assert call in mopidy_with_monitor.send_mock.mock_calls
 
-    def test_detect_track_change_previous_from_paused(self, mopidy_with_monitor):
+    def test_detect_track_change_previous_from_paused(
+        self, mopidy_with_monitor
+    ):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Next
             mopidy_with_monitor.core.playback.play(
@@ -502,7 +526,9 @@ class TestEventMonitorFrontend(object):
 
             assert call in mopidy_with_monitor.send_mock.mock_calls
 
-    def test_events_triggered_on_previous_action(self, config, mopidy_with_monitor):
+    def test_events_triggered_on_previous_action(
+        self, config, mopidy_with_monitor
+    ):
         with conftest.ThreadJoiner(timeout=5.0) as thread_joiner:
             # Pause -> Previous
             mopidy_with_monitor.core.playback.play(
@@ -526,7 +552,9 @@ class TestEventMonitorFrontend(object):
 
             assert call in mopidy_with_monitor.send_mock.mock_calls
 
-    def test_events_triggered_on_resume_action(self, config, mopidy_with_monitor):
+    def test_events_triggered_on_resume_action(
+        self, config, mopidy_with_monitor
+    ):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Pause -> Resume
             mopidy_with_monitor.core.playback.play(
@@ -550,7 +578,9 @@ class TestEventMonitorFrontend(object):
 
             assert call in mopidy_with_monitor.send_mock.mock_calls
 
-    def test_events_triggered_on_triple_click_action(self, config, mopidy_with_monitor):
+    def test_events_triggered_on_triple_click_action(
+        self, config, mopidy_with_monitor
+    ):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             # Pause -> Resume -> Pause
             mopidy_with_monitor.core.playback.play(
@@ -592,7 +622,9 @@ class TestEventMonitorFrontend(object):
                 mopidy_with_monitor.events.qsize() == 0
             )  # Check that no events were triggered
 
-    def test_monitor_resumes_playback_after_event_trigger(self, mopidy_with_monitor):
+    def test_monitor_resumes_playback_after_event_trigger(
+        self, mopidy_with_monitor
+    ):
         with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
             mopidy_with_monitor.core.playback.play(
                 tlid=mopidy_with_monitor.tl_tracks[0].tlid
@@ -617,7 +649,7 @@ class TestEventMonitorFrontend(object):
             )
 
 
-class TestEventSequence(object):
+class TestEventSequence:
     def test_events_ignored_if_time_position_is_zero(
         self, event_sequences, tl_track_mock
     ):
@@ -632,7 +664,9 @@ class TestEventSequence(object):
         for es in event_sequences:
             assert es.is_monitoring()
 
-    def test_start_monitor_handles_no_tl_track(self, event_sequences, tl_track_mock):
+    def test_start_monitor_handles_no_tl_track(
+        self, event_sequences, tl_track_mock
+    ):
         for es in event_sequences:
             es.notify("e1", tl_track=tl_track_mock, time_position=100)
         for es in event_sequences:
@@ -652,9 +686,13 @@ class TestEventSequence(object):
 
         assert rq.qsize() == 2
 
-    def test_stop_monitor_only_waits_for_matched_events(self, event_sequence_wait, rq):
+    def test_stop_monitor_only_waits_for_matched_events(
+        self, event_sequence_wait, rq
+    ):
         event_sequence_wait.notify("e1", time_position=100)
-        event_sequence_wait.notify("e_not_in_monitored_sequence", time_position=100)
+        event_sequence_wait.notify(
+            "e_not_in_monitored_sequence", time_position=100
+        )
 
         time.sleep(0.1 * 1.1)
         assert not event_sequence_wait.is_monitoring()
@@ -689,13 +727,17 @@ class TestEventSequence(object):
     def test_get_stop_monitor_strict_ensures_that_events_were_seen_in_order(
         self, event_sequence_strict, tl_track_mock, rq
     ):
-        event_sequence_strict.notify("e1", tl_track=tl_track_mock, time_position=100)
+        event_sequence_strict.notify(
+            "e1", tl_track=tl_track_mock, time_position=100
+        )
         event_sequence_strict.notify("e3", time_position=100)
         event_sequence_strict.notify("e2", time_position=100)
         event_sequence_strict.wait(timeout=1.0)
         assert rq.qsize() == 0
 
-        event_sequence_strict.notify("e1", tl_track=tl_track_mock, time_position=100)
+        event_sequence_strict.notify(
+            "e1", tl_track=tl_track_mock, time_position=100
+        )
         event_sequence_strict.notify("e2", time_position=100)
         event_sequence_strict.notify("e3", time_position=100)
         event_sequence_strict.wait(timeout=1.0)
@@ -714,7 +756,7 @@ class TestEventSequence(object):
         assert event_sequence_strict.get_ratio() == 1
 
 
-class TestMatchResult(object):
+class TestMatchResult:
     def test_match_result_comparison(self):
         mr1 = MatchResult(EventMarker("e1", "u1", 0), 1)
         mr2 = MatchResult(EventMarker("e1", "u1", 0), 2)

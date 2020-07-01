@@ -22,7 +22,7 @@ class Extension(ext.Extension):
     def get_config_schema(self):
         from pandora.client import BaseAPIClient
 
-        schema = super(Extension, self).get_config_schema()
+        schema = super().get_config_schema()
         schema["api_host"] = config.String()
         schema["partner_encryption_key"] = config.String()
         schema["partner_decryption_key"] = config.String()

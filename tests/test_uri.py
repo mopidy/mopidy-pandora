@@ -1,13 +1,9 @@
-# coding=utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
+from unittest import mock
 
-from mopidy import models
-
+import pytest
 from pandora.models.station import GenreStation, Station
 
-import mock
-import pytest
-
+from mopidy import models
 from mopidy_pandora.uri import (
     AdItemUri,
     GenreStationUri,

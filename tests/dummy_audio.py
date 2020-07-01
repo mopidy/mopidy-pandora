@@ -4,11 +4,10 @@ This class implements the audio API in the simplest way possible. It is used in
 tests of the core and backends.
 """
 
-from __future__ import absolute_import, unicode_literals
-
-from mopidy import audio
 
 import pykka
+
+from mopidy import audio
 
 
 def create_proxy(config=None, mixer=None):
@@ -18,7 +17,7 @@ def create_proxy(config=None, mixer=None):
 # TODO: reset position on track change?
 class DummyAudio(pykka.ThreadingActor):
     def __init__(self, config=None, mixer=None):
-        super(DummyAudio, self).__init__()
+        super().__init__()
         self.state = audio.PlaybackState.STOPPED
         self._volume = 0
         self._position = 0
@@ -103,7 +102,10 @@ class DummyAudio(pykka.ThreadingActor):
 
         old_state, self.state = self.state, new_state
         audio.AudioListener.send(
-            "state_changed", old_state=old_state, new_state=new_state, target_state=None
+            "state_changed",
+            old_state=old_state,
+            new_state=new_state,
+            target_state=None,
         )
 
         if new_state == audio.PlaybackState.PLAYING:

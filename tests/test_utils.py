@@ -1,15 +1,7 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-try:
-    import queue
-except ImportError:
-    import Queue as queue  # noqa: N813
-
 import json
-
 import logging
-
-import mock
+import queue
+from unittest import mock
 
 import requests
 

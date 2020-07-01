@@ -1,26 +1,26 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from queue import PriorityQueue
 import json
 import threading
+from queue import PriorityQueue
+from unittest import mock
 
-import mock
-from mopidy import models
 import pykka
-
+import pytest
+import requests
 from pandora.client import APIClient
-
 from pandora.models.ad import AdItem
-from pandora.models.station import GenreStation, GenreStationList, Station, StationList
 from pandora.models.playlist import PlaylistItem
 from pandora.models.search import SearchResult, SearchResultItem
+from pandora.models.station import (
+    GenreStation,
+    GenreStationList,
+    Station,
+    StationList,
+)
 
-import pytest
-
-import requests
-
+from mopidy import models
 from mopidy_pandora import backend, frontend, listener
 from mopidy_pandora.frontend import EventSequence
+
 from tests.dummy_mopidy import DummyMopidyInstance
 
 MOCK_STATION_TYPE = "station"
@@ -35,7 +35,10 @@ MOCK_STATION_LIST_CHECKSUM = "aa00aa00aa00aa00aa00aa00aa00aa00"
 
 MOCK_TRACK_TYPE = "track"
 MOCK_TRACK_NAME = "Mock Track"
-MOCK_TRACK_TOKEN = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+MOCK_TRACK_TOKEN = (
+    "000000000000000000000000000000000000000000000000"
+    "000000000000000000000000000000000000000000000001"
+)
 MOCK_TRACK_AD_TOKEN = "000000000000000000-none"
 MOCK_TRACK_AUDIO_HIGH = "http://mockup.com/high_quality_audiofile.mp4?..."
 MOCK_TRACK_AUDIO_MED = "http://mockup.com/medium_quality_audiofile.mp4?..."
@@ -95,7 +98,9 @@ def get_backend(config, simulate_request_exceptions=False):
 @pytest.fixture
 def mopidy(config):
     mopidy = DummyMopidyInstance()
-    mopidy.frontend = frontend.PandoraFrontend.start(config, mopidy.core).proxy()
+    mopidy.frontend = frontend.PandoraFrontend.start(
+        config, mopidy.core
+    ).proxy()
     mopidy.actor_register.append(mopidy.frontend)
 
     yield mopidy
@@ -106,7 +111,9 @@ def mopidy(config):
 
 @pytest.fixture
 def mopidy_with_monitor(config, mopidy):
-    mopidy.monitor = frontend.EventMonitorFrontend.start(config, mopidy.core).proxy()
+    mopidy.monitor = frontend.EventMonitorFrontend.start(
+        config, mopidy.core
+    ).proxy()
     mopidy.actor_register.append(mopidy.monitor)
 
     # Consume mode needs to be enabled to detect 'previous' track changes
@@ -272,12 +279,14 @@ def ad_metadata_result_mock():
 
 
 @pytest.fixture
-def playlist_mock(config, playlist_result_mock, simulate_request_exceptions=False):
+def playlist_mock(
+    config, playlist_result_mock, simulate_request_exceptions=False
+):
     with mock.patch.object(APIClient, "__call__", mock.Mock()) as call_mock:
         call_mock.return_value = playlist_result_mock["result"]
-        return get_backend(config, simulate_request_exceptions).api.get_playlist(
-            MOCK_STATION_TOKEN
-        )
+        return get_backend(
+            config, simulate_request_exceptions
+        ).api.get_playlist(MOCK_STATION_TOKEN)
 
 
 @pytest.fixture
@@ -417,7 +426,11 @@ def search_result_mock():
                 },
             ],
             "genreStations": [
-                {"musicToken": "G123", "score": 100, "stationName": "search_genre_mock"}
+                {
+                    "musicToken": "G123",
+                    "score": 100,
+                    "stationName": "search_genre_mock",
+                }
             ],
         },
     }
@@ -427,7 +440,9 @@ def search_result_mock():
 
 @pytest.fixture
 def get_station_list_return_value_mock(config, station_list_result_mock):
-    return StationList.from_json(get_backend(config).api, station_list_result_mock)
+    return StationList.from_json(
+        get_backend(config).api, station_list_result_mock
+    )
 
 
 @pytest.fixture
@@ -465,7 +480,7 @@ class TransportCallTestNotImplemented(Exception):
 
 # Based on https://pypi.python.org/pypi/tl.testing/0.5
 # Copyright (c) 2011-2012 Thomas Lotze
-class ThreadJoiner(object):
+class ThreadJoiner:
     """Context manager that tries to join any threads started by its suite.
 
     This context manager is instantiated with a mandatory ``timeout``

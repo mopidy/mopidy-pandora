@@ -1,12 +1,12 @@
-from __future__ import absolute_import, unicode_literals
-
-import mock
+from unittest import mock
 
 from mopidy import models
 
 
-class TestEventMonitorListener(object):
-    def test_on_event_forwards_to_specific_handler(self, event_monitor_listener):
+class TestEventMonitorListener:
+    def test_on_event_forwards_to_specific_handler(
+        self, event_monitor_listener
+    ):
         event_monitor_listener.event_triggered = mock.Mock()
 
         event_monitor_listener.on_event(
@@ -16,7 +16,8 @@ class TestEventMonitorListener(object):
         )
 
         event_monitor_listener.event_triggered.assert_called_with(
-            track_uri="pandora:track:id_mock:token_mock", pandora_event="event_mock"
+            track_uri="pandora:track:id_mock:token_mock",
+            pandora_event="event_mock",
         )
 
     def test_listener_has_default_impl_for_event_triggered(
@@ -43,7 +44,7 @@ class TestEventMonitorListener(object):
         )
 
 
-class TestPandoraFrontendListener(object):
+class TestPandoraFrontendListener:
     def test_on_event_forwards_to_specific_handler(self, frontend_listener):
         frontend_listener.end_of_tracklist_reached = mock.Mock()
 
@@ -63,44 +64,59 @@ class TestPandoraFrontendListener(object):
         )
 
 
-class TestPandoraBackendListener(object):
+class TestPandoraBackendListener:
     def test_on_event_forwards_to_specific_handler(self, backend_listener):
         backend_listener.next_track_available = mock.Mock()
 
         backend_listener.on_event(
-            "next_track_available", track=models.Ref(name="name_mock"), auto_play=False
+            "next_track_available",
+            track=models.Ref(name="name_mock"),
+            auto_play=False,
         )
 
         backend_listener.next_track_available.assert_called_with(
             track=models.Ref(name="name_mock"), auto_play=False
         )
 
-    def test_listener_has_default_impl_for_next_track_available(self, backend_listener):
+    def test_listener_has_default_impl_for_next_track_available(
+        self, backend_listener
+    ):
         backend_listener.next_track_available(
             track=models.Ref(name="name_mock"), auto_play=False
         )
 
-    def test_listener_has_default_impl_for_event_processed(self, backend_listener):
+    def test_listener_has_default_impl_for_event_processed(
+        self, backend_listener
+    ):
         backend_listener.event_processed(
-            track_uri="pandora:track:id_mock:token_mock", pandora_event="event_mock"
+            track_uri="pandora:track:id_mock:token_mock",
+            pandora_event="event_mock",
         )
 
 
-class TestPandoraPlaybackListener(object):
+class TestPandoraPlaybackListener:
     def test_on_event_forwards_to_specific_handler(self, playback_listener):
         playback_listener.track_changing = mock.Mock()
 
-        playback_listener.on_event("track_changing", track=models.Ref(name="name_mock"))
+        playback_listener.on_event(
+            "track_changing", track=models.Ref(name="name_mock")
+        )
 
         playback_listener.track_changing.assert_called_with(
             track=models.Ref(name="name_mock")
         )
 
-    def test_listener_has_default_impl_for_track_changing(self, playback_listener):
+    def test_listener_has_default_impl_for_track_changing(
+        self, playback_listener
+    ):
         playback_listener.track_changing(track=models.Ref(name="name_mock"))
 
-    def test_listener_has_default_impl_for_track_unplayable(self, playback_listener):
+    def test_listener_has_default_impl_for_track_unplayable(
+        self, playback_listener
+    ):
         playback_listener.track_unplayable(track=models.Ref(name="name_mock"))
 
-    def test_listener_has_default_impl_for_skip_limit_exceeded(self, playback_listener):
+    def test_listener_has_default_impl_for_skip_limit_exceeded(
+        self, playback_listener
+    ):
         playback_listener.skip_limit_exceeded()
