@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 
@@ -64,7 +69,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
         logger.info(
-            "Looking up Pandora {} {}...".format(pandora_uri.uri_type, pandora_uri.uri)
+            "Looking up Pandora {} {}...".format(
+                pandora_uri.uri_type, pandora_uri.uri
+            )
         )
         if isinstance(pandora_uri, SearchUri):
             # Create the station first so that it can be browsed.
@@ -81,7 +88,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 track = self.lookup_pandora_track(uri)
             except KeyError:
-                logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
+                logger.exception(
+                    "Failed to lookup Pandora URI '{}'.".format(uri)
+                )
                 return []
             else:
                 if isinstance(pandora_uri, AdItemUri):
@@ -137,13 +146,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     image_uri = track.album_art_url
                 if image_uri:
-                    image_uris.update([image_uri.replace("http://", "https://", 1)])
+                    image_uris.update(
+                        [image_uri.replace("http://", "https://", 1)]
+                    )
             except (TypeError, KeyError):
                 pandora_uri = PandoraUri.factory(uri)
                 if isinstance(pandora_uri, TrackUri):
                     # Could not find the track as expected - exception.
                     logger.exception(
-                        "Failed to lookup image for Pandora URI '{}'.".format(uri)
+                        "Failed to lookup image for Pandora URI '{}'.".format(
+                            uri
+                        )
                     )
                 else:
                     # Lookup
@@ -215,7 +228,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _browse_genre_stations(self, uri):
         return [
-            models.Ref.directory(name=station.name, uri=PandoraUri.factory(station).uri)
+            models.Ref.directory(
+                name=station.name, uri=PandoraUri.factory(station).uri
+            )
             for station in self.backend.api.get_genre_stations()[
                 PandoraUri.factory(uri).category_name
             ]
@@ -303,7 +318,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             artists.append(models.Artist(uri=search_uri.uri, name=station_name))
 
         return models.SearchResult(
-            uri="pandora:search:{}".format(search_text), tracks=tracks, artists=artists
+            uri="pandora:search:{}".format(search_text),
+            tracks=tracks,
+            artists=artists,
         )
 
     def _formatted_search_query(self, query):

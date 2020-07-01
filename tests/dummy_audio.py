@@ -103,7 +103,10 @@ class DummyAudio(pykka.ThreadingActor):
 
         old_state, self.state = self.state, new_state
         audio.AudioListener.send(
-            "state_changed", old_state=old_state, new_state=new_state, target_state=None
+            "state_changed",
+            old_state=old_state,
+            new_state=new_state,
+            target_state=None,
         )
 
         if new_state == audio.PlaybackState.PLAYING:

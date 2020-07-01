@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 
@@ -89,7 +94,9 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
         if uri_cls:
             return uri_cls(*parts[2:])
         else:
-            raise NotImplementedError("Unsupported Pandora URI type '{}'".format(uri))
+            raise NotImplementedError(
+                "Unsupported Pandora URI type '{}'".format(uri)
+            )
 
     @classmethod
     def _from_station(cls, station):

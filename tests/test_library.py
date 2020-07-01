@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 import time
@@ -74,8 +79,7 @@ def test_get_images_for_unsupported_uri_type_issues_warning(config, caplog):
     results = backend.library.get_images([search_uri.uri])
     assert len(results[search_uri.uri]) == 0
     assert (
-        "No images available for Pandora URIs of type 'search'."
-        in caplog.text
+        "No images available for Pandora URIs of type 'search'." in caplog.text
     )
 
 
@@ -103,7 +107,9 @@ def test_get_images_for_track_with_images(config, playlist_item_mock):
     # chrome blocks getting non https images from Pandora, therefore the
     # library provider substitutes https for http.  We need to perform
     # the same substitution here to verify it worked correctly
-    assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url.replace("http://", "https://", 1)
+    assert results[track_uri.uri][
+        0
+    ].uri == playlist_item_mock.album_art_url.replace("http://", "https://", 1)
 
 
 def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
@@ -118,10 +124,14 @@ def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
     ref = backend.library.get_next_pandora_track("id_token_mock")
     assert ref.uri == PandoraUri.factory(playlist_item_mock).uri
     assert backend.library.pandora_track_cache[ref.uri].ref == ref
-    assert backend.library.pandora_track_cache[ref.uri].track == playlist_item_mock
+    assert (
+        backend.library.pandora_track_cache[ref.uri].track == playlist_item_mock
+    )
 
 
-def test_get_next_pandora_track_handles_no_more_tracks_available(config, caplog):
+def test_get_next_pandora_track_handles_no_more_tracks_available(
+    config, caplog
+):
     backend = conftest.get_backend(config)
 
     station_mock = mock.Mock(spec=Station)
@@ -139,7 +149,9 @@ def test_get_next_pandora_track_renames_advertisements(
     config, get_station_mock_return_value, playlist_mock
 ):
     with mock.patch.object(
-        MopidyAPIClient, "get_station", return_value=get_station_mock_return_value
+        MopidyAPIClient,
+        "get_station",
+        return_value=get_station_mock_return_value,
     ):
         with mock.patch.object(
             Station, "get_playlist", mock.Mock()
@@ -168,7 +180,10 @@ def test_lookup_of_invalid_uri_type(config, caplog):
         backend = conftest.get_backend(config)
 
         backend.library.lookup("pandora:genre:mock_name")
-        assert "Unexpected type to perform Pandora track lookup: genre." in caplog.text
+        assert (
+            "Unexpected type to perform Pandora track lookup: genre."
+            in caplog.text
+        )
 
 
 def test_lookup_of_ad_uri(config, ad_item_mock):
@@ -214,14 +229,17 @@ def test_lookup_of_search_uri(
     station_result_mock,
 ):
     with mock.patch.object(
-        MopidyAPIClient, "get_station", return_value=get_station_mock_return_value
+        MopidyAPIClient,
+        "get_station",
+        return_value=get_station_mock_return_value,
     ):
         with mock.patch.object(
             APIClient,
             "create_station",
             mock.Mock(
                 return_value=Station.from_json(
-                    mock.MagicMock(MopidyAPIClient), station_result_mock["result"]
+                    mock.MagicMock(MopidyAPIClient),
+                    station_result_mock["result"],
                 )
             ),
         ) as create_station_mock:
@@ -240,7 +258,9 @@ def test_lookup_of_search_uri(
                 )
 
                 track_uri = PlaylistItemUri._from_track(playlist_item_mock)
-                backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(
+                backend.library.pandora_track_cache[
+                    track_uri.uri
+                ] = TrackCacheItem(
                     mock.Mock(spec=models.Ref.track), playlist_item_mock
                 )
 
@@ -255,7 +275,9 @@ def test_lookup_of_station_uri(
     config, get_station_list_return_value_mock, get_station_mock_return_value
 ):
     with mock.patch.object(
-        MopidyAPIClient, "get_station", return_value=get_station_mock_return_value
+        MopidyAPIClient,
+        "get_station",
+        return_value=get_station_mock_return_value,
     ):
         with mock.patch.object(
             APIClient,
@@ -291,7 +313,9 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
 
 
 # Regression test for https://github.com/mopidy/mopidy-pandora/issues/48
-def test_lookup_of_track_that_does_not_specify_bitrate(config, playlist_item_mock):
+def test_lookup_of_track_that_does_not_specify_bitrate(
+    config, playlist_item_mock
+):
     backend = conftest.get_backend(config)
 
     playlist_item_mock.bitrate = None
@@ -314,7 +338,10 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     results = backend.library.lookup(track_uri.uri)
 
     assert len(results) == 0
-    assert "Failed to lookup Pandora URI '{}'.".format(track_uri.uri) in caplog.text
+    assert (
+        "Failed to lookup Pandora URI '{}'.".format(track_uri.uri)
+        in caplog.text
+    )
 
 
 def test_lookup_overrides_album_and_artist_uris(config, playlist_item_mock):
@@ -335,7 +362,9 @@ def test_browse_directory_uri(
     config, get_station_list_return_value_mock, station_list_result_mock
 ):
     with mock.patch.object(
-        APIClient, "get_station_list", return_value=get_station_list_return_value_mock
+        APIClient,
+        "get_station_list",
+        return_value=get_station_list_return_value_mock,
     ):
         backend = conftest.get_backend(config)
         results = backend.library.browse(backend.library.root_directory.uri)
@@ -350,7 +379,9 @@ def test_browse_directory_uri(
         assert (
             results[1].uri
             == StationUri._from_station(
-                Station.from_json(backend.api, station_list_result_mock["stations"][2])
+                Station.from_json(
+                    backend.api, station_list_result_mock["stations"][2]
+                )
             ).uri
         )
 
@@ -358,7 +389,9 @@ def test_browse_directory_uri(
         assert (
             results[2].uri
             == StationUri._from_station(
-                Station.from_json(backend.api, station_list_result_mock["stations"][1])
+                Station.from_json(
+                    backend.api, station_list_result_mock["stations"][1]
+                )
             ).uri
         )
 
@@ -366,7 +399,9 @@ def test_browse_directory_uri(
         assert (
             results[3].uri
             == StationUri._from_station(
-                Station.from_json(backend.api, station_list_result_mock["stations"][0])
+                Station.from_json(
+                    backend.api, station_list_result_mock["stations"][0]
+                )
             ).uri
         )
 
@@ -375,7 +410,9 @@ def test_browse_directory_marks_quickmix_stations(
     config, get_station_list_return_value_mock
 ):
     with mock.patch.object(
-        APIClient, "get_station_list", return_value=get_station_list_return_value_mock
+        APIClient,
+        "get_station_list",
+        return_value=get_station_list_return_value_mock,
     ):
 
         quickmix_station_uri = "pandora:track:{}:{}".format(
@@ -393,7 +430,9 @@ def test_browse_directory_marks_quickmix_stations(
 
 def test_browse_directory_sort_za(config, get_station_list_return_value_mock):
     with mock.patch.object(
-        APIClient, "get_station_list", return_value=get_station_list_return_value_mock
+        APIClient,
+        "get_station_list",
+        return_value=get_station_list_return_value_mock,
     ):
         config["pandora"]["sort_order"] = "A-Z"
         backend = conftest.get_backend(config)
@@ -408,7 +447,9 @@ def test_browse_directory_sort_za(config, get_station_list_return_value_mock):
 
 def test_browse_directory_sort_date(config, get_station_list_return_value_mock):
     with mock.patch.object(
-        APIClient, "get_station_list", return_value=get_station_list_return_value_mock
+        APIClient,
+        "get_station_list",
+        return_value=get_station_list_return_value_mock,
     ):
         config["pandora"]["sort_order"] = "date"
         backend = conftest.get_backend(config)
@@ -441,7 +482,9 @@ def test_browse_raises_exception_for_unsupported_uri_type(config):
 
 def test_browse_resets_skip_limits(config, get_station_list_return_value_mock):
     with mock.patch.object(
-        APIClient, "get_station_list", return_value=get_station_list_return_value_mock
+        APIClient,
+        "get_station_list",
+        return_value=get_station_list_return_value_mock,
     ):
         backend = conftest.get_backend(config)
         backend.playback._consecutive_track_skips = 5
@@ -472,7 +515,9 @@ def test_browse_genre_station_uri(
     get_genre_stations_return_value_mock,
 ):
     with mock.patch.object(
-        MopidyAPIClient, "get_station", return_value=get_station_mock_return_value
+        MopidyAPIClient,
+        "get_station",
+        return_value=get_station_mock_return_value,
     ):
         with mock.patch.object(
             APIClient,
@@ -492,7 +537,9 @@ def test_browse_genre_station_uri(
                     backend = conftest.get_backend(config)
                     genre_uri = GenreUri._from_station(genre_station_mock)
                     t = time.time()
-                    backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
+                    backend.api.station_list_cache[t] = mock.Mock(
+                        spec=StationList
+                    )
 
                     results = backend.library.browse(genre_uri.uri)
                     assert len(results) == 1
@@ -505,13 +552,17 @@ def test_browse_station_uri(
     config, get_station_mock_return_value, get_station_playlist_mock
 ):
     with mock.patch.object(
-        MopidyAPIClient, "get_station", return_value=get_station_mock_return_value
+        MopidyAPIClient,
+        "get_station",
+        return_value=get_station_mock_return_value,
     ):
         with mock.patch.object(
             Station, "get_playlist", return_value=get_station_playlist_mock
         ):
             backend = conftest.get_backend(config)
-            station_uri = StationUri._from_station(get_station_mock_return_value)
+            station_uri = StationUri._from_station(
+                get_station_mock_return_value
+            )
 
             results = backend.library.browse(station_uri.uri)
             # Station should just contain the first track to be played.
@@ -522,9 +573,17 @@ def test_formatted_search_query_concatenates_queries_into_free_text(config):
     backend = conftest.get_backend(config)
 
     result = backend.library._formatted_search_query(
-        {"any": ["any_mock"], "artist": ["artist_mock"], "track_name": ["track_mock"]}
+        {
+            "any": ["any_mock"],
+            "artist": ["artist_mock"],
+            "track_name": ["track_mock"],
+        }
     )
-    assert "any_mock" in result and "artist_mock" in result and "track_mock" in result
+    assert (
+        "any_mock" in result
+        and "artist_mock" in result
+        and "track_mock" in result
+    )
 
 
 def test_formatted_search_query_ignores_unsupported_attributes(config):
@@ -609,13 +668,19 @@ def test_search_returns_empty_result_for_unsupported_queries(config, caplog):
 
 
 def test_search(config, search_return_value_mock):
-    with mock.patch.object(APIClient, "search", return_value=search_return_value_mock):
+    with mock.patch.object(
+        APIClient, "search", return_value=search_return_value_mock
+    ):
         backend = conftest.get_backend(config)
-        search_result = backend.library.search({"any": "search_return_value_mock"})
+        search_result = backend.library.search(
+            {"any": "search_return_value_mock"}
+        )
 
         assert len(search_result.tracks) == 2
         assert search_result.tracks[0].uri == "pandora:search:G123"
-        assert search_result.tracks[0].name == "search_genre_mock (Pandora genre)"
+        assert (
+            search_result.tracks[0].name == "search_genre_mock (Pandora genre)"
+        )
 
         assert search_result.tracks[1].uri == "pandora:search:S1234567"
         assert (

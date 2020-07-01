@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 import time
@@ -24,10 +29,14 @@ class MopidySettingsDictBuilder(SettingsDictBuilder):
         enc = Encryptor(settings["DECRYPTION_KEY"], settings["ENCRYPTION_KEY"])
 
         trans = APITransport(
-            enc, settings.get("API_HOST", DEFAULT_API_HOST), settings.get("PROXY", None)
+            enc,
+            settings.get("API_HOST", DEFAULT_API_HOST),
+            settings.get("PROXY", None),
         )
 
-        quality = settings.get("AUDIO_QUALITY", self.client_class.MED_AUDIO_QUALITY)
+        quality = settings.get(
+            "AUDIO_QUALITY", self.client_class.MED_AUDIO_QUALITY
+        )
 
         return self.client_class(
             settings["CACHE_TTL"],
@@ -56,7 +65,11 @@ class MopidyAPIClient(APIClient):
     ):
 
         super(MopidyAPIClient, self).__init__(
-            transport, partner_user, partner_password, device, default_audio_quality
+            transport,
+            partner_user,
+            partner_password,
+            device,
+            default_audio_quality,
         )
 
         self.station_list_cache = TTLCache(1, cache_ttl)
@@ -66,7 +79,8 @@ class MopidyAPIClient(APIClient):
         station_list = []
         try:
             if self.station_list_cache.currsize == 0 or (
-                force_refresh and next(iter(self.station_list_cache.values())).has_changed()
+                force_refresh
+                and next(iter(self.station_list_cache.values())).has_changed()
             ):
 
                 station_list = super(MopidyAPIClient, self).get_station_list()
@@ -93,10 +107,13 @@ class MopidyAPIClient(APIClient):
         genre_stations = []
         try:
             if self.genre_stations_cache.currsize == 0 or (
-                force_refresh and next(iter(self.genre_stations_cache.values())).has_changed()
+                force_refresh
+                and next(iter(self.genre_stations_cache.values())).has_changed()
             ):
 
-                genre_stations = super(MopidyAPIClient, self).get_genre_stations()
+                genre_stations = super(
+                    MopidyAPIClient, self
+                ).get_genre_stations()
                 self.genre_stations_cache[time.time()] = genre_stations
 
         except requests.exceptions.RequestException:

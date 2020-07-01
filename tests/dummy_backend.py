@@ -4,7 +4,12 @@ This backend implements the backend API in the simplest way possible.  It is
 used in tests of the frontends.
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 from mopidy import backend
 from mopidy import listener
@@ -25,7 +30,9 @@ class DummyBackend(pykka.ThreadingActor, backend.Backend):
 
         self.library = DummyLibraryProvider(backend=self)
         if audio is None:
-            self.playback = DummyPandoraPlaybackProvider(audio=audio, backend=self)
+            self.playback = DummyPandoraPlaybackProvider(
+                audio=audio, backend=self
+            )
         else:
             self.playback = DummyPandoraPlaybackProviderWithAudioEvents(
                 audio=audio, backend=self
@@ -116,12 +123,8 @@ class DummyPandoraPlaybackProvider(DummyPlaybackProvider):
 
 class DummyPandoraPlaybackProviderWithAudioEvents(backend.PlaybackProvider):
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args, **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
     def change_track(self, track):
         listener.send(PandoraPlaybackListener, "track_changing", track=track)
-        return super().change_track(
-            track
-        )
+        return super().change_track(track)

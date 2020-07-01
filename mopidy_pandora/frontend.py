@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 from queue import PriorityQueue
 
@@ -68,7 +73,9 @@ def get_active_uri(core, *args, **kwargs):
     if track:
         uri = track.uri
     else:
-        tl_track = kwargs.get("tl_track", core.playback.get_current_tl_track().get())
+        tl_track = kwargs.get(
+            "tl_track", core.playback.get_current_tl_track().get()
+        )
         if tl_track:
             uri = tl_track.track.uri
     if not uri:
@@ -211,7 +218,9 @@ class PandoraFrontend(
     def _trim_tracklist(self, keep_only=None, maxsize=2):
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
         if keep_only:
-            trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
+            trim_tlids = [
+                t.tlid for t in tl_tracks if t.track.uri != keep_only.uri
+            ]
             if len(trim_tlids) > 0:
                 return self.core.tracklist.remove({"tlid": trim_tlids})
             else:
@@ -222,14 +231,17 @@ class PandoraFrontend(
             return self.core.tracklist.remove(
                 {
                     "tlid": [
-                        tl_tracks[t].tlid for t in range(0, len(tl_tracks) - maxsize)
+                        tl_tracks[t].tlid
+                        for t in range(0, len(tl_tracks) - maxsize)
                     ]
                 }
             )
 
     def _trigger_end_of_tracklist_reached(self, station_id, auto_play=False):
         listener.PandoraFrontendListener.send(
-            "end_of_tracklist_reached", station_id=station_id, auto_play=auto_play
+            "end_of_tracklist_reached",
+            station_id=station_id,
+            auto_play=auto_play,
         )
 
 
@@ -328,7 +340,9 @@ class EventMonitorFrontend(
             )
         )
 
-        self.trigger_events = set(e.target_sequence[0] for e in self.event_sequences)
+        self.trigger_events = set(
+            e.target_sequence[0] for e in self.event_sequences
+        )
 
     @only_execute_for_pandora_uris
     def on_event(self, event, **kwargs):
@@ -342,7 +356,9 @@ class EventMonitorFrontend(
             if event in self.trigger_events:
                 # Monitor not running and current event will not trigger any starts either, ignore
                 self.notify_all(
-                    event, uri=get_active_uri(self.core, event, **kwargs), **kwargs
+                    event,
+                    uri=get_active_uri(self.core, event, **kwargs),
+                    **kwargs,
                 )
                 self.monitor_sequences()
             else:
@@ -393,9 +409,13 @@ class EventMonitorFrontend(
             if match.marker.uri and isinstance(
                 PandoraUri.factory(match.marker.uri), AdItemUri
             ):
-                logger.info("Ignoring doubleclick event for Pandora advertisement...")
+                logger.info(
+                    "Ignoring doubleclick event for Pandora advertisement..."
+                )
             else:
-                self._trigger_event_triggered(match.marker.event, match.marker.uri)
+                self._trigger_event_triggered(
+                    match.marker.event, match.marker.uri
+                )
             # Resume playback...
             if self.core.playback.get_state().get() != PlaybackState.PLAYING:
                 self.core.playback.resume()
@@ -544,7 +564,9 @@ class EventSequence(object):
         else:
             match_sequence = self.target_sequence
         if self.strict:
-            ratio = EventSequence.match_sequence(self.events_seen, match_sequence)
+            ratio = EventSequence.match_sequence(
+                self.events_seen, match_sequence
+            )
         else:
             filtered_list = [e for e in self.events_seen if e in match_sequence]
             ratio = EventSequence.match_sequence(filtered_list, match_sequence)

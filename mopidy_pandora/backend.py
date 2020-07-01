@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import logging
 
@@ -84,7 +89,9 @@ class PandoraBackend(
             self._trigger_event_processed(track_uri, pandora_event)
             return True
         except PandoraException:
-            logger.exception("Error calling Pandora event: {}.".format(pandora_event))
+            logger.exception(
+                "Error calling Pandora event: {}.".format(pandora_event)
+            )
             return False
 
     def thumbs_up(self, track_uri):

@@ -1,4 +1,9 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import queue
 from unittest import mock
@@ -47,13 +52,17 @@ class DummyMopidyInstance:
         config = {"core": {"max_tracklist_length": 10000}}
 
         self.audio = dummy_audio.create_proxy(DummyAudio)
-        self.backend = dummy_backend.create_proxy(DummyPandoraBackend, audio=self.audio)
+        self.backend = dummy_backend.create_proxy(
+            DummyPandoraBackend, audio=self.audio
+        )
         self.non_pandora_backend = dummy_backend.create_proxy(
             DummyBackend, audio=self.audio
         )
 
         self.core = core.Core.start(
-            config, audio=self.audio, backends=[self.backend, self.non_pandora_backend]
+            config,
+            audio=self.audio,
+            backends=[self.backend, self.non_pandora_backend],
         ).proxy()
 
         def lookup(uris):
