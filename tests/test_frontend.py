@@ -219,13 +219,16 @@ class TestPandoraFrontend:
             == mopidy.tl_tracks[0].track.uri
         )
 
-        # No easy way to test retrieving from history as it is not possible to set core.playback_current_tl_track
-        # to None
+        # No easy way to test retrieving from history as it is not possible to
+        # set core.playback_current_tl_track to None
 
         # mopidy.core.playback.next()
         # mopidy.core.playback.stop()
         # mopidy.replay_events()
-        # assert frontend.get_active_uri(mopidy.core, **kwargs) == mopidy.tl_tracks[1].track.uri
+        # assert (
+        #     frontend.get_active_uri(mopidy.core, **kwargs) ==
+        #     mopidy.tl_tracks[1].track.uri
+        # )
 
         kwargs["tl_track"] = mopidy.tl_tracks[2]
         assert (

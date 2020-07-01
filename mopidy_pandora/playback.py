@@ -15,22 +15,25 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def __init__(self, audio, backend):
         super().__init__(audio, backend)
 
-        # TODO: It shouldn't be necessary to keep track of the number of tracks that have been skipped in the
-        # player anymore once https://github.com/mopidy/mopidy/issues/1221 has been fixed.
+        # TODO: It shouldn't be necessary to keep track of the number of tracks
+        # that have been skipped in the player anymore once
+        # https://github.com/mopidy/mopidy/issues/1221 has been fixed.
         self._consecutive_track_skips = 0
 
         # TODO: add gapless playback when it is supported in Mopidy > 1.1
         # self.audio.set_about_to_finish_callback(self.callback)
 
         # def callback(self):
-        # See: https://discuss.mopidy.com/t/has-the-gapless-playback-implementation-been-completed-yet/784/2
+        # See: https://discourse.mopidy.com/t/784/2
         # self.audio.set_uri(self.translate_uri(self.get_next_track()))
 
     def change_pandora_track(self, track):
-        """ Attempt to retrieve the Pandora playlist item from the buffer and verify that it is ready to be played.
+        """Attempt to retrieve the Pandora playlist item from the buffer and
+        verify that it is ready to be played.
 
-        A track is playable if it has been stored in the buffer, has a URL, and the header for the Pandora URL can be
-        retrieved and the status code checked.
+        A track is playable if it has been stored in the buffer, has a URL, and
+        the header for the Pandora URL can be retrieved and the status code
+        checked.
 
         :param track: the track to retrieve and check the Pandora playlist item for.
         :return: True if the track is playable, False otherwise.
@@ -69,9 +72,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if isinstance(pandora_uri, StationUri):
             # Change to first track in station playlist.
             logger.warning(
-                "Cannot play Pandora stations directly. Retrieving tracks for station with ID: {}...".format(
-                    pandora_uri.station_id
-                )
+                "Cannot play Pandora stations directly. "
+                f"Retrieving tracks for station with ID: {pandora_uri.station_id}"
             )
             self.backend.end_of_tracklist_reached(
                 station_id=pandora_uri.station_id, auto_play=True
@@ -85,9 +87,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
 
         except KeyError:
             logger.exception(
-                "Error changing Pandora track: failed to lookup '{}'.".format(
-                    track.uri
-                )
+                f"Error changing Pandora track: failed to lookup {track.uri!r}"
             )
             return False
         except (MaxSkipLimitExceeded, Unplayable) as e:
@@ -98,9 +98,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if self._consecutive_track_skips >= self.SKIP_LIMIT:
             self._trigger_skip_limit_exceeded()
             raise MaxSkipLimitExceeded(
-                "Maximum track skip limit ({:d}) exceeded.".format(
-                    self.SKIP_LIMIT
-                )
+                f"Maximum track skip limit ({self.SKIP_LIMIT}) exceeded."
             )
 
     def reset_skip_limits(self):

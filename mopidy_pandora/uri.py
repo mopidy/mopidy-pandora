@@ -202,7 +202,8 @@ class SearchUri(PandoraUri):
         super().__init__(self.uri_type)
 
         # Check that this really is a search result URI as opposed to a regular URI.
-        # Search result tokens always start with 'S' (song), 'R' (artist), 'C' (composer), or 'G' (genre station).
+        # Search result tokens always start with 'S' (song), 'R' (artist),
+        # 'C' (composer), or 'G' (genre station).
         assert re.match("^([SRCG])", token)
         self.token = token
 

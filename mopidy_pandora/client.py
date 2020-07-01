@@ -90,7 +90,8 @@ class MopidyAPIClient(APIClient):
         try:
             return self.get_station_list()[station_token]
         except TypeError:
-            # Could not find station_token in cached list, try retrieving from Pandora server.
+            # Could not find station_token in cached list, try retrieving from
+            # Pandora server.
             return super().get_station(station_token)
 
     def get_genre_stations(self, force_refresh=False):

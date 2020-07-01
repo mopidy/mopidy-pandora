@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 def only_execute_for_pandora_uris(func):
-    """ Function decorator intended to ensure that "func" is only executed if a Pandora track
-        is currently playing. Allows CoreListener events to be ignored if they are being raised
-        while playing non-Pandora tracks.
+    """
+    Function decorator intended to ensure that "func" is only executed if a
+    Pandora track is currently playing. Allows CoreListener events to be
+    ignored if they are being raised while playing non-Pandora tracks.
 
     :param func: the function to be executed
     :return: the return value of the function if it was run, or 'None' otherwise.
@@ -29,7 +30,7 @@ def only_execute_for_pandora_uris(func):
 
     @wraps(func)
     def check_pandora(self, *args, **kwargs):
-        """ Check if a pandora track is currently being played.
+        """Check if a pandora track is currently being played.
 
         :param args: all arguments will be passed to the target function.
         :param kwargs: all kwargs will be passed to the target function.
@@ -44,17 +45,20 @@ def only_execute_for_pandora_uris(func):
 
 def get_active_uri(core, *args, **kwargs):
     """
-    Tries to determine what the currently 'active' Mopidy track is, and returns it's URI. Makes use of a best-effort
-    determination base on:
+    Tries to determine what the currently 'active' Mopidy track is, and returns
+    it's URI. Makes use of a best-effort determination base on:
+
     1. looking for 'track' in kwargs, then
     2. 'tl_track' in kwargs, then
     3. interrogating the Mopidy core for the currently playing track, and lastly
     4. checking which track was played last according to the history that Mopidy keeps.
 
-    :param core: the Mopidy core that can be used as a fallback if no suitable arguments are available.
+    :param core: the Mopidy core that can be used as a fallback if no suitable
+        arguments are available.
     :param args: all available arguments from the calling function.
     :param kwargs: all available kwargs from the calling function.
-    :return: the URI of the active Mopidy track, if it could be determined, or None otherwise.
+    :return: the URI of the active Mopidy track, if it could be determined, or
+        None otherwise.
     """
     uri = None
     track = kwargs.get("track", None)
@@ -215,7 +219,8 @@ class PandoraFrontend(
                 return 0
 
         elif len(tl_tracks) > maxsize:
-            # Only need two tracks in the tracklist at any given time, remove the oldest tracks
+            # Only need two tracks in the tracklist at any given time, remove
+            # the oldest tracks
             return self.core.tracklist.remove(
                 {
                     "tlid": [
@@ -342,7 +347,8 @@ class EventMonitorFrontend(
 
         if self._monitor_lock.acquire(False):
             if event in self.trigger_events:
-                # Monitor not running and current event will not trigger any starts either, ignore
+                # Monitor not running and current event will not trigger any
+                # starts either, ignore
                 self.notify_all(
                     event,
                     uri=get_active_uri(self.core, event, **kwargs),
@@ -417,14 +423,17 @@ class EventMonitorFrontend(
     def _get_track_change_direction(self, track_marker):
         history = self.core.history.get_history().get()
         for i, h in enumerate(history):
-            # TODO: find a way to eliminate this timing disparity between when 'track_playback_ended' event for
-            #       one track is processed, and the next track is added to the history.
+            # TODO: find a way to eliminate this timing disparity between when
+            # 'track_playback_ended' event for one track is processed, and the
+            # next track is added to the history.
             if h[0] + 100 < track_marker.time:
                 if h[1].uri == track_marker.uri:
-                    # This is the point in time in the history that the track was played.
+                    # This is the point in time in the history that the track
+                    # was played.
                     if history[i - 1][1].uri == track_marker.uri:
                         # Track was played again immediately.
-                        # User either clicked 'previous' in consume mode or clicked 'stop' -> 'play' for same track.
+                        # User either clicked 'previous' in consume mode or
+                        # clicked 'stop' -> 'play' for same track.
                         # Both actions are interpreted as 'previous'.
                         return "track_changed_previous"
                     else:
@@ -517,10 +526,12 @@ class EventSequence:
                     for e in self.target_sequence:
                         i = self.events_seen[i:].index(e) + 1
                 except ValueError:
-                    # Make sure that we have seen every event in the target sequence, and in the right order
+                    # Make sure that we have seen every event in the target
+                    # sequence, and in the right order
                     return
             elif not all([e in self.events_seen for e in self.target_sequence]):
-                # Make sure that we have seen every event in the target sequence, ignoring order
+                # Make sure that we have seen every event in the target
+                # sequence, ignoring order
                 return
             if self.wait_for_event.wait(timeout=timeout):
                 self.result_queue.put(

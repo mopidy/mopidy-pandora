@@ -183,9 +183,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 stations.sort(key=lambda x: x.name, reverse=False)
 
             for station in self._formatted_station_list(stations):
-                # As of version 5 of the Pandora API, station IDs and tokens are always equivalent.
-                # We're using this assumption as we don't have the station token available for deleting the station.
-                # Detect if any Pandora API changes ever breaks this assumption in the future.
+                # As of version 5 of the Pandora API, station IDs and tokens
+                # are always equivalent. We're using this assumption as we
+                # don't have the station token available for deleting the
+                # station. Detect if any Pandora API changes ever breaks this
+                # assumption in the future.
                 assert station.token == station.id
                 station_directories.append(
                     models.Ref.directory(
@@ -259,9 +261,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     pass
             else:
                 raise ValueError(
-                    "Unexpected URI type to perform refresh of Pandora directory: {}.".format(
-                        pandora_uri.uri_type
-                    )
+                    "Unexpected URI type to perform refresh of "
+                    f"Pandora directory: {pandora_uri.uri_type}"
                 )
 
     def search(self, query=None, uris=None, exact=False, **kwargs):
