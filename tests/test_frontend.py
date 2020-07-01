@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import time
 from unittest import mock
 
@@ -25,7 +18,7 @@ from mopidy_pandora.listener import (
 from tests import conftest
 
 
-class TestPandoraFrontend(object):
+class TestPandoraFrontend:
     def test_add_track_starts_playback(self, mopidy):
         assert mopidy.core.playback.get_state().get() == PlaybackState.STOPPED
         mopidy.core.tracklist.clear()
@@ -84,7 +77,7 @@ class TestPandoraFrontend(object):
         self, mopidy
     ):
         func_mock = mock.PropertyMock()
-        func_mock.__name__ = str("func_mock")
+        func_mock.__name__ = "func_mock"
         func_mock.return_value = True
 
         mopidy.core.playback.play(tlid=mopidy.tl_tracks[3].tlid)
@@ -96,7 +89,7 @@ class TestPandoraFrontend(object):
         self, mopidy
     ):
         func_mock = mock.PropertyMock()
-        func_mock.__name__ = str("func_mock")
+        func_mock.__name__ = "func_mock"
         func_mock.return_value = True
 
         tl_track_mock = mock.Mock(spec=models.TlTrack)
@@ -111,7 +104,7 @@ class TestPandoraFrontend(object):
 
     def test_only_execute_for_pandora_executes_for_pandora_uri(self, mopidy):
         func_mock = mock.PropertyMock()
-        func_mock.__name__ = str("func_mock")
+        func_mock.__name__ = "func_mock"
         func_mock.return_value = True
 
         mopidy.core.playback.play(tlid=mopidy.tl_tracks[0].tlid).get()
@@ -372,7 +365,7 @@ class TestPandoraFrontend(object):
         assert mopidy.core.playback.get_state().get() == PlaybackState.STOPPED
 
 
-class TestEventMonitorFrontend(object):
+class TestEventMonitorFrontend:
     def test_delete_station_clears_tracklist_on_finish(
         self, mopidy_with_monitor
     ):
@@ -656,7 +649,7 @@ class TestEventMonitorFrontend(object):
             )
 
 
-class TestEventSequence(object):
+class TestEventSequence:
     def test_events_ignored_if_time_position_is_zero(
         self, event_sequences, tl_track_mock
     ):
@@ -763,7 +756,7 @@ class TestEventSequence(object):
         assert event_sequence_strict.get_ratio() == 1
 
 
-class TestMatchResult(object):
+class TestMatchResult:
     def test_match_result_comparison(self):
         mr1 = MatchResult(EventMarker("e1", "u1", 0), 1)
         mr2 = MatchResult(EventMarker("e1", "u1", 0), 2)

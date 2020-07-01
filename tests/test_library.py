@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 import time
 from unittest import mock
@@ -67,7 +60,7 @@ def test_get_images_for_unknown_uri_returns_empty_list(config, caplog):
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 0
     assert (
-        "Failed to lookup image for Pandora URI '{}'.".format(track_uri.uri)
+        f"Failed to lookup image for Pandora URI '{track_uri.uri}'."
         in caplog.text
     )
 
@@ -338,10 +331,7 @@ def test_lookup_of_missing_track(config, playlist_item_mock, caplog):
     results = backend.library.lookup(track_uri.uri)
 
     assert len(results) == 0
-    assert (
-        "Failed to lookup Pandora URI '{}'.".format(track_uri.uri)
-        in caplog.text
-    )
+    assert f"Failed to lookup Pandora URI '{track_uri.uri}'." in caplog.text
 
 
 def test_lookup_overrides_album_and_artist_uris(config, playlist_item_mock):

@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 import time
 
@@ -64,7 +57,7 @@ class MopidyAPIClient(APIClient):
         default_audio_quality=BaseAPIClient.MED_AUDIO_QUALITY,
     ):
 
-        super(MopidyAPIClient, self).__init__(
+        super().__init__(
             transport,
             partner_user,
             partner_password,
@@ -83,7 +76,7 @@ class MopidyAPIClient(APIClient):
                 and next(iter(self.station_list_cache.values())).has_changed()
             ):
 
-                station_list = super(MopidyAPIClient, self).get_station_list()
+                station_list = super().get_station_list()
                 self.station_list_cache[time.time()] = station_list
 
         except requests.exceptions.RequestException:
@@ -101,7 +94,7 @@ class MopidyAPIClient(APIClient):
             return self.get_station_list()[station_token]
         except TypeError:
             # Could not find station_token in cached list, try retrieving from Pandora server.
-            return super(MopidyAPIClient, self).get_station(station_token)
+            return super().get_station(station_token)
 
     def get_genre_stations(self, force_refresh=False):
         genre_stations = []
@@ -111,9 +104,7 @@ class MopidyAPIClient(APIClient):
                 and next(iter(self.genre_stations_cache.values())).has_changed()
             ):
 
-                genre_stations = super(
-                    MopidyAPIClient, self
-                ).get_genre_stations()
+                genre_stations = super().get_genre_stations()
                 self.genre_stations_cache[time.time()] = genre_stations
 
         except requests.exceptions.RequestException:

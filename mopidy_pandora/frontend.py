@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 from queue import PriorityQueue
 
 import logging
@@ -93,7 +86,7 @@ class PandoraFrontend(
     listener.EventMonitorListener,
 ):
     def __init__(self, config, core):
-        super(PandoraFrontend, self).__init__()
+        super().__init__()
 
         self.config = config["pandora"]
         self.auto_setup = self.config.get("auto_setup")
@@ -246,9 +239,9 @@ class PandoraFrontend(
 
 
 @total_ordering
-class MatchResult(object):
+class MatchResult:
     def __init__(self, marker, ratio):
-        super(MatchResult, self).__init__()
+        super().__init__()
 
         self.marker = marker
         self.ratio = ratio
@@ -273,7 +266,7 @@ class EventMonitorFrontend(
     listener.EventMonitorListener,
 ):
     def __init__(self, config, core):
-        super(EventMonitorFrontend, self).__init__()
+        super().__init__()
         self.core = core
         self.event_sequences = []
         self.sequence_match_results = None
@@ -340,16 +333,16 @@ class EventMonitorFrontend(
             )
         )
 
-        self.trigger_events = set(
+        self.trigger_events = {
             e.target_sequence[0] for e in self.event_sequences
-        )
+        }
 
     @only_execute_for_pandora_uris
     def on_event(self, event, **kwargs):
         if not self.is_active:
             return
 
-        super(EventMonitorFrontend, self).on_event(event, **kwargs)
+        super().on_event(event, **kwargs)
         self._detect_track_change(event, **kwargs)
 
         if self._monitor_lock.acquire(False):
@@ -458,7 +451,7 @@ class EventMonitorFrontend(
         )
 
 
-class EventSequence(object):
+class EventSequence:
     pykka_traversable = True
 
     def __init__(

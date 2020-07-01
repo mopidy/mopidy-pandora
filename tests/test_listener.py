@@ -1,11 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 from unittest import mock
 
 from mopidy import models
 
 
-class TestEventMonitorListener(object):
+class TestEventMonitorListener:
     def test_on_event_forwards_to_specific_handler(
         self, event_monitor_listener
     ):
@@ -46,7 +44,7 @@ class TestEventMonitorListener(object):
         )
 
 
-class TestPandoraFrontendListener(object):
+class TestPandoraFrontendListener:
     def test_on_event_forwards_to_specific_handler(self, frontend_listener):
         frontend_listener.end_of_tracklist_reached = mock.Mock()
 
@@ -66,7 +64,7 @@ class TestPandoraFrontendListener(object):
         )
 
 
-class TestPandoraBackendListener(object):
+class TestPandoraBackendListener:
     def test_on_event_forwards_to_specific_handler(self, backend_listener):
         backend_listener.next_track_available = mock.Mock()
 
@@ -96,7 +94,7 @@ class TestPandoraBackendListener(object):
         )
 
 
-class TestPandoraPlaybackListener(object):
+class TestPandoraPlaybackListener:
     def test_on_event_forwards_to_specific_handler(self, playback_listener):
         playback_listener.track_changing = mock.Mock()
 

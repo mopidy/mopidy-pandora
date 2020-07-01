@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 from unittest import mock
 
 from mopidy import audio, models
@@ -194,7 +187,7 @@ def test_change_track_skips_if_track_not_available_in_buffer(
 
     assert provider.change_track(track) is False
     assert (
-        "Error changing Pandora track: failed to lookup '{}'.".format(track.uri)
+        f"Error changing Pandora track: failed to lookup '{track.uri}'."
         in caplog.text
     )
 

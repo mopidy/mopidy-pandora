@@ -1,11 +1,3 @@
-# coding=utf-8
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 from mopidy import models
 
 from pandora.models.station import GenreStation, Station

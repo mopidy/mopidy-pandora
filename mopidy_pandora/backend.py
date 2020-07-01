@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 
 from mopidy import backend, core
@@ -32,7 +25,7 @@ class PandoraBackend(
     listener.EventMonitorListener,
 ):
     def __init__(self, config, audio):
-        super(PandoraBackend, self).__init__()
+        super().__init__()
         self.config = config["pandora"]
         settings = {
             "CACHE_TTL": self.config.get("cache_time_to_live"),
@@ -89,9 +82,7 @@ class PandoraBackend(
             self._trigger_event_processed(track_uri, pandora_event)
             return True
         except PandoraException:
-            logger.exception(
-                "Error calling Pandora event: {}.".format(pandora_event)
-            )
+            logger.exception(f"Error calling Pandora event: {pandora_event}.")
             return False
 
     def thumbs_up(self, track_uri):

@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import json
 
 import requests
@@ -53,7 +46,7 @@ def format_proxy(proxy_config):
     return template.format(hostname=proxy_config["hostname"], port=port)
 
 
-class RPCClient(object):
+class RPCClient:
     hostname = "127.0.0.1"
     port = "6680"
 

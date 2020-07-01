@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 from queue import PriorityQueue
 import json
 import threading
@@ -487,7 +480,7 @@ class TransportCallTestNotImplemented(Exception):
 
 # Based on https://pypi.python.org/pypi/tl.testing/0.5
 # Copyright (c) 2011-2012 Thomas Lotze
-class ThreadJoiner(object):
+class ThreadJoiner:
     """Context manager that tries to join any threads started by its suite.
 
     This context manager is instantiated with a mandatory ``timeout``

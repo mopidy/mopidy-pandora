@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 
 from mopidy import backend
@@ -21,7 +14,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     SKIP_LIMIT = 5
 
     def __init__(self, audio, backend):
-        super(PandoraPlaybackProvider, self).__init__(audio, backend)
+        super().__init__(audio, backend)
 
         # TODO: It shouldn't be necessary to keep track of the number of tracks that have been skipped in the
         # player anymore once https://github.com/mopidy/mopidy/issues/1221 has been fixed.
@@ -50,7 +43,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 self._consecutive_track_skips = 0
             else:
                 raise Unplayable(
-                    "Track with URI '{}' is not playable.".format(track.uri)
+                    f"Track with URI '{track.uri}' is not playable."
                 )
 
         except (
@@ -62,9 +55,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self._consecutive_track_skips += 1
             self.check_skip_limit()
             self._trigger_track_unplayable(track)
-            raise Unplayable(
-                "Error changing Pandora track: {}, ({})".format(track, e)
-            )
+            raise Unplayable(f"Error changing Pandora track: {track}, ({e})")
 
     def change_track(self, track):
         if track.uri is None:
@@ -91,7 +82,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
             self._trigger_track_changing(track)
             self.check_skip_limit()
             self.change_pandora_track(track)
-            return super(PandoraPlaybackProvider, self).change_track(track)
+            return super().change_track(track)
 
         except KeyError:
             logger.exception(
@@ -108,10 +99,8 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
         if self._consecutive_track_skips >= self.SKIP_LIMIT:
             self._trigger_skip_limit_exceeded()
             raise MaxSkipLimitExceeded(
-                (
-                    "Maximum track skip limit ({:d}) exceeded.".format(
-                        self.SKIP_LIMIT
-                    )
+                "Maximum track skip limit ({:d}) exceeded.".format(
+                    self.SKIP_LIMIT
                 )
             )
 

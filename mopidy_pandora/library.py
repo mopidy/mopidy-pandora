@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 
 import re
@@ -44,7 +37,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     )
 
     def __init__(self, backend, sort_order):
-        super(PandoraLibraryProvider, self).__init__(backend)
+        super().__init__(backend)
         self.sort_order = sort_order.lower()
 
         self.pandora_station_cache = StationCache(self, maxsize=5)
@@ -88,9 +81,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 track = self.lookup_pandora_track(uri)
             except KeyError:
-                logger.exception(
-                    "Failed to lookup Pandora URI '{}'.".format(uri)
-                )
+                logger.exception(f"Failed to lookup Pandora URI '{uri}'.")
                 return []
             else:
                 if isinstance(pandora_uri, AdItemUri):
@@ -282,7 +273,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if not search_text:
             # No value provided for search query, abort.
-            logger.info("Unsupported Pandora search query: {}".format(query))
+            logger.info(f"Unsupported Pandora search query: {query}")
             return []
 
         search_result = self.backend.api.search(
@@ -294,7 +285,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             tracks.append(
                 models.Track(
                     uri=SearchUri(genre.token).uri,
-                    name="{} (Pandora genre)".format(genre.station_name),
+                    name=f"{genre.station_name} (Pandora genre)",
                     artists=[models.Artist(name=genre.station_name)],
                 )
             )
@@ -303,7 +294,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             tracks.append(
                 models.Track(
                     uri=SearchUri(song.token).uri,
-                    name="{} (Pandora station)".format(song.song_name),
+                    name=f"{song.song_name} (Pandora station)",
                     artists=[models.Artist(name=song.artist)],
                 )
             )
@@ -312,15 +303,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         for artist in search_result.artists:
             search_uri = SearchUri(artist.token)
             if search_uri.is_artist_search:
-                station_name = "{} (Pandora artist)".format(artist.artist)
+                station_name = f"{artist.artist} (Pandora artist)"
             else:
-                station_name = "{} (Pandora composer)".format(artist.artist)
+                station_name = f"{artist.artist} (Pandora composer)"
             artists.append(models.Artist(uri=search_uri.uri, name=station_name))
 
         return models.SearchResult(
-            uri="pandora:search:{}".format(search_text),
-            tracks=tracks,
-            artists=artists,
+            uri=f"pandora:search:{search_text}", tracks=tracks, artists=artists,
         )
 
     def _formatted_search_query(self, query):
@@ -337,7 +326,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
 class StationCache(LRUCache):
     def __init__(self, library, maxsize, getsizeof=None):
-        super(StationCache, self).__init__(maxsize, getsizeof=getsizeof)
+        super().__init__(maxsize, getsizeof=getsizeof)
         self.library = library
 
     def __missing__(self, station_id):

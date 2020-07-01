@@ -1,10 +1,3 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
-
 import logging
 from unittest import mock
 
@@ -126,7 +119,7 @@ def test_process_event_calls_method(config, caplog):
                 )
                 backend._trigger_event_processed.reset_mock()
 
-                assert "Triggering event '{}'".format(event) in caplog.text
+                assert f"Triggering event '{event}'" in caplog.text
 
 
 def test_process_event_handles_pandora_exception(config, caplog):
