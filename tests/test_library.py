@@ -7,8 +7,8 @@ import mock
 
 from mopidy import models
 
-from pandora import APIClient
-from pandora.models.pandora import Station, StationList
+from pandora.client import APIClient
+from pandora.models.station import Station, StationList
 
 import pytest
 
@@ -75,7 +75,7 @@ def test_get_images_for_unsupported_uri_type_issues_warning(config, caplog):
     results = backend.library.get_images([search_uri.uri])
     assert len(results[search_uri.uri]) == 0
     assert (
-        "No images available for Pandora URIs of type 'search'.".format(search_uri.uri)
+        "No images available for Pandora URIs of type 'search'."
         in caplog.text
     )
 
@@ -101,7 +101,10 @@ def test_get_images_for_track_with_images(config, playlist_item_mock):
     )
     results = backend.library.get_images([track_uri.uri])
     assert len(results[track_uri.uri]) == 1
-    assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url
+    # chrome blocks getting non https images from Pandora, therefore the
+    # library provider substitutes https for http.  We need to perform
+    # the same substitution here to verify it worked correctly
+    assert results[track_uri.uri][0].uri == playlist_item_mock.album_art_url.replace("http://", "https://", 1)
 
 
 def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
@@ -268,7 +271,6 @@ def test_lookup_of_station_uri(
 
             track = results[0]
             assert track.uri == station_uri.uri
-            assert next(iter(track.album.images)) == conftest.MOCK_STATION_ART_URL
             assert track.name == conftest.MOCK_STATION_NAME
             assert next(iter(track.artists)).name == "Pandora Station"
             assert track.album.name == conftest.MOCK_STATION_GENRE

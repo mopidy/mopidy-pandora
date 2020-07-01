@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import Queue
+import queue
 
 import mock
 
@@ -67,7 +67,7 @@ class DummyMopidyInstance:
         self.core.library.lookup = lookup
         self.tl_tracks = self.core.tracklist.add(uris=self.uris).get()
 
-        self.events = Queue.Queue()
+        self.events = queue.Queue()
 
         def send(cls, event, **kwargs):
             self.events.put((cls, event, kwargs))
@@ -101,6 +101,6 @@ class DummyMopidyInstance:
                     else:
                         if isinstance(actor, cls):
                             actor.on_event(event, **kwargs)
-            except Queue.Empty:
+            except queue.Empty:
                 # All events replayed.
                 break

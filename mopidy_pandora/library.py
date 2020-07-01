@@ -84,12 +84,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
                 return []
             else:
-                # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
-                #       updated to make use of the newer LibraryController.get_images()
-                images = self.get_images([uri])[uri]
-                if len(images) > 0:
-                    album_kwargs = {"images": [image.uri for image in images]}
-
                 if isinstance(pandora_uri, AdItemUri):
                     track_kwargs["name"] = "Advertisement"
 
@@ -112,7 +106,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     album_kwargs["name"] = track.album_name
         elif isinstance(pandora_uri, StationUri):
             station = self.backend.api.get_station(pandora_uri.station_id)
-            album_kwargs = {"images": [station.art_url]}
             track_kwargs["name"] = station.name
             artist_kwargs["name"] = "Pandora Station"
             album_kwargs["name"] = ", ".join(station.genre)
@@ -144,7 +137,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     image_uri = track.album_art_url
                 if image_uri:
-                    image_uris.update([image_uri])
+                    image_uris.update([image_uri.replace("http://", "https://", 1)])
             except (TypeError, KeyError):
                 pandora_uri = PandoraUri.factory(uri)
                 if isinstance(pandora_uri, TrackUri):
@@ -163,23 +156,23 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
 
-    def _formatted_station_list(self, list):
+    def _formatted_station_list(self, station_list):
         # Find QuickMix stations and move QuickMix to top
-        for i, station in enumerate(list[:]):
+        for i, station in enumerate(station_list.copy()):
             if station.is_quickmix:
                 quickmix_stations = station.quickmix_stations
                 if not station.name.endswith(" (marked with *)"):
                     station.name += " (marked with *)"
-                list.insert(0, list.pop(i))
+                station_list.insert(0, station_list.pop(i))
                 break
 
         # Mark QuickMix stations
-        for station in list:
+        for station in station_list:
             if station.id in quickmix_stations:
                 if not station.name.endswith("*"):
                     station.name += "*"
 
-        return list
+        return station_list
 
     def _browse_stations(self):
         station_directories = []

@@ -7,7 +7,7 @@ import mock
 from mopidy import backend as backend_api
 from mopidy import models
 
-from pandora import APIClient, BaseAPIClient
+from pandora.client import APIClient, BaseAPIClient
 from pandora.errors import PandoraException
 
 from mopidy_pandora import client, library, playback

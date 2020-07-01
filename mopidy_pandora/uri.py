@@ -4,9 +4,11 @@ import logging
 
 import re
 
-from mopidy import compat, models
+from mopidy import models
 
-from pandora.models.pandora import AdItem, GenreStation, PlaylistItem, Station
+from pandora.models.ad import AdItem
+from pandora.models.station import GenreStation, Station
+from pandora.models.playlist import PlaylistItem
 
 from requests.utils import quote, unquote
 
@@ -50,13 +52,15 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
     def encode(cls, value):
         if value is None:
             value = ""
-        if isinstance(value, compat.text_type):
+        if isinstance(value, str):
             value = value.encode("utf-8")
+        if isinstance(value, int):
+            value = f"{value}"
         return value
 
     @classmethod
     def factory(cls, obj):
-        if isinstance(obj, basestring):  # noqa: F821
+        if isinstance(obj, str):  # noqa: F821
             # A string
             return PandoraUri._from_uri(obj)
 
@@ -78,7 +82,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
 
     @classmethod
     def _from_uri(cls, uri):
-        parts = [unquote(cls.encode(p)) for p in uri.split(":")]
+        parts = [unquote(p) for p in uri.split(":")]
         if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
             raise NotImplementedError("Not a Pandora URI: {}".format(uri))
         uri_cls = cls.TYPES.get(parts[1])
@@ -117,7 +121,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
         try:
             return (
                 uri
-                and isinstance(uri, basestring)  # noqa: F821
+                and isinstance(uri, str)  # noqa: F821
                 and uri.startswith(PandoraUri.SCHEME)
                 and PandoraUri.factory(uri)
             )

@@ -4,7 +4,7 @@ import os
 
 from mopidy import config, ext
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 
 class Extension(ext.Extension):
@@ -18,7 +18,7 @@ class Extension(ext.Extension):
         return config.read(conf_file)
 
     def get_config_schema(self):
-        from pandora import BaseAPIClient
+        from pandora.client import BaseAPIClient
 
         schema = super(Extension, self).get_config_schema()
         schema["api_host"] = config.String()

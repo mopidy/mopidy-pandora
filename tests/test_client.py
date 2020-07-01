@@ -4,8 +4,8 @@ import time
 
 import mock
 
-from pandora import APIClient
-from pandora.models.pandora import GenreStationList, StationList, Station
+from pandora.client import APIClient
+from pandora.models.station import GenreStationList, StationList, Station
 
 import pytest
 
@@ -92,7 +92,7 @@ def test_get_genre_stations_changed_cached(
         backend.api.genre_stations_cache[time.time()] = station_list
 
         assert backend.api.get_genre_stations().checksum == cached_checksum
-        assert len(backend.api.genre_stations_cache.values()[0]) == len(
+        assert len(next(iter(backend.api.genre_stations_cache.values()))) == len(
             GenreStationList.from_json(APIClient, mock_cached_result["result"])
         )
 
@@ -168,7 +168,7 @@ def test_get_station_list_changed_cached(config, get_station_list_return_value_m
         )
 
         assert backend.api.get_station_list().checksum == cached_checksum
-        assert len(backend.api.station_list_cache.values()[0]) == len(
+        assert len(next(iter(backend.api.station_list_cache.values()))) == len(
             StationList.from_json(APIClient, mock_cached_result["result"])
         )
 
@@ -222,7 +222,7 @@ def test_get_station_list_changed_refreshed(
                 backend.api.get_station_list(force_refresh=True).checksum
                 == conftest.MOCK_STATION_LIST_CHECKSUM
             )
-            assert len(backend.api.station_list_cache.values()[0]) == len(
+            assert len(next(iter(backend.api.station_list_cache.values()))) == len(
                 station_list_result_mock["stations"]
             )
 

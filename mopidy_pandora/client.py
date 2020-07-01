@@ -5,7 +5,7 @@ import time
 
 from cachetools import TTLCache
 
-import pandora
+from pandora.client import APIClient, BaseAPIClient
 from pandora.clientbuilder import (
     APITransport,
     DEFAULT_API_HOST,
@@ -39,7 +39,7 @@ class MopidySettingsDictBuilder(SettingsDictBuilder):
         )
 
 
-class MopidyAPIClient(pandora.APIClient):
+class MopidyAPIClient(APIClient):
     """Pydora API Client for Mopidy-Pandora
 
     This API client implements caching of the station list.
@@ -52,7 +52,7 @@ class MopidyAPIClient(pandora.APIClient):
         partner_user,
         partner_password,
         device,
-        default_audio_quality=pandora.BaseAPIClient.MED_AUDIO_QUALITY,
+        default_audio_quality=BaseAPIClient.MED_AUDIO_QUALITY,
     ):
 
         super(MopidyAPIClient, self).__init__(
@@ -66,7 +66,7 @@ class MopidyAPIClient(pandora.APIClient):
         station_list = []
         try:
             if self.station_list_cache.currsize == 0 or (
-                force_refresh and self.station_list_cache.values()[0].has_changed()
+                force_refresh and next(iter(self.station_list_cache.values())).has_changed()
             ):
 
                 station_list = super(MopidyAPIClient, self).get_station_list()
@@ -77,8 +77,8 @@ class MopidyAPIClient(pandora.APIClient):
             station_list = []
 
         try:
-            return self.station_list_cache.values()[0]
-        except IndexError:
+            return next(iter(self.station_list_cache.values()))
+        except StopIteration:
             # Cache disabled
             return station_list
 
@@ -93,7 +93,7 @@ class MopidyAPIClient(pandora.APIClient):
         genre_stations = []
         try:
             if self.genre_stations_cache.currsize == 0 or (
-                force_refresh and self.genre_stations_cache.values()[0].has_changed()
+                force_refresh and next(iter(self.genre_stations_cache.values())).has_changed()
             ):
 
                 genre_stations = super(MopidyAPIClient, self).get_genre_stations()
@@ -104,7 +104,7 @@ class MopidyAPIClient(pandora.APIClient):
             return genre_stations
 
         try:
-            return self.genre_stations_cache.values()[0]
-        except IndexError:
+            return next(iter(self.genre_stations_cache.values()))
+        except StopIteration:
             # Cache disabled
             return genre_stations
