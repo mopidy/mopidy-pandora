@@ -25,9 +25,7 @@ impossible. Mopidy-Pandora is looking for a new maintainer, preferably someone w
 familiar with Python development, and uses the paid Pandora subscription service on a regular basis.
 
 If you're interested, please take a look at the code base and work on submitting a pull request or two to show you
-understand how everything works together. The most immediate effort should probably be directed at performing the
-`migration steps <https://github.com/mopidy/mopidy/blob/develop/docs/changelog.rst#v300-2019-12-22>`_ required in order
-to get this extension to support the new Mopidy v3.0.0 release and port everything over to Python 3.
+understand how everything works together.
 
 Features
 ========
