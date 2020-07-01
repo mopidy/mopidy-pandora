@@ -1,18 +1,14 @@
 import logging
 
-from mopidy import backend, core
-
+import pykka
 from pandora.errors import PandoraException
 
-import pykka
-
+from mopidy import backend, core
 from mopidy_pandora import listener, utils
-
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import PandoraPlaybackProvider
 from mopidy_pandora.uri import PandoraUri  # noqa: I101
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,9 @@
-from mopidy import models
-
-from pandora.models.station import GenreStation, Station
 from unittest import mock
 
 import pytest
+from pandora.models.station import GenreStation, Station
 
+from mopidy import models
 from mopidy_pandora.uri import (
     AdItemUri,
     GenreStationUri,

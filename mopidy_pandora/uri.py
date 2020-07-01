@@ -1,14 +1,12 @@
 import logging
-
 import re
 
-from mopidy import models
-
 from pandora.models.ad import AdItem
-from pandora.models.station import GenreStation, Station
 from pandora.models.playlist import PlaylistItem
-
+from pandora.models.station import GenreStation, Station
 from requests.utils import quote, unquote
+
+from mopidy import models
 
 logger = logging.getLogger(__name__)
 

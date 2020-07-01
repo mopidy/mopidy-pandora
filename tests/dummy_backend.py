@@ -5,12 +5,10 @@ used in tests of the frontends.
 """
 
 
-from mopidy import backend
-from mopidy import listener
-from mopidy.models import Ref, SearchResult
-
 import pykka
 
+from mopidy import backend, listener
+from mopidy.models import Ref, SearchResult
 from mopidy_pandora.listener import PandoraPlaybackListener
 
 

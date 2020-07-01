@@ -1,20 +1,15 @@
-from queue import PriorityQueue
-
 import logging
-
 import threading
-
 import time
-
 from collections import namedtuple
 from difflib import SequenceMatcher
 from functools import total_ordering
-
-from mopidy import audio, core
-from mopidy.audio import PlaybackState
+from queue import PriorityQueue
 
 import pykka
 
+from mopidy import audio, core
+from mopidy.audio import PlaybackState
 from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
 from mopidy_pandora.utils import run_async

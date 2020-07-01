@@ -4,7 +4,6 @@ except ImportError:
     import Queue as queue  # noqa: N813
 
 import json
-
 import logging
 from unittest import mock
 

@@ -1,23 +1,19 @@
 import logging
-
 import re
-
 from collections import namedtuple
 
 from cachetools import LRUCache
-
-from mopidy import backend, models
-
 from pydora.utils import iterate_forever
 
-from mopidy_pandora.uri import (
+from mopidy import backend, models
+from mopidy_pandora.uri import (  # noqa I101
     AdItemUri,
     GenreUri,
     PandoraUri,
     SearchUri,
     StationUri,
     TrackUri,
-)  # noqa I101
+)
 
 logger = logging.getLogger(__name__)
 

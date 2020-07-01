@@ -1,15 +1,15 @@
 import logging
 from unittest import mock
 
-from mopidy import backend as backend_api
-from mopidy import models
-
 from pandora.client import APIClient, BaseAPIClient
 from pandora.errors import PandoraException
 
+from mopidy import backend as backend_api
+from mopidy import models
 from mopidy_pandora import client, library, playback
 from mopidy_pandora.backend import PandoraBackend
 from mopidy_pandora.library import PandoraLibraryProvider
+
 from tests.conftest import get_backend
 
 

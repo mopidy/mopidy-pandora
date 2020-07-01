@@ -1,19 +1,14 @@
 from unittest import mock
 
-from mopidy import audio, models
-
-from pandora.transport import APITransport
-from pandora.models.playlist import PlaylistItem
-
 import pytest
+from pandora.models.playlist import PlaylistItem
+from pandora.transport import APITransport
 
+from mopidy import audio, models
 from mopidy_pandora import playback
-
 from mopidy_pandora.backend import MopidyAPIClient
 from mopidy_pandora.library import PandoraLibraryProvider, TrackCacheItem
-
 from mopidy_pandora.playback import PandoraPlaybackProvider
-
 from mopidy_pandora.uri import PandoraUri
 
 from . import conftest

@@ -1,9 +1,8 @@
 import logging
 
-from mopidy import backend
-
 import requests
 
+from mopidy import backend
 from mopidy_pandora import listener
 from mopidy_pandora.uri import PandoraUri, StationUri
 

@@ -1,9 +1,9 @@
 import queue
 from unittest import mock
 
-from mopidy import core, models
-
 import pykka
+
+from mopidy import core, models
 
 from tests import dummy_audio, dummy_backend
 from tests.dummy_audio import DummyAudio

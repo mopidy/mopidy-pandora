@@ -1,29 +1,26 @@
-from queue import PriorityQueue
 import json
 import threading
+from queue import PriorityQueue
 from unittest import mock
 
-from mopidy import models
 import pykka
-
+import pytest
+import requests
 from pandora.client import APIClient
-
 from pandora.models.ad import AdItem
+from pandora.models.playlist import PlaylistItem
+from pandora.models.search import SearchResult, SearchResultItem
 from pandora.models.station import (
     GenreStation,
     GenreStationList,
     Station,
     StationList,
 )
-from pandora.models.playlist import PlaylistItem
-from pandora.models.search import SearchResult, SearchResultItem
 
-import pytest
-
-import requests
-
+from mopidy import models
 from mopidy_pandora import backend, frontend, listener
 from mopidy_pandora.frontend import EventSequence
+
 from tests.dummy_mopidy import DummyMopidyInstance
 
 MOCK_STATION_TYPE = "station"

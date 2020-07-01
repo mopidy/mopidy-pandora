@@ -2,20 +2,17 @@ import logging
 import time
 from unittest import mock
 
-from mopidy import models
-
+import pytest
 from pandora.client import APIClient
 from pandora.models.station import Station, StationList
 
-import pytest
-
+from mopidy import models
 from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import (
     PandoraLibraryProvider,
     StationCacheItem,
     TrackCacheItem,
 )
-
 from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
 
 from tests import conftest

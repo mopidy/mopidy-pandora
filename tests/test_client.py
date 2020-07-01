@@ -1,10 +1,9 @@
 import time
 from unittest import mock
 
-from pandora.client import APIClient
-from pandora.models.station import GenreStationList, StationList, Station
-
 import pytest
+from pandora.client import APIClient
+from pandora.models.station import GenreStationList, Station, StationList
 
 from mopidy_pandora.client import MopidyAPIClient
 

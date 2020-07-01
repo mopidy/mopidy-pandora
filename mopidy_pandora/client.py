@@ -1,18 +1,15 @@
 import logging
 import time
 
+import requests
 from cachetools import TTLCache
-
 from pandora.client import APIClient, BaseAPIClient
 from pandora.clientbuilder import (
-    APITransport,
     DEFAULT_API_HOST,
+    APITransport,
     Encryptor,
     SettingsDictBuilder,
 )
-
-import requests
-
 
 logger = logging.getLogger(__name__)
 
