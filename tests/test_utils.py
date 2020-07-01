@@ -1,10 +1,6 @@
-try:
-    import queue
-except ImportError:
-    import Queue as queue  # noqa: N813
-
 import json
 import logging
+import queue
 from unittest import mock
 
 import requests
