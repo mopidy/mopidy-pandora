@@ -291,7 +291,7 @@ def test_lookup_of_track_uri(config, playlist_item_mock):
     assert track.uri == track_uri.uri
 
 
-# Regression test for https://github.com/jcass77/mopidy-pandora/issues/48
+# Regression test for https://github.com/mopidy/mopidy-pandora/issues/48
 def test_lookup_of_track_that_does_not_specify_bitrate(config, playlist_item_mock):
     backend = conftest.get_backend(config)
 

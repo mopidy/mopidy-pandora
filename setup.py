@@ -40,7 +40,7 @@ class Tox(test):
 setup(
     name="Mopidy-Pandora",
     version=get_version("mopidy_pandora/__init__.py"),
-    url="https://github.com/jcass77/mopidy-pandora",
+    url="https://github.com/mopidy/mopidy-pandora",
     license="Apache License, Version 2.0",
     author="Andrew Wason",
     author_email="rectalogic@rectalogic.com",
@@ -52,8 +52,8 @@ setup(
     install_requires=[
         "setuptools",
         "cachetools >= 1.0.0",
-        "Mopidy >= 1.1.2",
-        "Pykka >= 1.1",
+        "Mopidy >= 3",
+        "Pykka >= 2.0.1",
         "pydora >= 2, < 3",
         "requests >= 2.5.0",
     ],
@@ -65,7 +65,7 @@ setup(
         "Intended Audience :: End Users/Desktop",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "Topic :: Multimedia :: Sound/Audio :: Players",
     ],
 )
