@@ -1,10 +1,13 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+import logging
+import pathlib
 
-import os
+import pkg_resources
 
 from mopidy import config, ext
 
-__version__ = "1.0.0"
+__version__ = pkg_resources.get_distribution("Mopidy-Pandora").version
+
+logger = logging.getLogger(__name__)
 
 
 class Extension(ext.Extension):
@@ -14,8 +17,7 @@ class Extension(ext.Extension):
     version = __version__
 
     def get_default_config(self):
-        conf_file = os.path.join(os.path.dirname(__file__), "ext.conf")
-        return config.read(conf_file)
+        return config.read(pathlib.Path(__file__).parent / "ext.conf")
 
     def get_config_schema(self):
         from pandora.client import BaseAPIClient

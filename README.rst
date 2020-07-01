@@ -2,20 +2,17 @@
 Mopidy-Pandora
 **************
 
-.. image:: https://img.shields.io/pypi/v/Mopidy-Pandora.svg?style=flat
-    :target: https://pypi.python.org/pypi/Mopidy-Pandora/
+.. image:: https://img.shields.io/pypi/v/Mopidy-Pandora
+    :target: https://pypi.org/project/Mopidy-Pandora/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/travis/mopidy/mopidy-pandora/develop.svg?style=flat
-    :target: https://travis-ci.org/mopidy/mopidy-pandora
-    :alt: Travis CI build status
+.. image:: https://img.shields.io/circleci/build/gh/mopidy/mopidy-pandora
+    :target: https://circleci.com/gh/mopidy/mopidy-pandora
+    :alt: CircleCI build status
 
-.. image:: https://img.shields.io/coveralls/mopidy/mopidy-pandora/develop.svg?style=flat
-   :target: https://coveralls.io/r/mopidy/mopidy-pandora?branch=develop
-   :alt: Test coverage
-
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+.. image:: https://img.shields.io/codecov/c/gh/mopidy/mopidy-pandora
+    :target: https://codecov.io/gh/mopidy/mopidy-pandora
+    :alt: Test coverage
 
 `Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora <http://www.pandora.com/>`_.
 
@@ -67,14 +64,14 @@ Dependencies
 - Requires a Pandora user account. Users with a Pandora Premium subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.13,<2. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
+- ``pydora`` >= 2,<3. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
   Since Mopidy is still stuck on legacy Python (2.7), there may be some native dependencies on openssl that you will
   need to install beforehand. See the `cryptography installation docs <https://cryptography.io/en/latest/installation/>`_ for details.
 
-- ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
+- ``cachetools`` >= 1.0.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
 
-- ``Mopidy`` >= 1.1.2. The music server that Mopidy-Pandora extends.
+- ``Mopidy`` >= 3.0.0. The music server that Mopidy-Pandora extends.
 
 - ``requests`` >= 2.5.0. Python HTTP Requests for Humans™.
 
@@ -168,3 +165,10 @@ Project resources
 - `Source code <https://github.com/mopidy/mopidy-pandora>`_
 - `Issue tracker <https://github.com/mopidy/mopidy-pandora/issues>`_
 - `Development branch tarball <https://github.com/mopidy/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
+
+Credits
+=======
+
+- Original author: `Andrew Wason <https://github.com/rectalogic>`__
+- Current maintainer: `John Cass <https://github.com/jcass77>`__
+- `Contributors <https://github.com/mopidy/mopidy-pandora/graphs/contributors>`_

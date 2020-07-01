@@ -8,11 +8,11 @@
 #
 # See: https://docs.mopidy.com/en/develop/installation/ for details.
 #
-# Mopidy>=1.1.2  # https://github.com/mopidy/mopidy
+# Mopidy>=3.0.0  # https://github.com/mopidy/mopidy
 
 # Other runtime dependencies
 # ------------------------------------------------------------------------------
 cachetools>=1.0.0  # https://github.com/tkem/cachetools
-Pykka>=1.1  # https://github.com/jodal/pykka
-pydora>= 1.13,<2  # https://github.com/mcrute/pydora
+Pykka>=2.0.1  # https://github.com/jodal/pykka
+pydora>= 2,<3  # https://github.com/mcrute/pydora
 requests>= 2.5.0  # https://github.com/psf/requests
