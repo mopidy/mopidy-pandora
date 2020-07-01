@@ -63,8 +63,8 @@ Dependencies
   audio stream. Free accounts will play advertisements.
 
 - ``pydora`` >= 2,<3. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
-  Since Mopidy is still stuck on legacy Python (2.7), there may be some native dependencies on openssl that you will
-  need to install beforehand. See the `cryptography installation docs <https://cryptography.io/en/latest/installation/>`_ for details.
+  Depending on your setup, there may be some native dependencies on openssl that you will need to install beforehand.
+  See the `cryptography installation docs <https://cryptography.io/en/latest/installation/>`_ for details.
 
 - ``cachetools`` >= 1.0.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
