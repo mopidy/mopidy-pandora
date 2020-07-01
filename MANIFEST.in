@@ -1,6 +1,7 @@
 include *.py
 include *.rst
 include .mailmap
+include AUTHORS
 include LICENSE
 include MANIFEST.in
 include pyproject.toml
@@ -8,6 +9,8 @@ include tox.ini
 
 recursive-include .circleci *
 recursive-include .github *
+
+recursive-include docs *.rst
 
 include mopidy_*/ext.conf
 
