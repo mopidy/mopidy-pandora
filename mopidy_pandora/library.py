@@ -1,25 +1,19 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
-
 import re
-
 from collections import namedtuple
 
 from cachetools import LRUCache
-
-from mopidy import backend, models
-
 from pydora.utils import iterate_forever
 
-from mopidy_pandora.uri import (
+from mopidy import backend, models
+from mopidy_pandora.uri import (  # noqa I101
     AdItemUri,
     GenreUri,
     PandoraUri,
     SearchUri,
     StationUri,
     TrackUri,
-)  # noqa I101
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +33,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     )
 
     def __init__(self, backend, sort_order):
-        super(PandoraLibraryProvider, self).__init__(backend)
+        super().__init__(backend)
         self.sort_order = sort_order.lower()
 
         self.pandora_station_cache = StationCache(self, maxsize=5)
@@ -64,7 +58,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
         logger.info(
-            "Looking up Pandora {} {}...".format(pandora_uri.uri_type, pandora_uri.uri)
+            "Looking up Pandora {} {}...".format(
+                pandora_uri.uri_type, pandora_uri.uri
+            )
         )
         if isinstance(pandora_uri, SearchUri):
             # Create the station first so that it can be browsed.
@@ -81,15 +77,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 track = self.lookup_pandora_track(uri)
             except KeyError:
-                logger.exception("Failed to lookup Pandora URI '{}'.".format(uri))
+                logger.exception(f"Failed to lookup Pandora URI '{uri}'.")
                 return []
             else:
-                # TODO: Album.images has been deprecated in Mopidy 1.2. Remove this code when all frontends have been
-                #       updated to make use of the newer LibraryController.get_images()
-                images = self.get_images([uri])[uri]
-                if len(images) > 0:
-                    album_kwargs = {"images": [image.uri for image in images]}
-
                 if isinstance(pandora_uri, AdItemUri):
                     track_kwargs["name"] = "Advertisement"
 
@@ -112,7 +102,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     album_kwargs["name"] = track.album_name
         elif isinstance(pandora_uri, StationUri):
             station = self.backend.api.get_station(pandora_uri.station_id)
-            album_kwargs = {"images": [station.art_url]}
             track_kwargs["name"] = station.name
             artist_kwargs["name"] = "Pandora Station"
             album_kwargs["name"] = ", ".join(station.genre)
@@ -144,13 +133,17 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     image_uri = track.album_art_url
                 if image_uri:
-                    image_uris.update([image_uri])
+                    image_uris.update(
+                        [image_uri.replace("http://", "https://", 1)]
+                    )
             except (TypeError, KeyError):
                 pandora_uri = PandoraUri.factory(uri)
                 if isinstance(pandora_uri, TrackUri):
                     # Could not find the track as expected - exception.
                     logger.exception(
-                        "Failed to lookup image for Pandora URI '{}'.".format(uri)
+                        "Failed to lookup image for Pandora URI '{}'.".format(
+                            uri
+                        )
                     )
                 else:
                     # Lookup
@@ -163,23 +156,23 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
 
-    def _formatted_station_list(self, list):
+    def _formatted_station_list(self, station_list):
         # Find QuickMix stations and move QuickMix to top
-        for i, station in enumerate(list[:]):
+        for i, station in enumerate(station_list.copy()):
             if station.is_quickmix:
                 quickmix_stations = station.quickmix_stations
                 if not station.name.endswith(" (marked with *)"):
                     station.name += " (marked with *)"
-                list.insert(0, list.pop(i))
+                station_list.insert(0, station_list.pop(i))
                 break
 
         # Mark QuickMix stations
-        for station in list:
+        for station in station_list:
             if station.id in quickmix_stations:
                 if not station.name.endswith("*"):
                     station.name += "*"
 
-        return list
+        return station_list
 
     def _browse_stations(self):
         station_directories = []
@@ -190,9 +183,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 stations.sort(key=lambda x: x.name, reverse=False)
 
             for station in self._formatted_station_list(stations):
-                # As of version 5 of the Pandora API, station IDs and tokens are always equivalent.
-                # We're using this assumption as we don't have the station token available for deleting the station.
-                # Detect if any Pandora API changes ever breaks this assumption in the future.
+                # As of version 5 of the Pandora API, station IDs and tokens
+                # are always equivalent. We're using this assumption as we
+                # don't have the station token available for deleting the
+                # station. Detect if any Pandora API changes ever breaks this
+                # assumption in the future.
                 assert station.token == station.id
                 station_directories.append(
                     models.Ref.directory(
@@ -222,7 +217,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _browse_genre_stations(self, uri):
         return [
-            models.Ref.directory(name=station.name, uri=PandoraUri.factory(station).uri)
+            models.Ref.directory(
+                name=station.name, uri=PandoraUri.factory(station).uri
+            )
             for station in self.backend.api.get_genre_stations()[
                 PandoraUri.factory(uri).category_name
             ]
@@ -264,9 +261,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     pass
             else:
                 raise ValueError(
-                    "Unexpected URI type to perform refresh of Pandora directory: {}.".format(
-                        pandora_uri.uri_type
-                    )
+                    "Unexpected URI type to perform refresh of "
+                    f"Pandora directory: {pandora_uri.uri_type}"
                 )
 
     def search(self, query=None, uris=None, exact=False, **kwargs):
@@ -274,7 +270,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         if not search_text:
             # No value provided for search query, abort.
-            logger.info("Unsupported Pandora search query: {}".format(query))
+            logger.info(f"Unsupported Pandora search query: {query}")
             return []
 
         search_result = self.backend.api.search(
@@ -286,7 +282,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             tracks.append(
                 models.Track(
                     uri=SearchUri(genre.token).uri,
-                    name="{} (Pandora genre)".format(genre.station_name),
+                    name=f"{genre.station_name} (Pandora genre)",
                     artists=[models.Artist(name=genre.station_name)],
                 )
             )
@@ -295,7 +291,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             tracks.append(
                 models.Track(
                     uri=SearchUri(song.token).uri,
-                    name="{} (Pandora station)".format(song.song_name),
+                    name=f"{song.song_name} (Pandora station)",
                     artists=[models.Artist(name=song.artist)],
                 )
             )
@@ -304,13 +300,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         for artist in search_result.artists:
             search_uri = SearchUri(artist.token)
             if search_uri.is_artist_search:
-                station_name = "{} (Pandora artist)".format(artist.artist)
+                station_name = f"{artist.artist} (Pandora artist)"
             else:
-                station_name = "{} (Pandora composer)".format(artist.artist)
+                station_name = f"{artist.artist} (Pandora composer)"
             artists.append(models.Artist(uri=search_uri.uri, name=station_name))
 
         return models.SearchResult(
-            uri="pandora:search:{}".format(search_text), tracks=tracks, artists=artists
+            uri=f"pandora:search:{search_text}", tracks=tracks, artists=artists,
         )
 
     def _formatted_search_query(self, query):
@@ -327,7 +323,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
 class StationCache(LRUCache):
     def __init__(self, library, maxsize, getsizeof=None):
-        super(StationCache, self).__init__(maxsize, getsizeof=getsizeof)
+        super().__init__(maxsize, getsizeof=getsizeof)
         self.library = library
 
     def __missing__(self, station_id):

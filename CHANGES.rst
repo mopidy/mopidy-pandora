@@ -1,10 +1,18 @@
 Changelog
 =========
 
+v1.0.0 (UNRELEASED)
+-------------------
+
+- Now requires Python 3.7 or newer. Python 2.7 is no longer supported.
+- Now requires Mopidy 3.0 or newer.
+- Switch to Black code formatting.
+- Update docs to refer to new Pandora 'Premium' subscription model instead of the old 'Plus'.
+
 v0.4.2 (Apr 21, 2019)
 ---------------------
 
-- Pin pydora dependency to pydora>=1.13,<2. (Resolves: `#70 <https://github.com/rectalogic/mopidy-pandora/issues/70>`_).
+- Pin pydora dependency to pydora>=1.13,<2. (Resolves: `#70 <https://github.com/mopidy/mopidy-pandora/issues/70>`_).
 
 
 v0.4.1 (Dec 29, 2018)
@@ -16,43 +24,43 @@ v0.4.1 (Dec 29, 2018)
 
 **Fixes**
 
-- Use the updated Station API introduced in pydora 1.12.0. (Fixes: `#65 <https://github.com/rectalogic/mopidy-pandora/issues/65>`_).
-- Implement ``LRUCache``'s ``__missing__``. (Fixes: `#66 <https://github.com/rectalogic/mopidy-pandora/issues/66>`_).
+- Use the updated Station API introduced in pydora 1.12.0. (Fixes: `#65 <https://github.com/mopidy/mopidy-pandora/issues/65>`_).
+- Implement ``LRUCache``'s ``__missing__``. (Fixes: `#66 <https://github.com/mopidy/mopidy-pandora/issues/66>`_).
 
 v0.4.0 (Sep 20, 2017)
 ---------------------
 
 - Update documentation to refer to new 'Pandora Plus' subscription model instead of the old 'Pandora One'.
 - Update troubleshooting guide with more workarounds for cross-signed certificates using OpenSSL < 1.0.2.
-- Allow station URI's to be added to playlists and the Mopidy tracklist. (Addresses: `#58 <https://github.com/rectalogic/mopidy-pandora/issues/58>`_).
+- Allow station URI's to be added to playlists and the Mopidy tracklist. (Addresses: `#58 <https://github.com/mopidy/mopidy-pandora/issues/58>`_).
 
 v0.3.0 (Jul 8, 2016)
 --------------------
 
 **Features and improvements**
 
-- Add support for searching Pandora stations. (Addresses: `#36 <https://github.com/rectalogic/mopidy-pandora/issues/36>`_).
+- Add support for searching Pandora stations. (Addresses: `#36 <https://github.com/mopidy/mopidy-pandora/issues/36>`_).
 - Switch default partner device configuration values from ``IP01`` (iPhone) to ``android-generic``, which provides more
   stream quality configuration options.
 
 **Fixes**
 
-- Album and artist URIs now point back to the Pandora track. (Fixes: `#51 <https://github.com/rectalogic/mopidy-pandora/issues/51>`_).
+- Album and artist URIs now point back to the Pandora track. (Fixes: `#51 <https://github.com/mopidy/mopidy-pandora/issues/51>`_).
 
 
 v0.2.2 (Apr 13, 2016)
 ---------------------
 
 - Fix an issue that would cause Mopidy-Pandora to raise an exception if a track did not have the ``bitrate`` field specified.
-  Please refer to the updated `configuration <https://github.com/rectalogic/mopidy-pandora#configuration>`_ options for
+  Please refer to the updated `configuration <https://github.com/mopidy/mopidy-pandora#configuration>`_ options for
   ``preferred_audio_quality`` for details on the effect that the chosen partner device has on stream quality options.
-  (Fixes: `#48 <https://github.com/rectalogic/mopidy-pandora/issues/48>`_).
+  (Fixes: `#48 <https://github.com/mopidy/mopidy-pandora/issues/48>`_).
 
 v0.2.1 (Feb 6, 2016)
 --------------------
 
 - Fix to prevent the Mopidy-Pandora backend from starting up if logging in to the Pandora server failed.
-  (Fixes: `#44 <https://github.com/rectalogic/mopidy-pandora/issues/44>`_).
+  (Fixes: `#44 <https://github.com/mopidy/mopidy-pandora/issues/44>`_).
 - Fixed an issue that would cause only the first few doubleclick events to be processed correctly.
 
 v0.2.0 (Jan 26, 2016)
@@ -62,7 +70,7 @@ v0.2.0 (Jan 26, 2016)
 
 - Now displays all of the correct track information during playback (e.g. song and artist names, album covers, track
   length, bitrate etc.).
-- Simulate dynamic tracklist (workaround for `#2 <https://github.com/rectalogic/mopidy-pandora/issues/2>`_)
+- Simulate dynamic tracklist (workaround for `#2 <https://github.com/mopidy/mopidy-pandora/issues/2>`_)
 - Add support for browsing genre stations. Note that clicking on a genre station will automatically add that station to
   your profile.
 - Add ability to delete a station by setting one of the doubleclick event parameters to ``delete_station``.
@@ -72,7 +80,7 @@ v0.2.0 (Jan 26, 2016)
 - Station lists are now cached which speeds up startup and browsing of the list of stations dramatically. Configuration
   parameter ``cache_time_to_live`` can be used to specify when cache items should expire and be refreshed (in seconds).
 - Force Mopidy to stop when skip limit is exceeded (workaround for `#1221 <https://github.com/mopidy/mopidy/issues/1221>`_).
-- Now plays advertisements which should prevent non-Pandora Plus accounts from being locked after extended use.
+- Now plays advertisements which should prevent non-Pandora Premium accounts from being locked after extended use.
 - Tracks are now played in ``consume`` instead of ``repeat`` mode. This is more in line with how Pandora deals with
   track playback. It also avoids infinite loops on unplayable tracks, which is still an issue in Mopidy 1.1.2.
 - Station sort order now defaults to alphabetical. This makes it easier to find stations if the user profile contains
@@ -81,9 +89,9 @@ v0.2.0 (Jan 26, 2016)
 
 **Fixes**
 
-- Unplayable tracks are now removed from the tracklist. (Fixes: `#38 <https://github.com/rectalogic/mopidy-pandora/issues/38>`_).
-- Adds are now always assigned a unique URI. (Fixes: `#39 <https://github.com/rectalogic/mopidy-pandora/issues/39>`_).
-- Maximum skip limits are now reset whenever user browses another folder. (Fixes: `#43 <https://github.com/rectalogic/mopidy-pandora/issues/43>`_).
+- Unplayable tracks are now removed from the tracklist. (Fixes: `#38 <https://github.com/mopidy/mopidy-pandora/issues/38>`_).
+- Adds are now always assigned a unique URI. (Fixes: `#39 <https://github.com/mopidy/mopidy-pandora/issues/39>`_).
+- Maximum skip limits are now reset whenever user browses another folder. (Fixes: `#43 <https://github.com/mopidy/mopidy-pandora/issues/43>`_).
 
 v0.1.8 (Jan 8, 2016)
 --------------------

@@ -2,25 +2,35 @@
 Mopidy-Pandora
 **************
 
-.. image:: https://img.shields.io/pypi/v/Mopidy-Pandora.svg?style=flat
-    :target: https://pypi.python.org/pypi/Mopidy-Pandora/
+.. image:: https://img.shields.io/pypi/v/Mopidy-Pandora
+    :target: https://pypi.org/project/Mopidy-Pandora/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/travis/rectalogic/mopidy-pandora/develop.svg?style=flat
-    :target: https://travis-ci.org/rectalogic/mopidy-pandora
-    :alt: Travis CI build status
+.. image:: https://img.shields.io/circleci/build/gh/mopidy/mopidy-pandora
+    :target: https://circleci.com/gh/mopidy/mopidy-pandora
+    :alt: CircleCI build status
 
-.. image:: https://img.shields.io/coveralls/rectalogic/mopidy-pandora/develop.svg?style=flat
-   :target: https://coveralls.io/r/rectalogic/mopidy-pandora?branch=develop
-   :alt: Test coverage
+.. image:: https://img.shields.io/codecov/c/gh/mopidy/mopidy-pandora
+    :target: https://codecov.io/gh/mopidy/mopidy-pandora
+    :alt: Test coverage
 
-`Mopidy <http://www.mopidy.com/>`_ extension for playing music from `Pandora Radio <http://www.pandora.com/>`_.
+`Mopidy <https://mopidy.com/>`_ extension for playing music from `Pandora <https://www.pandora.com/>`_.
 
+
+Maintainer wanted
+=================
+
+I no longer have access to the Pandora music service in the region that I live, which has made maintaining this project
+impossible. Mopidy-Pandora is looking for a new maintainer, preferably someone who is familiar with the codebase,
+familiar with Python development, and uses the paid Pandora subscription service on a regular basis.
+
+If you're interested, please take a look at the code base and work on submitting a pull request or two to show you
+understand how everything works together.
 
 Features
 ========
 
-- Support for both Pandora Plus and ad-supported free accounts.
+- Support for both Pandora Premium and ad-supported free accounts.
 - Add ratings to tracks (thumbs up, thumbs down, sleep, etc.).
 - Bookmark songs or artists.
 - Browse and add genre stations.
@@ -49,17 +59,17 @@ idea. And not recommended.
 Dependencies
 ============
 
-- Requires a Pandora user account. Users with a Pandora Plus subscription will have access to the higher quality 192 Kbps
+- Requires a Pandora user account. Users with a Pandora Premium subscription will have access to the higher quality 192 Kbps
   audio stream. Free accounts will play advertisements.
 
-- ``pydora`` >= 1.13,<2. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
-  Since Mopidy is still stuck on legacy Python (2.7), there may be some native dependencies on openssl that you will
-  need to install beforehand. See the `cryptography installation docs <https://cryptography.io/en/latest/installation/>`_ for details.
+- ``pydora`` >= 2,<3. The Python Pandora API Client. **Pre-requisites**: As of 1.11.0 pydora requires `cryptography <https://pypi.python.org/pypi/cryptography>`_.
+  Depending on your setup, there may be some native dependencies on openssl that you will need to install beforehand.
+  See the `cryptography installation docs <https://cryptography.io/en/latest/installation/>`_ for details.
 
-- ``cachetools`` >= 1.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
+- ``cachetools`` >= 1.0.0. Extensible memoizing collections and decorators. The package is available as ``cachetools``
   on PyPI.
 
-- ``Mopidy`` >= 1.1.2. The music server that Mopidy-Pandora extends.
+- ``Mopidy`` >= 3.0.0. The music server that Mopidy-Pandora extends.
 
 - ``requests`` >= 2.5.0. Python HTTP Requests for Humans™.
 
@@ -93,10 +103,10 @@ The following configuration values are available:
 
 - ``pandora/enabled``: If the Pandora extension should be enabled or not. Defaults to ``true``.
 
-- ``pandora/api_host``: Which of the JSON API `endpoints <http://6xq.net/pandora-apidoc/json/>`_ to use. Note that
-  the endpoints are different for Pandora Plus and free accounts (details in the link provided).
+- ``pandora/api_host``: Which of the JSON API `endpoints <https://6xq.net/pandora-apidoc/json/>`_ to use. Note that
+  the endpoints are different for Pandora Premium and free accounts (details in the link provided).
 
-- ``pandora/partner_*`` related values: The `credentials <http://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
+- ``pandora/partner_*`` related values: The `credentials <https://6xq.net/playground/pandora-apidoc/json/partners/#partners>`_
   to use for the Pandora API entry point. You *must* provide these values based on your device preferences.
 
 - ``pandora/username``: Your Pandora username. You *must* provide this.
@@ -148,8 +158,15 @@ The full list of supported events are: ``thumbs_up``, ``thumbs_down``, ``sleep``
 Project resources
 =================
 
-- `Changelog <https://github.com/rectalogic/mopidy-pandora/blob/develop/CHANGES.rst>`_
-- `Troubleshooting guide <https://github.com/rectalogic/mopidy-pandora/blob/develop/docs/troubleshooting.rst>`_
-- `Source code <https://github.com/rectalogic/mopidy-pandora>`_
-- `Issue tracker <https://github.com/rectalogic/mopidy-pandora/issues>`_
-- `Development branch tarball <https://github.com/rectalogic/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
+- `Changelog <https://github.com/mopidy/mopidy-pandora/blob/develop/CHANGES.rst>`_
+- `Troubleshooting guide <https://github.com/mopidy/mopidy-pandora/blob/develop/docs/troubleshooting.rst>`_
+- `Source code <https://github.com/mopidy/mopidy-pandora>`_
+- `Issue tracker <https://github.com/mopidy/mopidy-pandora/issues>`_
+- `Development branch tarball <https://github.com/mopidy/mopidy-pandora/archive/develop.tar.gz#egg=Mopidy-Pandora-dev>`_
+
+Credits
+=======
+
+- Original author: `Andrew Wason <https://github.com/rectalogic>`__
+- Current maintainer: `John Cass <https://github.com/jcass77>`__
+- `Contributors <https://github.com/mopidy/mopidy-pandora/graphs/contributors>`_

@@ -1,9 +1,18 @@
-include .coveragerc
-include .travis.yml
+include *.py
+include *.rst
+include .mailmap
+include AUTHORS
 include LICENSE
 include MANIFEST.in
-include README.rst
-include mopidy_pandora/ext.conf
+include pyproject.toml
 include tox.ini
 
+recursive-include .circleci *
+recursive-include .github *
+
+recursive-include docs *.rst
+
+include mopidy_*/ext.conf
+
 recursive-include tests *.py
+recursive-include tests/data *

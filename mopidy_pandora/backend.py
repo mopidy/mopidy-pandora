@@ -1,20 +1,14 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 
-from mopidy import backend, core
-
+import pykka
 from pandora.errors import PandoraException
 
-import pykka
-
+from mopidy import backend, core
 from mopidy_pandora import listener, utils
-
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import PandoraPlaybackProvider
 from mopidy_pandora.uri import PandoraUri  # noqa: I101
-
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +21,7 @@ class PandoraBackend(
     listener.EventMonitorListener,
 ):
     def __init__(self, config, audio):
-        super(PandoraBackend, self).__init__()
+        super().__init__()
         self.config = config["pandora"]
         settings = {
             "CACHE_TTL": self.config.get("cache_time_to_live"),
@@ -84,7 +78,7 @@ class PandoraBackend(
             self._trigger_event_processed(track_uri, pandora_event)
             return True
         except PandoraException:
-            logger.exception("Error calling Pandora event: {}.".format(pandora_event))
+            logger.exception(f"Error calling Pandora event: {pandora_event}.")
             return False
 
     def thumbs_up(self, track_uri):

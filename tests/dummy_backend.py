@@ -4,14 +4,11 @@ This backend implements the backend API in the simplest way possible.  It is
 used in tests of the frontends.
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from mopidy import backend
-from mopidy import listener
-from mopidy.models import Ref, SearchResult
 
 import pykka
 
+from mopidy import backend, listener
+from mopidy.models import Ref, SearchResult
 from mopidy_pandora.listener import PandoraPlaybackListener
 
 
@@ -20,31 +17,33 @@ def create_proxy(cls, config=None, audio=None):
 
 
 class DummyBackend(pykka.ThreadingActor, backend.Backend):
-
     def __init__(self, config, audio):
-        super(DummyBackend, self).__init__()
+        super().__init__()
 
         self.library = DummyLibraryProvider(backend=self)
         if audio is None:
-            self.playback = DummyPandoraPlaybackProvider(audio=audio, backend=self)
+            self.playback = DummyPandoraPlaybackProvider(
+                audio=audio, backend=self
+            )
         else:
-            self.playback = DummyPandoraPlaybackProviderWithAudioEvents(audio=audio, backend=self)
+            self.playback = DummyPandoraPlaybackProviderWithAudioEvents(
+                audio=audio, backend=self
+            )
 
-        self.uri_schemes = ['mock']
+        self.uri_schemes = ["mock"]
 
 
 class DummyPandoraBackend(DummyBackend):
-
     def __init__(self, config, audio):
-        super(DummyPandoraBackend, self).__init__(config, audio)
-        self.uri_schemes = ['pandora']
+        super().__init__(config, audio)
+        self.uri_schemes = ["pandora"]
 
 
 class DummyLibraryProvider(backend.LibraryProvider):
-    root_directory = Ref.directory(uri='mock:/', name='mock')
+    root_directory = Ref.directory(uri="mock:/", name="mock")
 
     def __init__(self, *args, **kwargs):
-        super(DummyLibraryProvider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.dummy_library = []
         self.dummy_get_distinct_result = {}
         self.dummy_browse_result = {}
@@ -70,9 +69,8 @@ class DummyLibraryProvider(backend.LibraryProvider):
 
 
 class DummyPlaybackProvider(backend.PlaybackProvider):
-
     def __init__(self, *args, **kwargs):
-        super(DummyPlaybackProvider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._uri = None
         self._time_position = 0
 
@@ -80,7 +78,7 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
         return True
 
     def play(self):
-        return self._uri and self._uri != 'mock:error'
+        return self._uri and self._uri != "mock:error"
 
     def change_track(self, track):
         """Pass a track with URI 'dummy:error' to force failure"""
@@ -107,20 +105,18 @@ class DummyPlaybackProvider(backend.PlaybackProvider):
 
 
 class DummyPandoraPlaybackProvider(DummyPlaybackProvider):
-
     def __init__(self, *args, **kwargs):
-        super(DummyPandoraPlaybackProvider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def change_track(self, track):
-        listener.send(PandoraPlaybackListener, 'track_changing', track=track)
-        return super(DummyPandoraPlaybackProvider, self).change_track(track)
+        listener.send(PandoraPlaybackListener, "track_changing", track=track)
+        return super().change_track(track)
 
 
 class DummyPandoraPlaybackProviderWithAudioEvents(backend.PlaybackProvider):
-
     def __init__(self, *args, **kwargs):
-        super(DummyPandoraPlaybackProviderWithAudioEvents, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def change_track(self, track):
-        listener.send(PandoraPlaybackListener, 'track_changing', track=track)
-        return super(DummyPandoraPlaybackProviderWithAudioEvents, self).change_track(track)
+        listener.send(PandoraPlaybackListener, "track_changing", track=track)
+        return super().change_track(track)
