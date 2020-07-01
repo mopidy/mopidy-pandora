@@ -1,8 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
-
-import mock
+from unittest import mock
 
 from mopidy import backend as backend_api
 from mopidy import models

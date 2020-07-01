@@ -1,8 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import time
-
-import mock
+from unittest import mock
 
 from pandora.client import APIClient
 from pandora.models.station import GenreStationList, StationList, Station

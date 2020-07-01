@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from queue import PriorityQueue
 import json
 import threading
+from unittest import mock
 
-import mock
 from mopidy import models
 import pykka
 

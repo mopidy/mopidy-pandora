@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from mopidy import models
 
 from pandora.models.station import GenreStation, Station
+from unittest import mock
 
-import mock
 import pytest
 
 from mopidy_pandora.uri import (
