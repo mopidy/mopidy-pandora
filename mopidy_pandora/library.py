@@ -8,7 +8,9 @@ from pydora.utils import iterate_forever
 from mopidy import backend, models
 from mopidy_pandora.uri import (  # noqa I101
     AdItemUri,
+    GenreStationUri,
     GenreUri,
+    GenresUri,
     PandoraUri,
     SearchUri,
     StationUri,
@@ -127,11 +129,42 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         for uri in uris:
             image_uris = set()
             try:
-                track = self.lookup_pandora_track(uri)
-                if track.is_ad is True:
-                    image_uri = track.image_url
+                image_uri = None
+                pandora_uri = PandoraUri.factory(uri)
+                # Pandora has a "Browse Genres" option, but the API doesn't expose
+                # an image for that feature
+                if isinstance(pandora_uri, GenresUri):
+                    continue
+
+                logger.info(
+                        "Retrieving images for Pandora {} {}...".format(
+                        pandora_uri.uri_type, pandora_uri.uri
+                    )
+                )
+
+                if isinstance(pandora_uri, AdItemUri) or isinstance(pandora_uri, TrackUri):
+                    track = self.lookup_pandora_track(uri)
+                    if track.is_ad is True:
+                        image_uri = track.image_url
+                    else:
+                        image_uri = track.album_art_url
+                elif isinstance(pandora_uri, StationUri):
+                    # GenreStations don't appear to have artwork available via the
+                    # json API
+                    if not isinstance(pandora_uri, GenreStationUri):
+                        station = self.backend.api.get_station(pandora_uri.station_id)
+                        if station:
+                            image_uri = station.art_url
+                        else:
+                            logger.warning(f"Could not find station for uri {uri}")
                 else:
-                    image_uri = track.album_art_url
+                    # Lookup
+                    logger.warning(
+                        "No images available for Pandora URIs of type '{}'.".format(
+                            pandora_uri.uri_type
+                        )
+                    )
+
                 if image_uri:
                     image_uris.update(
                         [image_uri.replace("http://", "https://", 1)]
@@ -145,14 +178,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                             uri
                         )
                     )
-                else:
-                    # Lookup
-                    logger.warning(
-                        "No images available for Pandora URIs of type '{}'.".format(
-                            pandora_uri.uri_type
-                        )
-                    )
-                pass
+            except NotImplementedError:
+                logger.warning(f"Unsupported uri {uri}")
+
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
 

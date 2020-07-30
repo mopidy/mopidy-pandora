@@ -138,6 +138,13 @@ class GenreUri(PandoraUri):
         )
 
 
+class GenresUri(PandoraUri):
+    uri_type = "genres"
+
+    def __init__(self):
+        super().__init__(self.uri_type)
+
+
 class StationUri(PandoraUri):
     uri_type = "station"
 
