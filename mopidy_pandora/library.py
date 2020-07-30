@@ -137,12 +137,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     continue
 
                 logger.info(
-                        "Retrieving images for Pandora {} {}...".format(
+                    "Retrieving images for Pandora {} {}...".format(
                         pandora_uri.uri_type, pandora_uri.uri
                     )
                 )
 
-                if isinstance(pandora_uri, AdItemUri) or isinstance(pandora_uri, TrackUri):
+                if (isinstance(pandora_uri, AdItemUri)
+                        or isinstance(pandora_uri, TrackUri)):
                     track = self.lookup_pandora_track(uri)
                     if track.is_ad is True:
                         image_uri = track.image_url
