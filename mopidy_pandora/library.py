@@ -142,8 +142,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     )
                 )
 
-                if (isinstance(pandora_uri, AdItemUri)
-                        or isinstance(pandora_uri, TrackUri)):
+                if isinstance(pandora_uri, AdItemUri) or isinstance(
+                    pandora_uri, TrackUri
+                ):
                     track = self.lookup_pandora_track(uri)
                     if track.is_ad is True:
                         image_uri = track.image_url
@@ -153,11 +154,15 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     # GenreStations don't appear to have artwork available via the
                     # json API
                     if not isinstance(pandora_uri, GenreStationUri):
-                        station = self.backend.api.get_station(pandora_uri.station_id)
+                        station = self.backend.api.get_station(
+                            pandora_uri.station_id
+                        )
                         if station:
                             image_uri = station.art_url
                         else:
-                            logger.warning(f"Could not find station for uri {uri}")
+                            logger.warning(
+                                f"Could not find station for uri {uri}"
+                            )
                 else:
                     # Lookup
                     logger.warning(

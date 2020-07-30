@@ -106,7 +106,9 @@ def test_get_images_for_stations(config, station_result_mock):
     backend = conftest.get_backend(config)
 
     station_mock = Station.from_json(backend.api, station_result_mock["result"])
-    station_uri = PandoraUri.factory(f"pandora:station:{station_mock.id}:mock_token")
+    station_uri = PandoraUri.factory(
+        f"pandora:station:{station_mock.id}:mock_token"
+    )
     backend.api.get_station = mock.MagicMock(return_value=station_mock)
 
     results = backend.library.get_images([station_uri.uri])
@@ -114,9 +116,9 @@ def test_get_images_for_stations(config, station_result_mock):
     # chrome blocks getting non https images from Pandora, therefore the
     # library provider substitutes https for http.  We need to perform
     # the same substitution here to verify it worked correctly
-    assert results[station_uri.uri][
-        0
-    ].uri == station_mock.art_url.replace("http://", "https://", 1)
+    assert results[station_uri.uri][0].uri == station_mock.art_url.replace(
+        "http://", "https://", 1
+    )
 
 
 def test_get_next_pandora_track_fetches_track(config, playlist_item_mock):
