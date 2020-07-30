@@ -117,7 +117,7 @@ def test_pandora_repr_converts_to_string():
 
 def test_pandora_parse_none_mock_uri():
     uri = PandoraUri()
-    assert uri.encode(None) == b''
+    assert uri.encode(None) == b""
 
 
 def test_pandora_parse_invalid_type_raises_exception():
