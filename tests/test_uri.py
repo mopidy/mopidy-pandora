@@ -253,6 +253,7 @@ def test_genres_uri_parse():
     assert obj.uri_type == "genres"
     assert obj.uri == mock_uri
 
+
 def test_genre_station_uri_parse():
     mock_uri = "pandora:genre_station:G100:G100"
     obj = PandoraUri._from_uri(mock_uri)
