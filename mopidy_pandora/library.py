@@ -131,10 +131,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             try:
                 image_uri = None
                 pandora_uri = PandoraUri.factory(uri)
-                # Pandora has a "Browse Genres" option, but the API doesn't expose
-                # an image for that feature
-                if isinstance(pandora_uri, GenresUri):
-                    continue
 
                 logger.info(
                     "Retrieving images for Pandora {} {}...".format(
@@ -157,12 +153,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                         station = self.backend.api.get_station(
                             pandora_uri.station_id
                         )
-                        if station:
-                            image_uri = station.art_url
-                        else:
-                            logger.warning(
-                                f"Could not find station for uri {uri}"
-                            )
+                        image_uri = station.art_url
                 else:
                     # Lookup
                     logger.warning(
@@ -184,8 +175,6 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                             uri
                         )
                     )
-            except NotImplementedError:
-                logger.warning(f"Unsupported uri {uri}")
 
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result
