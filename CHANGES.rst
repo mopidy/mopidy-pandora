@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v1.0.0 (UNRELEASED)
+v1.0.0 (2020-09-22)
 -------------------
 
 - Now requires Python 3.7 or newer. Python 2.7 is no longer supported.
