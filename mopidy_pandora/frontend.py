@@ -529,7 +529,7 @@ class EventSequence:
                     # Make sure that we have seen every event in the target
                     # sequence, and in the right order
                     return
-            elif not all([e in self.events_seen for e in self.target_sequence]):
+            elif not all(e in self.events_seen for e in self.target_sequence):
                 # Make sure that we have seen every event in the target
                 # sequence, ignoring order
                 return

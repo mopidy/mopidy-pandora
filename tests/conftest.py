@@ -198,8 +198,8 @@ def get_station_mock_return_value(
 def playlist_result_mock():
     mock_result = {
         "stat": "ok",
-        "result": dict(
-            items=[
+        "result": {
+            "items": [
                 {
                     "trackToken": MOCK_TRACK_TOKEN,
                     "artistName": "Mock Artist Name",
@@ -235,7 +235,7 @@ def playlist_result_mock():
                 # Also add an advertisement to the playlist.
                 {"adToken": MOCK_TRACK_AD_TOKEN},
             ]
-        ),
+        },
     }
 
     return mock_result
@@ -245,13 +245,13 @@ def playlist_result_mock():
 def ad_metadata_result_mock():
     mock_result = {
         "stat": "ok",
-        "result": dict(
-            title=MOCK_TRACK_NAME,
-            companyName="Mock Company Name",
-            clickThroughUrl="click_url_mock",
-            imageUrl="img_url_mock",
-            trackGain="0.0",
-            audioUrlMap={
+        "result": {
+            "title": MOCK_TRACK_NAME,
+            "companyName": "Mock Company Name",
+            "clickThroughUrl": "click_url_mock",
+            "imageUrl": "img_url_mock",
+            "trackGain": "0.0",
+            "audioUrlMap": {
                 "highQuality": {
                     "bitrate": "64",
                     "encoding": "aacplus",
@@ -271,8 +271,8 @@ def ad_metadata_result_mock():
                     "protocol": "http",
                 },
             },
-            adTrackingTokens={MOCK_TRACK_AD_TOKEN},
-        ),
+            "adTrackingTokens": {MOCK_TRACK_AD_TOKEN},
+        },
     }
 
     return mock_result
