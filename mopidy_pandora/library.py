@@ -306,9 +306,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             artists.append(models.Artist(uri=search_uri.uri, name=station_name))
 
         return models.SearchResult(
-            uri=f"pandora:search:{search_text}",
-            tracks=tracks,
-            artists=artists,
+            uri=f"pandora:search:{search_text}", tracks=tracks, artists=artists,
         )
 
     def _formatted_search_query(self, query):
