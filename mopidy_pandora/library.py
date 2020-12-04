@@ -158,6 +158,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _formatted_station_list(self, station_list):
         # Find QuickMix stations and move QuickMix to top
+        quickmix_stations = []
         for i, station in enumerate(station_list.copy()):
             if station.is_quickmix:
                 quickmix_stations = station.quickmix_stations
