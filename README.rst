@@ -158,10 +158,10 @@ The full list of supported events are: ``thumbs_up``, ``thumbs_down``, ``sleep``
 Project resources
 =================
 
-- `Changelog <https://github.com/mopidy/mopidy-pandora/blob/master/CHANGES.rst>`_
-- `Troubleshooting guide <https://github.com/mopidy/mopidy-pandora/blob/master/docs/troubleshooting.rst>`_
 - `Source code <https://github.com/mopidy/mopidy-pandora>`_
 - `Issue tracker <https://github.com/mopidy/mopidy-pandora/issues>`_
+- `Changelog <https://github.com/mopidy/mopidy-pandora/releases>`_
+- `Troubleshooting guide <https://github.com/mopidy/mopidy-pandora/blob/master/docs/troubleshooting.rst>`_
 
 Credits
 =======
