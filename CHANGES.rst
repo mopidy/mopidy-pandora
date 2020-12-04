@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v1.1.0 (2020-12-04)
+-------------------
+
+- Add station art. (Fixes: `#74
+  <https://github.com/mopidy/mopidy-pandora/issues/74>`_. PR: `#75
+  <https://github.com/mopidy/mopidy-pandora/pull/75>`_)
+- Fix crash when `quickmix_stations` is undefined. (PR: `#77
+  <https://github.com/mopidy/mopidy-pandora/pull/77>`_)
+- Add Python 3.9 to the test matrix.
+
 v1.0.0 (2020-09-22)
 -------------------
 
@@ -12,7 +22,7 @@ v1.0.0 (2020-09-22)
 v0.4.2 (2019-04-21)
 -------------------
 
-- Pin pydora dependency to pydora>=1.13,<2. (Resolves: `#70 <https://github.com/mopidy/mopidy-pandora/issues/70>`_).
+- Pin pydora dependency to pydora>=1.13,<2. (Fixes: `#70 <https://github.com/mopidy/mopidy-pandora/issues/70>`_).
 
 
 v0.4.1 (2018-12-29)
