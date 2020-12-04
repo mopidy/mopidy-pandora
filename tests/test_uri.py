@@ -8,6 +8,7 @@ from mopidy_pandora.uri import (
     AdItemUri,
     GenreStationUri,
     GenreUri,
+    GenresUri,
     PandoraUri,
     PlaylistItemUri,
     SearchUri,
@@ -114,10 +115,9 @@ def test_pandora_repr_converts_to_string():
     assert obj.uri == uri + "0"
 
 
-@pytest.mark.skip
 def test_pandora_parse_none_mock_uri():
     uri = PandoraUri()
-    assert uri.encode(None) == ""
+    assert uri.encode(None) == b""
 
 
 def test_pandora_parse_invalid_type_raises_exception():
@@ -241,6 +241,16 @@ def test_genre_uri_parse():
     assert obj.uri_type == "genre"
     assert obj.category_name == "category_mock"
 
+    assert obj.uri == mock_uri
+
+
+def test_genres_uri_parse():
+    mock_uri = "pandora:genres"
+    obj = PandoraUri._from_uri(mock_uri)
+
+    assert type(obj) is GenresUri
+
+    assert obj.uri_type == "genres"
     assert obj.uri == mock_uri
 
 
