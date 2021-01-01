@@ -6,9 +6,9 @@ Mopidy-Pandora
     :target: https://pypi.org/project/Mopidy-Pandora/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/circleci/build/gh/mopidy/mopidy-pandora
-    :target: https://circleci.com/gh/mopidy/mopidy-pandora
-    :alt: CircleCI build status
+.. image:: https://img.shields.io/github/workflow/status/mopidy/mopidy-pandora/CI
+    :target: https://github.com/mopidy/mopidy-pandora/actions
+    :alt: CI build status
 
 .. image:: https://img.shields.io/codecov/c/gh/mopidy/mopidy-pandora
     :target: https://codecov.io/gh/mopidy/mopidy-pandora
