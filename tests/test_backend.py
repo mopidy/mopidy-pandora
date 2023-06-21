@@ -72,7 +72,6 @@ def test_prepare_next_track_triggers_event(config):
     with mock.patch.object(
         PandoraLibraryProvider, "get_next_pandora_track", mock.Mock()
     ) as get_next_pandora_track_mock:
-
         backend = get_backend(config)
 
         backend.prepare_next_track("id_token_mock")
@@ -92,7 +91,6 @@ def test_process_event_calls_method(config, caplog):
         PandoraLibraryProvider, "lookup_pandora_track", mock.Mock()
     ):
         with mock.patch.object(APIClient, "__call__", mock.Mock()) as mock_call:
-
             backend = get_backend(config)
             uri_mock = "pandora:track:id_token_mock:id_token_mock"
             backend._trigger_event_processed = mock.Mock()
@@ -105,7 +103,6 @@ def test_process_event_calls_method(config, caplog):
                 "add_song_bookmark",
                 "delete_station",
             ]:
-
                 if event == "delete_station":
                     backend.library.refresh = mock.Mock()
                     backend.library.browse = mock.Mock()
@@ -129,7 +126,6 @@ def test_process_event_handles_pandora_exception(config, caplog):
         with mock.patch.object(
             PandoraBackend, "thumbs_up", mock.Mock()
         ) as mock_call:
-
             backend = get_backend(config)
             uri_mock = "pandora:track:id_token_mock:id_token_mock"
             backend._trigger_event_processed = mock.Mock()

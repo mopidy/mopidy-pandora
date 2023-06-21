@@ -53,7 +53,6 @@ class MopidyAPIClient(APIClient):
         device,
         default_audio_quality=BaseAPIClient.MED_AUDIO_QUALITY,
     ):
-
         super().__init__(
             transport,
             partner_user,
@@ -72,7 +71,6 @@ class MopidyAPIClient(APIClient):
                 force_refresh
                 and next(iter(self.station_list_cache.values())).has_changed()
             ):
-
                 station_list = super().get_station_list()
                 self.station_list_cache[time.time()] = station_list
 
@@ -101,7 +99,6 @@ class MopidyAPIClient(APIClient):
                 force_refresh
                 and next(iter(self.genre_stations_cache.values())).has_changed()
             ):
-
                 genre_stations = super().get_genre_stations()
                 self.genre_stations_cache[time.time()] = genre_stations
 

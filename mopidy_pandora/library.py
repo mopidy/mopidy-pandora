@@ -337,7 +337,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _formatted_search_query(self, query):
         search_text = []
-        for (field, values) in iter(query.items()):
+        for field, values in iter(query.items()):
             if not hasattr(values, "__iter__"):
                 values = [values]
             for value in values:
