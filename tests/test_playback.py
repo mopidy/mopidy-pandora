@@ -233,7 +233,6 @@ def test_resume_click_ignored_if_start_of_track(provider):
     with mock.patch.object(
         PandoraPlaybackProvider, "get_time_position", return_value=0
     ):
-
         process_click_mock = mock.PropertyMock()
         provider.process_click = process_click_mock
 

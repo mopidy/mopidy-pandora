@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Extension(ext.Extension):
-
     dist_name = "Mopidy-Pandora"
     ext_name = "pandora"
     version = __version__

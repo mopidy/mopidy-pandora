@@ -21,7 +21,6 @@ from . import conftest
 
 def test_factory_unsupported_type():
     with pytest.raises(NotImplementedError):
-
         PandoraUri.factory(0)
 
 
@@ -122,18 +121,15 @@ def test_pandora_parse_none_mock_uri():
 
 def test_pandora_parse_invalid_type_raises_exception():
     with pytest.raises(NotImplementedError):
-
         PandoraUri()._from_uri("pandora:invalid_uri")
 
 
 def test_pandora_parse_invalid_scheme_raises_exception():
     with pytest.raises(NotImplementedError):
-
         PandoraUri()._from_uri("not_the_pandora_scheme:invalid")
 
 
 def test_search_uri_parse():
-
     obj = PandoraUri._from_uri("pandora:search:S1234567")
     assert type(obj) is SearchUri
 
@@ -204,7 +200,6 @@ def test_station_uri_from_station(get_station_mock_return_value):
 
 def test_station_uri_from_station_unsupported_type(playlist_result_mock):
     with pytest.raises(NotImplementedError):
-
         PandoraUri._from_station(playlist_result_mock)
 
 
@@ -312,7 +307,6 @@ def test_track_uri_from_track(playlist_item_mock):
 
 def test_track_uri_from_track_unsupported_type(playlist_result_mock):
     with pytest.raises(NotImplementedError):
-
         PandoraUri._from_track(playlist_result_mock)
 
 

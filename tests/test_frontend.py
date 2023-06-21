@@ -174,7 +174,7 @@ class TestPandoraFrontend:
 
             mopidy.core.playback.play(tlid=mopidy.tl_tracks[0].tlid)
 
-            for (event, kwargs) in core_events.items():
+            for event, kwargs in core_events.items():
                 mopidy.frontend.setup_required = True
                 listener.send(CoreListener, event, **kwargs)
                 mopidy.replay_events()

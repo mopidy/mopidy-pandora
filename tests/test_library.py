@@ -420,7 +420,6 @@ def test_browse_directory_marks_quickmix_stations(
         "get_station_list",
         return_value=get_station_list_return_value_mock,
     ):
-
         quickmix_station_uri = "pandora:track:{}:{}".format(
             conftest.MOCK_STATION_ID.replace("1", "2"),
             conftest.MOCK_STATION_TOKEN.replace("1", "2"),
