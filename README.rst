@@ -6,7 +6,7 @@ Mopidy-Pandora
     :target: https://pypi.org/project/Mopidy-Pandora/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/github/workflow/status/mopidy/mopidy-pandora/CI
+.. image:: https://img.shields.io/github/actions/workflow/status/mopidy/mopidy-pandora/ci.yml?branch=main
     :target: https://github.com/mopidy/mopidy-pandora/actions
     :alt: CI build status
 
