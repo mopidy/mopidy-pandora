@@ -298,18 +298,20 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             return []
 
         search_result = self.backend.api.search(
-            search_text, include_near_matches=False, include_genre_stations=True
+            search_text, include_near_matches=True, include_genre_stations=False
         )
 
         tracks = []
-        for genre in search_result.genre_stations:
-            tracks.append(
-                models.Track(
-                    uri=SearchUri(genre.token).uri,
-                    name=f"{genre.station_name} (Pandora genre)",
-                    artists=[models.Artist(name=genre.station_name)],
+        # Check if genre_stations exists before iterating to prevent TypeError
+        if search_result.genre_stations:
+            for genre in search_result.genre_stations:
+                tracks.append(
+                    models.Track(
+                        uri=SearchUri(genre.token).uri,
+                        name=f"{genre.station_name} (Pandora genre)",
+                        artists=[models.Artist(name=genre.station_name)],
+                    )
                 )
-            )
 
         for song in search_result.songs:
             tracks.append(
