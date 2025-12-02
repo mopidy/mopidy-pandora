@@ -2,7 +2,6 @@ from mopidy import backend, listener
 
 
 class EventMonitorListener(listener.Listener):
-
     """
     Marker interface for recipients of events sent by the event monitor.
 
@@ -53,7 +52,6 @@ class EventMonitorListener(listener.Listener):
 
 
 class PandoraFrontendListener(listener.Listener):
-
     """
     Marker interface for recipients of events sent by the frontend actor.
 
@@ -79,7 +77,6 @@ class PandoraFrontendListener(listener.Listener):
 
 
 class PandoraBackendListener(backend.BackendListener):
-
     """
     Marker interface for recipients of events sent by the backend actor.
 
@@ -118,7 +115,6 @@ class PandoraBackendListener(backend.BackendListener):
 
 
 class PandoraPlaybackListener(listener.Listener):
-
     """
     Marker interface for recipients of events sent by the playback provider.
     """

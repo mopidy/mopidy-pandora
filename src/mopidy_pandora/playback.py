@@ -44,9 +44,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
                 # Success, reset track skip counter.
                 self._consecutive_track_skips = 0
             else:
-                raise Unplayable(
-                    f"Track with URI '{track.uri}' is not playable."
-                )
+                raise Unplayable(f"Track with URI '{track.uri}' is not playable.")
 
         except (
             AttributeError,
@@ -62,9 +60,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def change_track(self, track):
         if track.uri is None:
             logger.warning(
-                "No URI for Pandora track '{}'. Track cannot be played.".format(
-                    track
-                )
+                "No URI for Pandora track '{}'. Track cannot be played.".format(track)
             )
             return False
 

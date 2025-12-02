@@ -158,8 +158,7 @@ def test_change_track_fetches_next_track_if_station_uri(
     assert provider.change_track(station) is False
     assert (
         "Cannot play Pandora stations directly. "
-        f"Retrieving tracks for station with ID: {station.station_id}"
-        in caplog.text
+        f"Retrieving tracks for station with ID: {station.station_id}" in caplog.text
     )
     assert provider.backend._trigger_next_track_available.called
 
@@ -181,8 +180,7 @@ def test_change_track_skips_if_track_not_available_in_buffer(
 
     assert provider.change_track(track) is False
     assert (
-        f"Error changing Pandora track: failed to lookup '{track.uri}'"
-        in caplog.text
+        f"Error changing Pandora track: failed to lookup '{track.uri}'" in caplog.text
     )
 
 
@@ -192,9 +190,7 @@ def test_change_track_resets_skips_on_success(provider, playlist_item_mock):
         "lookup_pandora_track",
         return_value=playlist_item_mock,
     ):
-        with mock.patch.object(
-            PlaylistItem, "get_is_playable", return_value=True
-        ):
+        with mock.patch.object(PlaylistItem, "get_is_playable", return_value=True):
             track = PandoraUri.factory(playlist_item_mock)
 
             provider._consecutive_track_skips = 1
@@ -209,9 +205,7 @@ def test_change_track_triggers_event_on_success(provider, playlist_item_mock):
         "lookup_pandora_track",
         return_value=playlist_item_mock,
     ):
-        with mock.patch.object(
-            PlaylistItem, "get_is_playable", return_value=True
-        ):
+        with mock.patch.object(PlaylistItem, "get_is_playable", return_value=True):
             track = PandoraUri.factory(playlist_item_mock)
 
             provider._trigger_track_changing = mock.PropertyMock()
@@ -250,6 +244,4 @@ def add_artist_bookmark(provider):
 
 def add_song_bookmark(provider):
     provider.add_song_bookmark(conftest.MOCK_TRACK_TOKEN)
-    provider.client.add_song_bookmark.assert_called_once_with(
-        conftest.MOCK_TRACK_TOKEN
-    )
+    provider.client.add_song_bookmark.assert_called_once_with(conftest.MOCK_TRACK_TOKEN)

@@ -97,9 +97,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
                 return GenreStationUri(station.id, station.token)
             return StationUri(station.id, station.token)
         else:
-            raise NotImplementedError(
-                f"Unsupported station item type '{station}'"
-            )
+            raise NotImplementedError(f"Unsupported station item type '{station}'")
 
     @classmethod
     def _from_track(cls, track):
@@ -108,9 +106,7 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
         elif isinstance(track, AdItem):
             return AdItemUri(track.station_id, track.ad_token)
         else:
-            raise NotImplementedError(
-                f"Unsupported playlist item type '{track}'"
-            )
+            raise NotImplementedError(f"Unsupported playlist item type '{track}'")
 
     @classmethod
     def is_pandora_uri(cls, uri):
@@ -215,9 +211,7 @@ class SearchUri(PandoraUri):
         self.token = token
 
     def __repr__(self):
-        return "{}:{token}".format(
-            super().__repr__(), **self.encoded_attributes
-        )
+        return "{}:{token}".format(super().__repr__(), **self.encoded_attributes)
 
     @property
     def is_track_search(self):

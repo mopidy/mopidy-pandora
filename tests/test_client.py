@@ -22,9 +22,7 @@ def test_get_genre_stations(
 
         genre_stations = backend.api.get_genre_stations()
 
-        assert len(genre_stations) == len(
-            genre_stations_result_mock["categories"]
-        )
+        assert len(genre_stations) == len(genre_stations_result_mock["categories"])
         assert "Category mock" in list(genre_stations)
 
 
@@ -90,16 +88,12 @@ def test_get_genre_stations_changed_cached(
         backend.api.genre_stations_cache[time.time()] = station_list
 
         assert backend.api.get_genre_stations().checksum == cached_checksum
-        assert len(
-            next(iter(backend.api.genre_stations_cache.values()))
-        ) == len(
+        assert len(next(iter(backend.api.genre_stations_cache.values()))) == len(
             GenreStationList.from_json(APIClient, mock_cached_result["result"])
         )
 
 
-def test_getgenre_stations_cache_disabled(
-    config, get_genre_stations_return_value_mock
-):
+def test_getgenre_stations_cache_disabled(config, get_genre_stations_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_genre_stations",
@@ -133,9 +127,7 @@ def test_get_station_list(
         assert station_list[2].name.startswith("QuickMix")
 
 
-def test_get_station_list_populates_cache(
-    config, get_station_list_return_value_mock
-):
+def test_get_station_list_populates_cache(config, get_station_list_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_station_list",
@@ -149,9 +141,7 @@ def test_get_station_list_populates_cache(
         assert backend.api.station_list_cache.currsize == 1
 
 
-def test_get_station_list_changed_cached(
-    config, get_station_list_return_value_mock
-):
+def test_get_station_list_changed_cached(config, get_station_list_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_station_list",
@@ -185,9 +175,7 @@ def test_get_station_list_changed_cached(
         )
 
 
-def test_getstation_list_cache_disabled(
-    config, get_station_list_return_value_mock
-):
+def test_getstation_list_cache_disabled(config, get_station_list_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_station_list",
@@ -240,9 +228,9 @@ def test_get_station_list_changed_refreshed(
                 backend.api.get_station_list(force_refresh=True).checksum
                 == conftest.MOCK_STATION_LIST_CHECKSUM
             )
-            assert len(
-                next(iter(backend.api.station_list_cache.values()))
-            ) == len(station_list_result_mock["stations"])
+            assert len(next(iter(backend.api.station_list_cache.values()))) == len(
+                station_list_result_mock["stations"]
+            )
 
 
 def test_get_station_list_handles_request_exception(config, caplog):

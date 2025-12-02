@@ -60,9 +60,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
         logger.info(
-            "Looking up Pandora {} {}...".format(
-                pandora_uri.uri_type, pandora_uri.uri
-            )
+            "Looking up Pandora {} {}...".format(pandora_uri.uri_type, pandora_uri.uri)
         )
         if isinstance(pandora_uri, SearchUri):
             # Create the station first so that it can be browsed.
@@ -114,13 +112,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 )
             )
 
-        artist_kwargs[
-            "uri"
-        ] = uri  # Artist lookups should just point back to the track itself.
+        artist_kwargs["uri"] = (
+            uri  # Artist lookups should just point back to the track itself.
+        )
         track_kwargs["artists"] = [models.Artist(**artist_kwargs)]
-        album_kwargs[
-            "uri"
-        ] = uri  # Album lookups should just point back to the track itself.
+        album_kwargs["uri"] = (
+            uri  # Album lookups should just point back to the track itself.
+        )
         track_kwargs["album"] = models.Album(**album_kwargs)
         return [models.Track(**track_kwargs)]
 
@@ -150,9 +148,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     # GenreStations don't appear to have artwork available via the
                     # json API
                     if not isinstance(pandora_uri, GenreStationUri):
-                        station = self.backend.api.get_station(
-                            pandora_uri.station_id
-                        )
+                        station = self.backend.api.get_station(pandora_uri.station_id)
                         image_uri = station.art_url
                 else:
                     # Lookup
@@ -163,17 +159,13 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                     )
 
                 if image_uri:
-                    image_uris.update(
-                        [image_uri.replace("http://", "https://", 1)]
-                    )
+                    image_uris.update([image_uri.replace("http://", "https://", 1)])
             except (TypeError, KeyError):
                 pandora_uri = PandoraUri.factory(uri)
                 if isinstance(pandora_uri, TrackUri):
                     # Could not find the track as expected - exception.
                     logger.exception(
-                        "Failed to lookup image for Pandora URI '{}'.".format(
-                            uri
-                        )
+                        "Failed to lookup image for Pandora URI '{}'.".format(uri)
                     )
 
             result[uri] = [models.Image(uri=u) for u in image_uris]
@@ -241,9 +233,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def _browse_genre_stations(self, uri):
         return [
-            models.Ref.directory(
-                name=station.name, uri=PandoraUri.factory(station).uri
-            )
+            models.Ref.directory(name=station.name, uri=PandoraUri.factory(station).uri)
             for station in self.backend.api.get_genre_stations()[
                 PandoraUri.factory(uri).category_name
             ]

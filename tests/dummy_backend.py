@@ -4,7 +4,6 @@ This backend implements the backend API in the simplest way possible.  It is
 used in tests of the frontends.
 """
 
-
 import pykka
 
 from mopidy import backend, listener
@@ -22,9 +21,7 @@ class DummyBackend(pykka.ThreadingActor, backend.Backend):
 
         self.library = DummyLibraryProvider(backend=self)
         if audio is None:
-            self.playback = DummyPandoraPlaybackProvider(
-                audio=audio, backend=self
-            )
+            self.playback = DummyPandoraPlaybackProvider(audio=audio, backend=self)
         else:
             self.playback = DummyPandoraPlaybackProviderWithAudioEvents(
                 audio=audio, backend=self

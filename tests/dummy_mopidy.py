@@ -45,9 +45,7 @@ class DummyMopidyInstance:
         config = {"core": {"max_tracklist_length": 10000}}
 
         self.audio = dummy_audio.create_proxy(DummyAudio)
-        self.backend = dummy_backend.create_proxy(
-            DummyPandoraBackend, audio=self.audio
-        )
+        self.backend = dummy_backend.create_proxy(DummyPandoraBackend, audio=self.audio)
         self.non_pandora_backend = dummy_backend.create_proxy(
             DummyBackend, audio=self.audio
         )

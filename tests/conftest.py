@@ -98,9 +98,7 @@ def get_backend(config, simulate_request_exceptions=False):
 @pytest.fixture
 def mopidy(config):
     mopidy = DummyMopidyInstance()
-    mopidy.frontend = frontend.PandoraFrontend.start(
-        config, mopidy.core
-    ).proxy()
+    mopidy.frontend = frontend.PandoraFrontend.start(config, mopidy.core).proxy()
     mopidy.actor_register.append(mopidy.frontend)
 
     yield mopidy
@@ -111,9 +109,7 @@ def mopidy(config):
 
 @pytest.fixture
 def mopidy_with_monitor(config, mopidy):
-    mopidy.monitor = frontend.EventMonitorFrontend.start(
-        config, mopidy.core
-    ).proxy()
+    mopidy.monitor = frontend.EventMonitorFrontend.start(config, mopidy.core).proxy()
     mopidy.actor_register.append(mopidy.monitor)
 
     # Consume mode needs to be enabled to detect 'previous' track changes
@@ -279,14 +275,12 @@ def ad_metadata_result_mock():
 
 
 @pytest.fixture
-def playlist_mock(
-    config, playlist_result_mock, simulate_request_exceptions=False
-):
+def playlist_mock(config, playlist_result_mock, simulate_request_exceptions=False):
     with mock.patch.object(APIClient, "__call__", mock.Mock()) as call_mock:
         call_mock.return_value = playlist_result_mock["result"]
-        return get_backend(
-            config, simulate_request_exceptions
-        ).api.get_playlist(MOCK_STATION_TOKEN)
+        return get_backend(config, simulate_request_exceptions).api.get_playlist(
+            MOCK_STATION_TOKEN
+        )
 
 
 @pytest.fixture
@@ -440,9 +434,7 @@ def search_result_mock():
 
 @pytest.fixture
 def get_station_list_return_value_mock(config, station_list_result_mock):
-    return StationList.from_json(
-        get_backend(config).api, station_list_result_mock
-    )
+    return StationList.from_json(get_backend(config).api, station_list_result_mock)
 
 
 @pytest.fixture
