@@ -124,17 +124,36 @@ def rq():
 
 @pytest.fixture
 def event_sequence(rq):
-    return EventSequence("match_mock", ["e1", "e2", "e3"], rq, 0.1, False)
+    return EventSequence(
+        "match_mock",
+        ["e1", "e2", "e3"],
+        rq,
+        interval=0.1,
+        strict=False,
+    )
 
 
 @pytest.fixture
 def event_sequence_strict(rq):
-    return EventSequence("match_mock", ["e1", "e2", "e3"], rq, 0.1, True)
+    return EventSequence(
+        "match_mock",
+        ["e1", "e2", "e3"],
+        rq,
+        interval=0.1,
+        strict=True,
+    )
 
 
 @pytest.fixture
 def event_sequence_wait(rq):
-    return EventSequence("match_mock", ["e1", "e2", "e3"], rq, 0.1, False, "w1")
+    return EventSequence(
+        "match_mock",
+        ["e1", "e2", "e3"],
+        rq,
+        interval=0.1,
+        strict=False,
+        wait_for="w1",
+    )
 
 
 @pytest.fixture
@@ -164,7 +183,7 @@ def genre_station_mock(
 
 @pytest.fixture
 def station_result_mock():
-    mock_result = {
+    return {
         "stat": "ok",
         "result": {
             "stationId": MOCK_STATION_ID,
@@ -175,8 +194,6 @@ def station_result_mock():
             "genre": [MOCK_STATION_GENRE],
         },
     }
-
-    return mock_result
 
 
 @pytest.fixture
@@ -191,7 +208,7 @@ def get_station_mock_return_value(
 
 @pytest.fixture(scope="session")
 def playlist_result_mock():
-    mock_result = {
+    return {
         "stat": "ok",
         "result": {
             "items": [
@@ -233,12 +250,10 @@ def playlist_result_mock():
         },
     }
 
-    return mock_result
-
 
 @pytest.fixture(scope="session")
 def ad_metadata_result_mock():
-    mock_result = {
+    return {
         "stat": "ok",
         "result": {
             "title": MOCK_TRACK_NAME,
@@ -269,8 +284,6 @@ def ad_metadata_result_mock():
             "adTrackingTokens": {MOCK_TRACK_AD_TOKEN},
         },
     }
-
-    return mock_result
 
 
 @pytest.fixture
@@ -448,7 +461,7 @@ def request_exception_mock(self, *args, **kwargs):
 
 
 def transport_call_not_implemented_mock(self, method, **data):
-    raise TransportCallTestNotImplemented(
+    raise TransportCallTestNotImplementedError(
         method + "(" + json.dumps(self.remove_empty_values(data)) + ")"
     )
 
@@ -465,7 +478,7 @@ def search_return_value_mock(config, search_result_mock):
     return SearchResult.from_json(get_backend(config).api, search_result_mock)
 
 
-class TransportCallTestNotImplemented(Exception):
+class TransportCallTestNotImplementedError(Exception):
     pass
 
 
@@ -502,7 +515,8 @@ class ThreadJoiner:
         for thread in set(threading.enumerate()) - self.before:
             thread.join(self.timeout)
             if self.check_alive and thread.is_alive():
-                raise RuntimeError("Timeout joining thread %r" % thread)
+                msg = f"Timeout joining thread {thread}"
+                raise RuntimeError(msg)
         self.left_behind = sorted(
             set(threading.enumerate()) - self.before, key=lambda t: t.name
         )

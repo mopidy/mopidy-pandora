@@ -194,43 +194,45 @@ def test_getstation_list_cache_disabled(config, get_station_list_return_value_mo
 def test_get_station_list_changed_refreshed(
     config, get_station_list_return_value_mock, station_list_result_mock
 ):
-    with mock.patch.object(
-        APIClient,
-        "get_station_list",
-        return_value=get_station_list_return_value_mock,
+    # Ensure that the cache is invalidated if 'force_refresh' is True
+    with (
+        mock.patch.object(
+            APIClient,
+            "get_station_list",
+            return_value=get_station_list_return_value_mock,
+        ),
+        mock.patch.object(StationList, "has_changed", return_value=True),
     ):
-        # Ensure that the cache is invalidated if 'force_refresh' is True
-        with mock.patch.object(StationList, "has_changed", return_value=True):
-            backend = conftest.get_backend(config)
+        backend = conftest.get_backend(config)
 
-            cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
-            mock_cached_result = {
-                "stat": "ok",
-                "result": {
-                    "stations": [
-                        {
-                            "stationId": conftest.MOCK_STATION_ID,
-                            "stationToken": conftest.MOCK_STATION_TOKEN,
-                            "stationName": conftest.MOCK_STATION_NAME,
-                        }
-                    ],
-                    "checksum": cached_checksum,
-                },
-            }
+        cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
+        mock_cached_result = {
+            "stat": "ok",
+            "result": {
+                "stations": [
+                    {
+                        "stationId": conftest.MOCK_STATION_ID,
+                        "stationToken": conftest.MOCK_STATION_TOKEN,
+                        "stationName": conftest.MOCK_STATION_NAME,
+                    }
+                ],
+                "checksum": cached_checksum,
+            },
+        }
 
-            backend.api.station_list_cache[time.time()] = StationList.from_json(
-                APIClient, mock_cached_result["result"]
-            )
+        backend.api.station_list_cache[time.time()] = StationList.from_json(
+            APIClient, mock_cached_result["result"]
+        )
 
-            assert backend.api.get_station_list().checksum == cached_checksum
+        assert backend.api.get_station_list().checksum == cached_checksum
 
-            assert (
-                backend.api.get_station_list(force_refresh=True).checksum
-                == conftest.MOCK_STATION_LIST_CHECKSUM
-            )
-            assert len(next(iter(backend.api.station_list_cache.values()))) == len(
-                station_list_result_mock["stations"]
-            )
+        assert (
+            backend.api.get_station_list(force_refresh=True).checksum
+            == conftest.MOCK_STATION_LIST_CHECKSUM
+        )
+        assert len(next(iter(backend.api.station_list_cache.values()))) == len(
+            station_list_result_mock["stations"]
+        )
 
 
 def test_get_station_list_handles_request_exception(config, caplog):
@@ -248,10 +250,10 @@ def test_get_station(config, get_station_list_return_value_mock):
         "get_station_list",
         return_value=get_station_list_return_value_mock,
     ):
+        backend = conftest.get_backend(config)
+
         # Make sure we re-use the cached station list between calls
         with mock.patch.object(StationList, "has_changed", return_value=False):
-            backend = conftest.get_backend(config)
-
             backend.api.get_station_list()
 
             assert (
@@ -273,11 +275,11 @@ def test_get_invalid_station(config, get_station_list_return_value_mock):
         "get_station_list",
         return_value=get_station_list_return_value_mock,
     ):
+        backend = conftest.get_backend(config)
+
         # Check that a call to the Pandora server is triggered if station is
         # not found in the cache
-        with pytest.raises(conftest.TransportCallTestNotImplemented):
-            backend = conftest.get_backend(config)
-
+        with pytest.raises(conftest.TransportCallTestNotImplementedError):
             backend.api.get_station("9999999999999999999")
 
 

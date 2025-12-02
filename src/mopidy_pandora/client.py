@@ -42,7 +42,7 @@ class MopidyAPIClient(APIClient):
     This API client implements caching of the station list.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         cache_ttl,
         transport,

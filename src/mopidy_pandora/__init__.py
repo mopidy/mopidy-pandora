@@ -18,7 +18,7 @@ class Extension(ext.Extension):
         return config.read(pathlib.Path(__file__).parent / "ext.conf")
 
     def get_config_schema(self):
-        from pandora.client import BaseAPIClient
+        from pandora.client import BaseAPIClient  # noqa: PLC0415
 
         schema = super().get_config_schema()
         schema["api_host"] = config.String()
@@ -85,8 +85,8 @@ class Extension(ext.Extension):
         return schema
 
     def setup(self, registry):
-        from .backend import PandoraBackend
-        from .frontend import EventMonitorFrontend, PandoraFrontend
+        from .backend import PandoraBackend  # noqa: PLC0415
+        from .frontend import EventMonitorFrontend, PandoraFrontend  # noqa: PLC0415
 
         registry.add("backend", PandoraBackend)
         registry.add("frontend", PandoraFrontend)

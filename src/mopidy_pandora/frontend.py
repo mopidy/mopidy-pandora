@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 import threading
 import time
-from collections import namedtuple
 from difflib import SequenceMatcher
-from functools import total_ordering
+from functools import total_ordering, wraps
 from queue import PriorityQueue
+from typing import TYPE_CHECKING, Any, NamedTuple, override
 
 import pykka
 from mopidy import audio, core
@@ -13,6 +15,10 @@ from mopidy.audio import PlaybackState
 from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
 from mopidy_pandora.utils import run_async
+
+if TYPE_CHECKING:
+    from mopidy.config import Config
+    from mopidy.models import Track
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +32,6 @@ def only_execute_for_pandora_uris(func):
     :param func: the function to be executed
     :return: the return value of the function if it was run, or 'None' otherwise.
     """
-    from functools import wraps
 
     @wraps(func)
     def check_pandora(self, *args, **kwargs):
@@ -37,13 +42,14 @@ def only_execute_for_pandora_uris(func):
         :return: the return value of the function if it was run or 'None' otherwise.
         """
         uri = get_active_uri(self.core, *args, **kwargs)
-        if uri and PandoraUri.is_pandora_uri(uri):
-            return func(self, *args, **kwargs)
+        if not uri or not PandoraUri.is_pandora_uri(uri):
+            return None
+        return func(self, *args, **kwargs)
 
     return check_pandora
 
 
-def get_active_uri(core, *args, **kwargs):
+def get_active_uri(core, *_args, **kwargs):
     """
     Tries to determine what the currently 'active' Mopidy track is, and returns
     it's URI. Makes use of a best-effort determination base on:
@@ -82,7 +88,7 @@ class PandoraFrontend(
     listener.PandoraPlaybackListener,
     listener.EventMonitorListener,
 ):
-    def __init__(self, config, core):
+    def __init__(self, config: Config, core: core.CoreProxy):
         super().__init__()
 
         self.config = config["pandora"]
@@ -112,11 +118,13 @@ class PandoraFrontend(
 
             self.setup_required = False
 
+    @override
     @only_execute_for_pandora_uris
     def options_changed(self):
         self.setup_required = True
         self.set_options()
 
+    @override
     @only_execute_for_pandora_uris
     def track_playback_started(self, tl_track):
         self.set_options()
@@ -124,10 +132,12 @@ class PandoraFrontend(
             self.track_change_completed_event.set()
             self.update_tracklist(tl_track.track)
 
+    @override
     @only_execute_for_pandora_uris
     def track_playback_ended(self, tl_track, time_position):
         self.set_options()
 
+    @override
     @only_execute_for_pandora_uris
     def track_playback_paused(self, tl_track, time_position):
         self.set_options()
@@ -135,6 +145,7 @@ class PandoraFrontend(
             self.track_change_completed_event.set()
             self.update_tracklist(tl_track.track)
 
+    @override
     @only_execute_for_pandora_uris
     def track_playback_resumed(self, tl_track, time_position):
         self.set_options()
@@ -166,6 +177,7 @@ class PandoraFrontend(
             pass
         return False
 
+    @override
     def track_changing(self, track):
         self.track_change_completed_event.clear()
 
@@ -178,6 +190,7 @@ class PandoraFrontend(
                 PandoraUri.factory(track).station_id, auto_play=False
             )
 
+    @override
     def track_unplayable(self, track):
         if self.is_end_of_tracklist_reached(track):
             self.core.playback.stop()
@@ -187,6 +200,7 @@ class PandoraFrontend(
 
         self.core.tracklist.remove({"uri": [track.uri]})
 
+    @override
     def next_track_available(self, track, auto_play=False):
         if track:
             self.add_track(track, auto_play)
@@ -194,6 +208,7 @@ class PandoraFrontend(
             logger.warning("No more Pandora tracks available to play.")
             self.core.playback.stop()
 
+    @override
     def skip_limit_exceeded(self):
         self.core.playback.stop()
 
@@ -205,18 +220,19 @@ class PandoraFrontend(
             self.core.playback.play(tlid=tl_tracks[-1].tlid)
         self._trim_tracklist(maxsize=2)
 
-    def _trim_tracklist(self, keep_only=None, maxsize=2):
+    def _trim_tracklist(self, keep_only: Track | None = None, maxsize=2):
         tl_tracks = self.core.tracklist.get_tl_tracks().get()
+
         if keep_only:
             trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
             if len(trim_tlids) > 0:
-                return self.core.tracklist.remove({"tlid": trim_tlids})
-            return 0
+                self.core.tracklist.remove({"tlid": trim_tlids})
+            return
 
         if len(tl_tracks) > maxsize:
             # Only need two tracks in the tracklist at any given time, remove
             # the oldest tracks
-            return self.core.tracklist.remove(
+            self.core.tracklist.remove(
                 {"tlid": [tl_tracks[t].tlid for t in range(len(tl_tracks) - maxsize)]}
             )
 
@@ -242,8 +258,14 @@ class MatchResult:
     def __lt__(self, other):
         return self.ratio < other.ratio
 
+    def __hash__(self):
+        return hash((self.marker, self.ratio))
 
-EventMarker = namedtuple("EventMarker", "event, uri, time")
+
+class EventMarker(NamedTuple):
+    event: Any
+    uri: Any
+    time: Any
 
 
 class EventMonitorFrontend(
@@ -400,7 +422,7 @@ class EventMonitorFrontend(
 
         self._monitor_lock.release()
 
-    def event_processed(self, track_uri, pandora_event):
+    def event_processed(self, track_uri, pandora_event):  # noqa: ARG002
         if pandora_event == "delete_station":
             self.core.tracklist.clear()
 
@@ -410,18 +432,18 @@ class EventMonitorFrontend(
             # TODO: find a way to eliminate this timing disparity between when
             # 'track_playback_ended' event for one track is processed, and the
             # next track is added to the history.
-            if h[0] + 100 < track_marker.time:
-                if h[1].uri == track_marker.uri:
-                    # This is the point in time in the history that the track
-                    # was played.
-                    if history[i - 1][1].uri == track_marker.uri:
-                        # Track was played again immediately.
-                        # User either clicked 'previous' in consume mode or
-                        # clicked 'stop' -> 'play' for same track.
-                        # Both actions are interpreted as 'previous'.
-                        return "track_changed_previous"
-                    # Switched to another track, user clicked 'next'.
-                    return "track_changed_next"
+            if h[0] + 100 < track_marker.time and h[1].uri == track_marker.uri:
+                # This is the point in time in the history that the track
+                # was played.
+                if history[i - 1][1].uri == track_marker.uri:
+                    # Track was played again immediately.
+                    # User either clicked 'previous' in consume mode or
+                    # clicked 'stop' -> 'play' for same track.
+                    # Both actions are interpreted as 'previous'.
+                    return "track_changed_previous"
+                # Switched to another track, user clicked 'next'.
+                return "track_changed_next"
+        return None
 
     def _trigger_event_triggered(self, event, uri):
         (
@@ -441,11 +463,12 @@ class EventMonitorFrontend(
 class EventSequence:
     pykka_traversable = True
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         on_match_event,
         target_sequence,
         result_queue,
+        *,
         interval=1.0,
         strict=False,
         wait_for=None,
@@ -541,7 +564,7 @@ class EventSequence:
     def get_ratio(self):
         if self.wait_for:
             # Add 'wait_for' event as well to make ratio more accurate.
-            match_sequence = self.target_sequence + [self.wait_for]
+            match_sequence = [*self.target_sequence, self.wait_for]
         else:
             match_sequence = self.target_sequence
         if self.strict:

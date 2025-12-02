@@ -160,18 +160,20 @@ def test_get_next_pandora_track_renames_advertisements(
 
 
 def test_lookup_of_invalid_uri(config):
-    with pytest.raises(NotImplementedError):
-        backend = conftest.get_backend(config)
+    backend = conftest.get_backend(config)
 
+    with pytest.raises(NotImplementedError):
         backend.library.lookup("pandora:invalid")
 
 
 def test_lookup_of_invalid_uri_type(config, caplog):
-    with pytest.raises(ValueError):
-        backend = conftest.get_backend(config)
+    backend = conftest.get_backend(config)
 
+    with pytest.raises(
+        TypeError,
+        match="Unexpected type to perform Pandora track lookup: 'genre'",
+    ):
         backend.library.lookup("pandora:genre:mock_name")
-        assert "Unexpected type to perform Pandora track lookup: genre." in caplog.text
 
 
 def test_lookup_of_ad_uri(config, ad_item_mock):
@@ -451,8 +453,9 @@ def test_browse_genres(config, get_genre_stations_return_value_mock):
 
 
 def test_browse_raises_exception_for_unsupported_uri_type(config):
+    backend = conftest.get_backend(config)
+
     with pytest.raises(NotImplementedError):
-        backend = conftest.get_backend(config)
         backend.library.browse("pandora:invalid_uri")
 
 
@@ -482,7 +485,7 @@ def test_browse_genre_category(config, get_genre_stations_return_value_mock):
         assert results[0].name == "Genre mock"
 
 
-def test_browse_genre_station_uri(
+def test_browse_genre_station_uri(  # noqa: PLR0913
     config,
     get_station_mock_return_value,
     genre_station_mock,
@@ -555,7 +558,9 @@ def test_formatted_search_query_concatenates_queries_into_free_text(config):
             "track_name": ["track_mock"],
         }
     )
-    assert "any_mock" in result and "artist_mock" in result and "track_mock" in result
+    assert "any_mock" in result
+    assert "artist_mock" in result
+    assert "track_mock" in result
 
 
 def test_formatted_search_query_ignores_unsupported_attributes(config):
@@ -596,11 +601,14 @@ def test_refresh_genre_directory(config):
 
 
 def test_refresh_station_directory_invalid_uri_type_raises_exception(config):
-    with pytest.raises(ValueError):
-        backend = conftest.get_backend(config)
-        backend.api.get_station_list = mock.Mock()
-        backend.api.get_genre_stations = mock.Mock()
+    backend = conftest.get_backend(config)
+    backend.api.get_station_list = mock.Mock()
+    backend.api.get_genre_stations = mock.Mock()
 
+    with pytest.raises(
+        ValueError,
+        match="Unexpected URI type to perform refresh of Pandora directory: track",
+    ):
         backend.library.refresh("pandora:track:id_token_mock:id_token_mock")
 
 

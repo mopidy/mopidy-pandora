@@ -1,4 +1,6 @@
 import json
+from functools import wraps
+from threading import Thread
 
 import requests
 
@@ -10,8 +12,6 @@ def run_async(func):
     :param func: the function to run asynchronously
     :return: the created Thread object that the function is running in.
     """
-    from functools import wraps
-    from threading import Thread
 
     @wraps(func)
     def async_func(*args, **kwargs):

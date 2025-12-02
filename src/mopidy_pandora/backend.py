@@ -63,18 +63,21 @@ class PandoraBackend(
         try:
             if pandora_event == "delete_station":
                 logger.info(
-                    f"Triggering event '{pandora_event}' for Pandora station with ID: '{PandoraUri.factory(track_uri).station_id}'."
+                    f"Triggering event {pandora_event!r} for Pandora station with ID: "
+                    f"{PandoraUri.factory(track_uri).station_id!r}"
                 )
             else:
                 logger.info(
-                    f"Triggering event '{pandora_event}' for Pandora song: '{self.library.lookup_pandora_track(track_uri).song_name}'."
+                    f"Triggering event {pandora_event!r} for Pandora song: "
+                    f"{self.library.lookup_pandora_track(track_uri).song_name!r}"
                 )
             func(track_uri)
             self._trigger_event_processed(track_uri, pandora_event)
-            return True
         except PandoraException:
             logger.exception(f"Error calling Pandora event: {pandora_event}.")
             return False
+        else:
+            return True
 
     def thumbs_up(self, track_uri):
         return self.api.add_feedback(PandoraUri.factory(track_uri).token, True)

@@ -16,8 +16,7 @@ from . import conftest
 
 @pytest.fixture
 def audio_mock():
-    audio_mock = mock.Mock(spec=audio.Audio)
-    return audio_mock
+    return mock.Mock(spec=audio.Audio)
 
 
 @pytest.fixture
@@ -29,8 +28,7 @@ def provider(audio_mock, config):
 
 @pytest.fixture(scope="session")
 def client_mock():
-    client_mock = mock.Mock(spec=MopidyAPIClient)
-    return client_mock
+    return mock.Mock(spec=MopidyAPIClient)
 
 
 def test_change_track_enforces_skip_limit_if_no_track_available(
@@ -55,8 +53,8 @@ def test_change_track_enforces_skip_limit_if_no_track_available(
                 assert provider._trigger_skip_limit_exceeded.called
 
         assert (
-            f"Maximum track skip limit ({PandoraPlaybackProvider.SKIP_LIMIT:d}) exceeded."
-            in caplog.text
+            "Maximum track skip limit "
+            f"({PandoraPlaybackProvider.SKIP_LIMIT:d}) exceeded." in caplog.text
         )
 
 
@@ -86,8 +84,8 @@ def test_change_track_enforces_skip_limit_if_no_audio_url(
                 assert provider._trigger_skip_limit_exceeded.called
 
         assert (
-            f"Maximum track skip limit ({PandoraPlaybackProvider.SKIP_LIMIT:d}) exceeded."
-            in caplog.text
+            "Maximum track skip limit "
+            f"({PandoraPlaybackProvider.SKIP_LIMIT:d}) exceeded." in caplog.text
         )
 
 
@@ -123,8 +121,8 @@ def test_change_track_enforces_skip_limit_on_request_exceptions(
                 assert provider._trigger_skip_limit_exceeded.called
 
         assert (
-            f"Maximum track skip limit ({PandoraPlaybackProvider.SKIP_LIMIT:d}) exceeded."
-            in caplog.text
+            "Maximum track skip limit "
+            f"({PandoraPlaybackProvider.SKIP_LIMIT:d}) exceeded." in caplog.text
         )
 
 

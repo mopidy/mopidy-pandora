@@ -1,15 +1,15 @@
+import contextlib
 import logging
 import re
-from collections import namedtuple
+from typing import Any, NamedTuple, override
 
 from cachetools import LRUCache
 from mopidy import backend, models
 from pydora.utils import iterate_forever
 
-from mopidy_pandora.uri import (  # noqa I101
+from mopidy_pandora.uri import (
     AdItemUri,
     GenreStationUri,
-    GenresUri,
     GenreUri,
     PandoraUri,
     SearchUri,
@@ -19,8 +19,15 @@ from mopidy_pandora.uri import (  # noqa I101
 
 logger = logging.getLogger(__name__)
 
-StationCacheItem = namedtuple("StationCacheItem", "station, iter")
-TrackCacheItem = namedtuple("TrackCacheItem", "ref, track")
+
+class StationCacheItem(NamedTuple):
+    station: Any
+    iter: Any
+
+
+class TrackCacheItem(NamedTuple):
+    ref: models.Ref
+    track: models.Track
 
 
 class PandoraLibraryProvider(backend.LibraryProvider):
@@ -41,8 +48,10 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self.pandora_station_cache = StationCache(self, maxsize=5)
         self.pandora_track_cache = LRUCache(maxsize=10)
 
+    @override
     def browse(self, uri):
         self.backend.playback.reset_skip_limits()
+
         if uri == self.root_directory.uri:
             return self._browse_stations()
 
@@ -57,6 +66,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         if isinstance(pandora_uri, StationUri):
             return self._browse_tracks(uri)
 
+        return None
+
+    @override
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
         logger.info(f"Looking up Pandora {pandora_uri.uri_type} {pandora_uri.uri}...")
@@ -91,11 +103,9 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     track_kwargs["name"] = track.song_name
                     track_kwargs["length"] = track.track_length * 1000
-                    try:
+                    with contextlib.suppress(TypeError):
+                        # If bitrate not specified for this stream, ignore.
                         track_kwargs["bitrate"] = int(track.bitrate)
-                    except TypeError:
-                        # Bitrate not specified for this stream, ignore.
-                        pass
                     artist_kwargs["name"] = track.artist_name
                     album_kwargs["name"] = track.album_name
         elif isinstance(pandora_uri, StationUri):
@@ -104,9 +114,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             artist_kwargs["name"] = "Pandora Station"
             album_kwargs["name"] = ", ".join(station.genre)
         else:
-            raise ValueError(
-                f"Unexpected type to perform Pandora track lookup: {pandora_uri.uri_type}."
+            msg = (
+                "Unexpected type to perform Pandora track lookup: "
+                f"{pandora_uri.uri_type!r}"
             )
+            raise TypeError(msg)
 
         artist_kwargs["uri"] = (
             uri  # Artist lookups should just point back to the track itself.
@@ -118,6 +130,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         track_kwargs["album"] = models.Album(**album_kwargs)
         return [models.Track(**track_kwargs)]
 
+    @override
     def get_images(self, uris):
         result = {}
         for uri in uris:
@@ -127,12 +140,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 pandora_uri = PandoraUri.factory(uri)
 
                 logger.info(
-                    f"Retrieving images for Pandora {pandora_uri.uri_type} {pandora_uri.uri}..."
+                    "Retrieving images for Pandora "
+                    f"{pandora_uri.uri_type} {pandora_uri.uri}..."
                 )
 
-                if isinstance(pandora_uri, AdItemUri) or isinstance(
-                    pandora_uri, TrackUri
-                ):
+                if isinstance(pandora_uri, (AdItemUri, TrackUri)):
                     track = self.lookup_pandora_track(uri)
                     if track.is_ad is True:
                         image_uri = track.image_url
@@ -147,7 +159,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     # Lookup
                     logger.warning(
-                        f"No images available for Pandora URIs of type '{pandora_uri.uri_type}'."
+                        "No images available for Pandora URIs of "
+                        f"type {pandora_uri.uri_type!r}."
                     )
 
                 if image_uri:
@@ -174,9 +187,8 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
         # Mark QuickMix stations
         for station in station_list:
-            if station.id in quickmix_stations:
-                if not station.name.endswith("*"):
-                    station.name += "*"
+            if station.id in quickmix_stations and not station.name.endswith("*"):
+                station.name += "*"
 
         return station_list
 
@@ -250,6 +262,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         self.pandora_track_cache[track_uri.uri] = TrackCacheItem(ref, track)
         return ref
 
+    @override
     def refresh(self, uri=None):
         if not uri or uri == self.root_directory.uri:
             self.backend.api.get_station_list(force_refresh=True)
@@ -258,17 +271,16 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         else:
             pandora_uri = PandoraUri.factory(uri)
             if isinstance(pandora_uri, StationUri):
-                try:
+                with contextlib.suppress(KeyError):
                     self.pandora_station_cache.pop(pandora_uri.station_id)
-                except KeyError:
-                    # Item not in cache, ignore
-                    pass
             else:
-                raise ValueError(
+                msg = (
                     "Unexpected URI type to perform refresh of "
                     f"Pandora directory: {pandora_uri.uri_type}"
                 )
+                raise ValueError(msg)
 
+    @override
     def search(self, query=None, uris=None, exact=False, **kwargs):
         search_text = self._formatted_search_query(query)
 
@@ -282,23 +294,22 @@ class PandoraLibraryProvider(backend.LibraryProvider):
         )
 
         tracks = []
-        for genre in search_result.genre_stations:
-            tracks.append(
-                models.Track(
-                    uri=SearchUri(genre.token).uri,
-                    name=f"{genre.station_name} (Pandora genre)",
-                    artists=[models.Artist(name=genre.station_name)],
-                )
+        tracks.extend(
+            models.Track(
+                uri=SearchUri(genre.token).uri,
+                name=f"{genre.station_name} (Pandora genre)",
+                artists=[models.Artist(name=genre.station_name)],
             )
-
-        for song in search_result.songs:
-            tracks.append(
-                models.Track(
-                    uri=SearchUri(song.token).uri,
-                    name=f"{song.song_name} (Pandora station)",
-                    artists=[models.Artist(name=song.artist)],
-                )
+            for genre in search_result.genre_stations
+        )
+        tracks.extend(
+            models.Track(
+                uri=SearchUri(song.token).uri,
+                name=f"{song.song_name} (Pandora station)",
+                artists=[models.Artist(name=song.artist)],
             )
+            for song in search_result.songs
+        )
 
         artists = []
         for artist in search_result.artists:
@@ -318,13 +329,11 @@ class PandoraLibraryProvider(backend.LibraryProvider):
     def _formatted_search_query(self, query):
         search_text = []
         for field, values in iter(query.items()):
-            if not hasattr(values, "__iter__"):
-                values = [values]
-            for value in values:
-                if field == "any" or field == "artist" or field == "track_name":
-                    search_text.append(value)
-        search_text = " ".join(search_text)
-        return search_text
+            vals = values if hasattr(values, "__iter__") else [values]
+            search_text.extend(
+                val for val in vals if field in ("any", "artist", "track_name")
+            )
+        return " ".join(search_text)
 
 
 class StationCache(LRUCache):
@@ -334,7 +343,7 @@ class StationCache(LRUCache):
 
     def __missing__(self, station_id):
         if re.match("^([SRCG])", station_id):
-            pandora_uri = self.library._create_station_for_token(station_id)
+            pandora_uri = self.library._create_station_for_token(station_id)  # noqa: SLF001
             station_id = pandora_uri.station_id
 
         station = self.library.backend.api.get_station(station_id)

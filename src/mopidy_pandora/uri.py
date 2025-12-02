@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import logging
 import re
+from typing import ClassVar
 
 from mopidy import models
+from mopidy.types import Uri
 from pandora.models.ad import AdItem
 from pandora.models.playlist import PlaylistItem
 from pandora.models.station import GenreStation, Station
@@ -22,10 +26,10 @@ class _PandoraUriMeta(type):
 
 
 class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
-    TYPES = {}
+    TYPES: ClassVar[dict[str, type[PandoraUri]]] = {}
     SCHEME = "pandora"
 
-    def __init__(self, uri_type=None):
+    def __init__(self, uri_type: str | None = None) -> None:
         self.uri_type = uri_type
 
     def __repr__(self):
@@ -40,8 +44,8 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
         return encoded_dict
 
     @property
-    def uri(self):
-        return repr(self)
+    def uri(self) -> Uri:
+        return Uri(repr(self))
 
     @classmethod
     def encode(cls, value):
@@ -59,39 +63,43 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
             # A string
             return PandoraUri._from_uri(obj)
 
-        if isinstance(obj, models.Ref) or isinstance(obj, models.Track):
+        if isinstance(obj, (models.Ref, models.Track)):
             # A mopidy track or track reference
             return PandoraUri._from_uri(obj.uri)
 
-        if isinstance(obj, Station) or isinstance(obj, GenreStation):
+        if isinstance(obj, (Station, GenreStation)):
             # One of the station types
             return PandoraUri._from_station(obj)
 
-        if isinstance(obj, PlaylistItem) or isinstance(obj, AdItem):
+        if isinstance(obj, (PlaylistItem, AdItem)):
             # One of the playlist item (track) types
             return PandoraUri._from_track(obj)
-        raise NotImplementedError(f"Unsupported URI object type '{type(obj)}'")
+        msg = f"Unsupported URI object type '{type(obj)}'"
+        raise NotImplementedError(msg)
 
     @classmethod
     def _from_uri(cls, uri):
         parts = [unquote(p) for p in uri.split(":")]
-        if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:
-            raise NotImplementedError(f"Not a Pandora URI: {uri}")
+        if not parts or parts[0] != PandoraUri.SCHEME or len(parts) < 2:  # noqa: PLR2004
+            msg = f"Not a Pandora URI: {uri}"
+            raise NotImplementedError(msg)
         uri_cls = cls.TYPES.get(parts[1])
         if uri_cls:
             return uri_cls(*parts[2:])
-        raise NotImplementedError(f"Unsupported Pandora URI type '{uri}'")
+        msg = f"Unsupported Pandora URI type '{uri}'"
+        raise NotImplementedError(msg)
 
     @classmethod
     def _from_station(cls, station):
-        if isinstance(station, Station) or isinstance(station, GenreStation):
+        if isinstance(station, (Station, GenreStation)):
             if (
                 GenreStationUri.pattern.match(station.id)
                 and station.id == station.token
             ):
                 return GenreStationUri(station.id, station.token)
             return StationUri(station.id, station.token)
-        raise NotImplementedError(f"Unsupported station item type '{station}'")
+        msg = f"Unsupported station item type '{station}'"
+        raise NotImplementedError(msg)
 
     @classmethod
     def _from_track(cls, track):
@@ -99,7 +107,8 @@ class PandoraUri(with_metaclass(_PandoraUriMeta, object)):
             return PlaylistItemUri(track.station_id, track.track_token)
         if isinstance(track, AdItem):
             return AdItemUri(track.station_id, track.ad_token)
-        raise NotImplementedError(f"Unsupported playlist item type '{track}'")
+        msg = f"Unsupported playlist item type '{track}'"
+        raise NotImplementedError(msg)
 
     @classmethod
     def is_pandora_uri(cls, uri):

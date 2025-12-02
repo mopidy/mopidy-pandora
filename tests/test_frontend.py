@@ -182,22 +182,24 @@ class TestPandoraFrontend:
     def test_station_change_does_not_trim_currently_playing_track_from_tracklist(
         self, mopidy
     ):
-        with conftest.ThreadJoiner(timeout=1.0) as thread_joiner:
-            with mock.patch.object(
+        with (
+            conftest.ThreadJoiner(timeout=1.0) as thread_joiner,
+            mock.patch.object(
                 PandoraFrontend,
                 "is_station_changed",
                 mock.Mock(return_value=True),
-            ):
-                mopidy.core.playback.play(tlid=mopidy.tl_tracks[4].tlid)
-                mopidy.replay_events()
+            ),
+        ):
+            mopidy.core.playback.play(tlid=mopidy.tl_tracks[4].tlid)
+            mopidy.replay_events()
 
-                thread_joiner.wait(
-                    timeout=1.0
-                )  # Wait until threads spawned by frontend have finished.
+            thread_joiner.wait(
+                timeout=1.0
+            )  # Wait until threads spawned by frontend have finished.
 
-                tl_tracks = mopidy.core.tracklist.get_tl_tracks().get()
-                assert len(tl_tracks) == 1
-                assert tl_tracks[0].track == mopidy.tl_tracks[4].track
+            tl_tracks = mopidy.core.tracklist.get_tl_tracks().get()
+            assert len(tl_tracks) == 1
+            assert tl_tracks[0].track == mopidy.tl_tracks[4].track
 
     def test_get_active_uri_order_of_precedence(self, mopidy):
         # Should be 'track' -> 'tl_track' -> 'current_tl_track' -> 'history[0]'
@@ -211,14 +213,6 @@ class TestPandoraFrontend:
 
         # No easy way to test retrieving from history as it is not possible to
         # set core.playback_current_tl_track to None
-
-        # mopidy.core.playback.next()
-        # mopidy.core.playback.stop()
-        # mopidy.replay_events()
-        # assert (
-        #     frontend.get_active_uri(mopidy.core, **kwargs) ==
-        #     mopidy.tl_tracks[1].track.uri
-        # )
 
         kwargs["tl_track"] = mopidy.tl_tracks[2]
         assert (
