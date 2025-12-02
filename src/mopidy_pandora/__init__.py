@@ -1,17 +1,16 @@
 import logging
 import pathlib
-
-import pkg_resources
+from importlib.metadata import version
 
 from mopidy import config, ext
 
-__version__ = pkg_resources.get_distribution("Mopidy-Pandora").version
+__version__ = version("mopidy-pandora")
 
 logger = logging.getLogger(__name__)
 
 
 class Extension(ext.Extension):
-    dist_name = "Mopidy-Pandora"
+    dist_name = "mopidy-pandora"
     ext_name = "pandora"
     version = __version__
 
