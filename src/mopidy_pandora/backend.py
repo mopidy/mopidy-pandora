@@ -1,14 +1,14 @@
 import logging
 
 import pykka
+from mopidy import backend, core
 from pandora.errors import PandoraException
 
-from mopidy import backend, core
 from mopidy_pandora import listener, utils
 from mopidy_pandora.client import MopidyAPIClient, MopidySettingsDictBuilder
 from mopidy_pandora.library import PandoraLibraryProvider
 from mopidy_pandora.playback import PandoraPlaybackProvider
-from mopidy_pandora.uri import PandoraUri  # noqa: I101
+from mopidy_pandora.uri import PandoraUri
 
 logger = logging.getLogger(__name__)
 
@@ -63,16 +63,11 @@ class PandoraBackend(
         try:
             if pandora_event == "delete_station":
                 logger.info(
-                    "Triggering event '{}' for Pandora station with ID: '{}'.".format(
-                        pandora_event, PandoraUri.factory(track_uri).station_id
-                    )
+                    f"Triggering event '{pandora_event}' for Pandora station with ID: '{PandoraUri.factory(track_uri).station_id}'."
                 )
             else:
                 logger.info(
-                    "Triggering event '{}' for Pandora song: '{}'.".format(
-                        pandora_event,
-                        self.library.lookup_pandora_track(track_uri).song_name,
-                    )
+                    f"Triggering event '{pandora_event}' for Pandora song: '{self.library.lookup_pandora_track(track_uri).song_name}'."
                 )
             func(track_uri)
             self._trigger_event_processed(track_uri, pandora_event)

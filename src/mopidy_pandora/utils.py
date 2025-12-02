@@ -10,8 +10,8 @@ def run_async(func):
     :param func: the function to run asynchronously
     :return: the created Thread object that the function is running in.
     """
-    from threading import Thread
     from functools import wraps
+    from threading import Thread
 
     @wraps(func)
     def async_func(*args, **kwargs):
@@ -26,7 +26,7 @@ def run_async(func):
         """
         t = Thread(target=func, args=args, kwargs=kwargs)
 
-        queue = kwargs.get("queue", None)
+        queue = kwargs.get("queue")
         if queue is not None:
             t.result_queue = queue
 

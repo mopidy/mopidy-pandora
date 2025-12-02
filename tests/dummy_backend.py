@@ -5,9 +5,9 @@ used in tests of the frontends.
 """
 
 import pykka
-
 from mopidy import backend, listener
 from mopidy.models import Ref, SearchResult
+
 from mopidy_pandora.listener import PandoraPlaybackListener
 
 

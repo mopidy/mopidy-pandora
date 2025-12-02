@@ -6,6 +6,7 @@ from unittest import mock
 import pykka
 import pytest
 import requests
+from mopidy import models
 from pandora.client import APIClient
 from pandora.models.ad import AdItem
 from pandora.models.playlist import PlaylistItem
@@ -17,10 +18,8 @@ from pandora.models.station import (
     StationList,
 )
 
-from mopidy import models
 from mopidy_pandora import backend, frontend, listener
 from mopidy_pandora.frontend import EventSequence
-
 from tests.dummy_mopidy import DummyMopidyInstance
 
 MOCK_STATION_TYPE = "station"
@@ -115,7 +114,7 @@ def mopidy_with_monitor(config, mopidy):
     # Consume mode needs to be enabled to detect 'previous' track changes
     mopidy.core.tracklist.set_consume(True)
 
-    yield mopidy
+    return mopidy
 
 
 @pytest.fixture

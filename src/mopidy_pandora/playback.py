@@ -1,8 +1,8 @@
 import logging
 
 import requests
-
 from mopidy import backend
+
 from mopidy_pandora import listener
 from mopidy_pandora.uri import PandoraUri, StationUri
 
@@ -60,7 +60,7 @@ class PandoraPlaybackProvider(backend.PlaybackProvider):
     def change_track(self, track):
         if track.uri is None:
             logger.warning(
-                "No URI for Pandora track '{}'. Track cannot be played.".format(track)
+                f"No URI for Pandora track '{track}'. Track cannot be played."
             )
             return False
 

@@ -1,14 +1,14 @@
 from unittest import mock
 
 import pytest
+from mopidy import models
 from pandora.models.station import GenreStation, Station
 
-from mopidy import models
 from mopidy_pandora.uri import (
     AdItemUri,
     GenreStationUri,
-    GenreUri,
     GenresUri,
+    GenreUri,
     PandoraUri,
     PlaylistItemUri,
     SearchUri,
@@ -41,8 +41,9 @@ def test_factory_ad(ad_item_mock):
     obj = PandoraUri.factory(ad_item_mock)
 
     assert type(obj) is AdItemUri
-    assert obj.uri == "pandora:ad:{}:{}".format(
-        conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN
+    assert (
+        obj.uri
+        == f"pandora:ad:{conftest.MOCK_STATION_ID}:{conftest.MOCK_TRACK_AD_TOKEN}"
     )
 
 
@@ -50,8 +51,9 @@ def test_factory_playlist_item(playlist_item_mock):
     obj = PandoraUri.factory(playlist_item_mock)
 
     assert type(obj) is PlaylistItemUri
-    assert obj.uri == "pandora:track:{}:{}".format(
-        conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_TOKEN
+    assert (
+        obj.uri
+        == f"pandora:track:{conftest.MOCK_STATION_ID}:{conftest.MOCK_TRACK_TOKEN}"
     )
 
 
@@ -190,11 +192,9 @@ def test_search_uri_is_genre_search():
 def test_station_uri_from_station(get_station_mock_return_value):
     station_uri = StationUri._from_station(get_station_mock_return_value)
 
-    assert station_uri.uri == "{}:{}:{}:{}".format(
-        PandoraUri.SCHEME,
-        conftest.MOCK_STATION_TYPE,
-        conftest.MOCK_STATION_ID,
-        conftest.MOCK_STATION_TOKEN,
+    assert (
+        station_uri.uri
+        == f"{PandoraUri.SCHEME}:{conftest.MOCK_STATION_TYPE}:{conftest.MOCK_STATION_ID}:{conftest.MOCK_STATION_TOKEN}"
     )
 
 
@@ -297,11 +297,9 @@ def test_genre_station_uri_from_genre_station_returns_correct_type():
 def test_track_uri_from_track(playlist_item_mock):
     track_uri = TrackUri._from_track(playlist_item_mock)
 
-    assert track_uri.uri == "{}:{}:{}:{}".format(
-        PandoraUri.SCHEME,
-        conftest.MOCK_TRACK_TYPE,
-        conftest.MOCK_STATION_TOKEN,
-        conftest.MOCK_TRACK_TOKEN,
+    assert (
+        track_uri.uri
+        == f"{PandoraUri.SCHEME}:{conftest.MOCK_TRACK_TYPE}:{conftest.MOCK_STATION_TOKEN}:{conftest.MOCK_TRACK_TOKEN}"
     )
 
 
@@ -313,11 +311,9 @@ def test_track_uri_from_track_unsupported_type(playlist_result_mock):
 def test_track_uri_from_track_for_ads(ad_item_mock):
     track_uri = TrackUri._from_track(ad_item_mock)
 
-    assert track_uri.uri == "{}:{}:{}:{}".format(
-        PandoraUri.SCHEME,
-        conftest.MOCK_AD_TYPE,
-        conftest.MOCK_STATION_ID,
-        conftest.MOCK_TRACK_AD_TOKEN,
+    assert (
+        track_uri.uri
+        == f"{PandoraUri.SCHEME}:{conftest.MOCK_AD_TYPE}:{conftest.MOCK_STATION_ID}:{conftest.MOCK_TRACK_AD_TOKEN}"
     )
 
 

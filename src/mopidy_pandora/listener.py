@@ -23,7 +23,6 @@ class EventMonitorListener(listener.Listener):
             defined in `:class:mopidy_pandora.backend.PandoraBackend`
         :type pandora_event: string
         """
-        pass
 
     def track_changed_previous(self, old_uri, new_uri):
         """
@@ -34,7 +33,6 @@ class EventMonitorListener(listener.Listener):
         :param new_uri: the URI of the Pandora track that was changed to.
         :type new_uri: string
         """
-        pass
 
     def track_changed_next(self, old_uri, new_uri):
         """
@@ -48,7 +46,6 @@ class EventMonitorListener(listener.Listener):
         :param new_uri: the URI of the Pandora track that was changed to.
         :type new_uri: string
         """
-        pass
 
 
 class PandoraFrontendListener(listener.Listener):
@@ -73,7 +70,6 @@ class PandoraFrontendListener(listener.Listener):
             as it is added to the tracklist.
         :type auto_play: boolean
         """
-        pass
 
 
 class PandoraBackendListener(backend.BackendListener):
@@ -97,7 +93,6 @@ class PandoraBackendListener(backend.BackendListener):
             is added to the tracklist.
         :type auto_play: boolean
         """
-        pass
 
     def event_processed(self, track_uri, pandora_event):
         """
@@ -111,7 +106,6 @@ class PandoraBackendListener(backend.BackendListener):
         :type pandora_event: string
 
         """
-        pass
 
 
 class PandoraPlaybackListener(listener.Listener):
@@ -130,7 +124,6 @@ class PandoraPlaybackListener(listener.Listener):
         :param track: the Pandora track that is being changed to.
         :type track: :class:`mopidy.models.Ref`
         """
-        pass
 
     def track_unplayable(self, track):
         """
@@ -141,7 +134,6 @@ class PandoraPlaybackListener(listener.Listener):
         :param track: the unplayable Pandora track.
         :type track: :class:`mopidy.models.Ref`
         """
-        pass
 
     def skip_limit_exceeded(self):
         """
@@ -153,4 +145,3 @@ class PandoraPlaybackListener(listener.Listener):
         exceeding the maximum number of station playlist requests as determined
         by the Pandora server.
         """
-        pass

@@ -3,14 +3,14 @@ import re
 from collections import namedtuple
 
 from cachetools import LRUCache
+from mopidy import backend, models
 from pydora.utils import iterate_forever
 
-from mopidy import backend, models
 from mopidy_pandora.uri import (  # noqa I101
     AdItemUri,
     GenreStationUri,
-    GenreUri,
     GenresUri,
+    GenreUri,
     PandoraUri,
     SearchUri,
     StationUri,
@@ -59,9 +59,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
 
     def lookup(self, uri):
         pandora_uri = PandoraUri.factory(uri)
-        logger.info(
-            "Looking up Pandora {} {}...".format(pandora_uri.uri_type, pandora_uri.uri)
-        )
+        logger.info(f"Looking up Pandora {pandora_uri.uri_type} {pandora_uri.uri}...")
         if isinstance(pandora_uri, SearchUri):
             # Create the station first so that it can be browsed.
             station_uri = self._create_station_for_token(pandora_uri.token)
@@ -107,9 +105,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
             album_kwargs["name"] = ", ".join(station.genre)
         else:
             raise ValueError(
-                "Unexpected type to perform Pandora track lookup: {}.".format(
-                    pandora_uri.uri_type
-                )
+                f"Unexpected type to perform Pandora track lookup: {pandora_uri.uri_type}."
             )
 
         artist_kwargs["uri"] = (
@@ -131,9 +127,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 pandora_uri = PandoraUri.factory(uri)
 
                 logger.info(
-                    "Retrieving images for Pandora {} {}...".format(
-                        pandora_uri.uri_type, pandora_uri.uri
-                    )
+                    f"Retrieving images for Pandora {pandora_uri.uri_type} {pandora_uri.uri}..."
                 )
 
                 if isinstance(pandora_uri, AdItemUri) or isinstance(
@@ -153,9 +147,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 else:
                     # Lookup
                     logger.warning(
-                        "No images available for Pandora URIs of type '{}'.".format(
-                            pandora_uri.uri_type
-                        )
+                        f"No images available for Pandora URIs of type '{pandora_uri.uri_type}'."
                     )
 
                 if image_uri:
@@ -164,9 +156,7 @@ class PandoraLibraryProvider(backend.LibraryProvider):
                 pandora_uri = PandoraUri.factory(uri)
                 if isinstance(pandora_uri, TrackUri):
                     # Could not find the track as expected - exception.
-                    logger.exception(
-                        "Failed to lookup image for Pandora URI '{}'.".format(uri)
-                    )
+                    logger.exception(f"Failed to lookup image for Pandora URI '{uri}'.")
 
             result[uri] = [models.Image(uri=u) for u in image_uris]
         return result

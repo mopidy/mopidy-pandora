@@ -7,9 +7,9 @@ from functools import total_ordering
 from queue import PriorityQueue
 
 import pykka
-
 from mopidy import audio, core
 from mopidy.audio import PlaybackState
+
 from mopidy_pandora import listener
 from mopidy_pandora.uri import AdItemUri, PandoraUri
 from mopidy_pandora.utils import run_async
@@ -61,7 +61,7 @@ def get_active_uri(core, *args, **kwargs):
         None otherwise.
     """
     uri = None
-    track = kwargs.get("track", None)
+    track = kwargs.get("track")
     if track:
         uri = track.uri
     else:
@@ -211,18 +211,13 @@ class PandoraFrontend(
             trim_tlids = [t.tlid for t in tl_tracks if t.track.uri != keep_only.uri]
             if len(trim_tlids) > 0:
                 return self.core.tracklist.remove({"tlid": trim_tlids})
-            else:
-                return 0
+            return 0
 
-        elif len(tl_tracks) > maxsize:
+        if len(tl_tracks) > maxsize:
             # Only need two tracks in the tracklist at any given time, remove
             # the oldest tracks
             return self.core.tracklist.remove(
-                {
-                    "tlid": [
-                        tl_tracks[t].tlid for t in range(0, len(tl_tracks) - maxsize)
-                    ]
-                }
+                {"tlid": [tl_tracks[t].tlid for t in range(len(tl_tracks) - maxsize)]}
             )
 
     def _trigger_end_of_tracklist_reached(self, station_id, auto_play=False):
@@ -425,9 +420,8 @@ class EventMonitorFrontend(
                         # clicked 'stop' -> 'play' for same track.
                         # Both actions are interpreted as 'previous'.
                         return "track_changed_previous"
-                    else:
-                        # Switched to another track, user clicked 'next'.
-                        return "track_changed_next"
+                    # Switched to another track, user clicked 'next'.
+                    return "track_changed_next"
 
     def _trigger_event_triggered(self, event, uri):
         (
@@ -489,9 +483,8 @@ class EventSequence:
             if kwargs.get("time_position", 0) == 0:
                 # Don't do anything if track playback has not yet started.
                 return
-            else:
-                self.start_monitor(kwargs.get("uri", None))
-                self.events_seen.append(event)
+            self.start_monitor(kwargs.get("uri"))
+            self.events_seen.append(event)
 
     def is_monitoring(self):
         return not self.monitoring_completed.is_set()

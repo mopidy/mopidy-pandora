@@ -2,7 +2,6 @@ import queue
 from unittest import mock
 
 import pykka
-
 from mopidy import core, models
 
 from tests import dummy_audio, dummy_backend
@@ -97,9 +96,8 @@ class DummyMopidyInstance:
                     if isinstance(actor, pykka.ActorProxy):
                         if isinstance(actor._actor, cls):
                             actor.on_event(event, **kwargs).get()
-                    else:
-                        if isinstance(actor, cls):
-                            actor.on_event(event, **kwargs)
+                    elif isinstance(actor, cls):
+                        actor.on_event(event, **kwargs)
             except queue.Empty:
                 # All events replayed.
                 break

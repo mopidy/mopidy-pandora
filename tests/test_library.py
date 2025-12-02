@@ -3,10 +3,10 @@ import time
 from unittest import mock
 
 import pytest
+from mopidy import models
 from pandora.client import APIClient
 from pandora.models.station import Station, StationList
 
-from mopidy import models
 from mopidy_pandora.client import MopidyAPIClient
 from mopidy_pandora.library import (
     PandoraLibraryProvider,
@@ -14,7 +14,6 @@ from mopidy_pandora.library import (
     TrackCacheItem,
 )
 from mopidy_pandora.uri import GenreUri, PandoraUri, PlaylistItemUri, StationUri
-
 from tests import conftest
 
 
@@ -22,9 +21,7 @@ def test_get_images_for_ad_without_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
 
     ad_uri = PandoraUri.factory(
-        "pandora:ad:{}:{}".format(
-            conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN
-        )
+        f"pandora:ad:{conftest.MOCK_STATION_ID}:{conftest.MOCK_TRACK_AD_TOKEN}"
     )
     ad_item_mock.image_url = None
     backend.library.pandora_track_cache[ad_uri.uri] = TrackCacheItem(
@@ -38,9 +35,7 @@ def test_get_images_for_ad_with_images(config, ad_item_mock):
     backend = conftest.get_backend(config)
 
     ad_uri = PandoraUri.factory(
-        "pandora:ad:{}:{}".format(
-            conftest.MOCK_STATION_ID, conftest.MOCK_TRACK_AD_TOKEN
-        )
+        f"pandora:ad:{conftest.MOCK_STATION_ID}:{conftest.MOCK_TRACK_AD_TOKEN}"
     )
     backend.library.pandora_track_cache[ad_uri.uri] = TrackCacheItem(
         mock.Mock(spec=models.Ref.track), ad_item_mock
@@ -146,24 +141,22 @@ def test_get_next_pandora_track_handles_no_more_tracks_available(config, caplog)
 def test_get_next_pandora_track_renames_advertisements(
     config, get_station_mock_return_value, playlist_mock
 ):
-    with mock.patch.object(
-        MopidyAPIClient,
-        "get_station",
-        return_value=get_station_mock_return_value,
+    with (
+        mock.patch.object(
+            MopidyAPIClient,
+            "get_station",
+            return_value=get_station_mock_return_value,
+        ),
+        mock.patch.object(Station, "get_playlist", mock.Mock()) as get_playlist_mock,
     ):
-        with mock.patch.object(
-            Station, "get_playlist", mock.Mock()
-        ) as get_playlist_mock:
-            backend = conftest.get_backend(config)
+        backend = conftest.get_backend(config)
 
-            playlist = playlist_mock
-            playlist.pop(0)
-            get_playlist_mock.return_value = iter(playlist)
+        playlist = playlist_mock
+        playlist.pop(0)
+        get_playlist_mock.return_value = iter(playlist)
 
-            track = backend.library.get_next_pandora_track(
-                get_station_mock_return_value.id
-            )
-            assert track.name == "Advertisement"
+        track = backend.library.get_next_pandora_track(get_station_mock_return_value.id)
+        assert track.name == "Advertisement"
 
 
 def test_lookup_of_invalid_uri(config):
@@ -223,12 +216,13 @@ def test_lookup_of_search_uri(
     get_station_list_return_value_mock,
     station_result_mock,
 ):
-    with mock.patch.object(
-        MopidyAPIClient,
-        "get_station",
-        return_value=get_station_mock_return_value,
-    ):
-        with mock.patch.object(
+    with (
+        mock.patch.object(
+            MopidyAPIClient,
+            "get_station",
+            return_value=get_station_mock_return_value,
+        ),
+        mock.patch.object(
             APIClient,
             "create_station",
             mock.Mock(
@@ -237,57 +231,58 @@ def test_lookup_of_search_uri(
                     station_result_mock["result"],
                 )
             ),
-        ) as create_station_mock:
-            with mock.patch.object(
-                APIClient,
-                "get_station_list",
-                return_value=get_station_list_return_value_mock,
-            ):
-                backend = conftest.get_backend(config)
+        ) as create_station_mock,
+        mock.patch.object(
+            APIClient,
+            "get_station_list",
+            return_value=get_station_list_return_value_mock,
+        ),
+    ):
+        backend = conftest.get_backend(config)
 
-                get_station_mock_return_value.id = conftest.MOCK_STATION_ID
-                backend.library.pandora_station_cache[
-                    get_station_mock_return_value.id
-                ] = StationCacheItem(
-                    station_result_mock["result"], iter([playlist_item_mock])
-                )
+        get_station_mock_return_value.id = conftest.MOCK_STATION_ID
+        backend.library.pandora_station_cache[get_station_mock_return_value.id] = (
+            StationCacheItem(station_result_mock["result"], iter([playlist_item_mock]))
+        )
 
-                track_uri = PlaylistItemUri._from_track(playlist_item_mock)
-                backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(
-                    mock.Mock(spec=models.Ref.track), playlist_item_mock
-                )
+        track_uri = PlaylistItemUri._from_track(playlist_item_mock)
+        backend.library.pandora_track_cache[track_uri.uri] = TrackCacheItem(
+            mock.Mock(spec=models.Ref.track), playlist_item_mock
+        )
 
-                results = backend.library.lookup("pandora:search:S1234567")
-                # Make sure a station is created for the search URI first
-                assert create_station_mock.called
-                # Check that the first track to be played is returned correctly.
-                assert results[0].uri == track_uri.uri
+        results = backend.library.lookup("pandora:search:S1234567")
+        # Make sure a station is created for the search URI first
+        assert create_station_mock.called
+        # Check that the first track to be played is returned correctly.
+        assert results[0].uri == track_uri.uri
 
 
 def test_lookup_of_station_uri(
     config, get_station_list_return_value_mock, get_station_mock_return_value
 ):
-    with mock.patch.object(
-        MopidyAPIClient,
-        "get_station",
-        return_value=get_station_mock_return_value,
-    ):
-        with mock.patch.object(
+    with (
+        mock.patch.object(
+            MopidyAPIClient,
+            "get_station",
+            return_value=get_station_mock_return_value,
+        ),
+        mock.patch.object(
             APIClient,
             "get_station_list",
             return_value=get_station_list_return_value_mock,
-        ):
-            backend = conftest.get_backend(config)
+        ),
+    ):
+        backend = conftest.get_backend(config)
 
-            station_uri = PandoraUri.factory(get_station_mock_return_value)
-            results = backend.library.lookup(station_uri.uri)
-            assert len(results) == 1
+        station_uri = PandoraUri.factory(get_station_mock_return_value)
+        results = backend.library.lookup(station_uri.uri)
+        assert len(results) == 1
 
-            track = results[0]
-            assert track.uri == station_uri.uri
-            assert track.name == conftest.MOCK_STATION_NAME
-            assert next(iter(track.artists)).name == "Pandora Station"
-            assert track.album.name == conftest.MOCK_STATION_GENRE
+        track = results[0]
+        assert track.uri == station_uri.uri
+        assert track.name == conftest.MOCK_STATION_NAME
+        assert next(iter(track.artists)).name == "Pandora Station"
+        assert track.album.name == conftest.MOCK_STATION_GENRE
 
 
 def test_lookup_of_track_uri(config, playlist_item_mock):
@@ -495,55 +490,59 @@ def test_browse_genre_station_uri(
     station_result_mock,
     get_genre_stations_return_value_mock,
 ):
-    with mock.patch.object(
-        MopidyAPIClient,
-        "get_station",
-        return_value=get_station_mock_return_value,
-    ):
-        with mock.patch.object(
+    with (
+        mock.patch.object(
+            MopidyAPIClient,
+            "get_station",
+            return_value=get_station_mock_return_value,
+        ),
+        mock.patch.object(
             APIClient,
             "create_station",
             mock.Mock(return_value=station_result_mock["result"]),
-        ) as create_station_mock:
-            with mock.patch.object(
-                APIClient,
-                "get_station_list",
-                return_value=get_station_list_return_value_mock,
-            ):
-                with mock.patch.object(
-                    MopidyAPIClient,
-                    "get_genre_stations",
-                    return_value=get_genre_stations_return_value_mock,
-                ):
-                    backend = conftest.get_backend(config)
-                    genre_uri = GenreUri._from_station(genre_station_mock)
-                    t = time.time()
-                    backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
+        ) as create_station_mock,
+        mock.patch.object(
+            APIClient,
+            "get_station_list",
+            return_value=get_station_list_return_value_mock,
+        ),
+        mock.patch.object(
+            MopidyAPIClient,
+            "get_genre_stations",
+            return_value=get_genre_stations_return_value_mock,
+        ),
+    ):
+        backend = conftest.get_backend(config)
+        genre_uri = GenreUri._from_station(genre_station_mock)
+        t = time.time()
+        backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
 
-                    results = backend.library.browse(genre_uri.uri)
-                    assert len(results) == 1
-                    assert backend.api.station_list_cache.currsize == 1
-                    assert t not in list(backend.api.station_list_cache)
-                    assert create_station_mock.called
+        results = backend.library.browse(genre_uri.uri)
+        assert len(results) == 1
+        assert backend.api.station_list_cache.currsize == 1
+        assert t not in list(backend.api.station_list_cache)
+        assert create_station_mock.called
 
 
 def test_browse_station_uri(
     config, get_station_mock_return_value, get_station_playlist_mock
 ):
-    with mock.patch.object(
-        MopidyAPIClient,
-        "get_station",
-        return_value=get_station_mock_return_value,
-    ):
-        with mock.patch.object(
+    with (
+        mock.patch.object(
+            MopidyAPIClient,
+            "get_station",
+            return_value=get_station_mock_return_value,
+        ),
+        mock.patch.object(
             Station, "get_playlist", return_value=get_station_playlist_mock
-        ):
-            backend = conftest.get_backend(config)
-            station_uri = StationUri._from_station(get_station_mock_return_value)
+        ),
+    ):
+        backend = conftest.get_backend(config)
+        station_uri = StationUri._from_station(get_station_mock_return_value)
 
-            results = backend.library.browse(station_uri.uri)
-            # Station should just contain the first track to be played.
-            assert len(results) == 1
+        results = backend.library.browse(station_uri.uri)
+        # Station should just contain the first track to be played.
+        assert len(results) == 1
 
 
 def test_formatted_search_query_concatenates_queries_into_free_text(config):

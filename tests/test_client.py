@@ -287,28 +287,30 @@ def test_create_genre_station_invalidates_cache(
     get_genre_stations_return_value_mock,
     station_result_mock,
 ):
-    with mock.patch.object(
-        APIClient,
-        "get_station_list",
-        return_value=get_station_list_return_value_mock,
-    ):
-        with mock.patch.object(
+    with (
+        mock.patch.object(
+            APIClient,
+            "get_station_list",
+            return_value=get_station_list_return_value_mock,
+        ),
+        mock.patch.object(
             MopidyAPIClient,
             "get_genre_stations",
             return_value=get_genre_stations_return_value_mock,
-        ):
-            backend = conftest.get_backend(config)
+        ),
+    ):
+        backend = conftest.get_backend(config)
 
-            backend.api.create_station = mock.PropertyMock(
-                return_value=Station.from_json(
-                    mock.MagicMock(MopidyAPIClient),
-                    station_result_mock["result"],
-                )
+        backend.api.create_station = mock.PropertyMock(
+            return_value=Station.from_json(
+                mock.MagicMock(MopidyAPIClient),
+                station_result_mock["result"],
             )
-            t = time.time()
-            backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
-            assert t in list(backend.api.station_list_cache)
+        )
+        t = time.time()
+        backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
+        assert t in list(backend.api.station_list_cache)
 
-            backend.library._create_station_for_token("test_token")
-            assert t not in list(backend.api.station_list_cache)
-            assert backend.api.station_list_cache.currsize == 1
+        backend.library._create_station_for_token("test_token")
+        assert t not in list(backend.api.station_list_cache)
+        assert backend.api.station_list_cache.currsize == 1
