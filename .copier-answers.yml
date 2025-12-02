@@ -1,0 +1,9 @@
+_commit: v1.1.0
+_src_path: gh:mopidy/mopidy-ext-template
+author_email: john.cass77@gmail.com
+author_full_name: John Cass
+repo_name: mopidy-pandora
+dist_name: Mopidy-Pandora
+ext_name: pandora
+github_username: mopidy
+short_description: Mopidy extension for playing music from Pandora
