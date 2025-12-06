@@ -22,9 +22,7 @@ def test_get_genre_stations(
 
         genre_stations = backend.api.get_genre_stations()
 
-        assert len(genre_stations) == len(
-            genre_stations_result_mock["categories"]
-        )
+        assert len(genre_stations) == len(genre_stations_result_mock["categories"])
         assert "Category mock" in list(genre_stations)
 
 
@@ -90,16 +88,12 @@ def test_get_genre_stations_changed_cached(
         backend.api.genre_stations_cache[time.time()] = station_list
 
         assert backend.api.get_genre_stations().checksum == cached_checksum
-        assert len(
-            next(iter(backend.api.genre_stations_cache.values()))
-        ) == len(
+        assert len(next(iter(backend.api.genre_stations_cache.values()))) == len(
             GenreStationList.from_json(APIClient, mock_cached_result["result"])
         )
 
 
-def test_getgenre_stations_cache_disabled(
-    config, get_genre_stations_return_value_mock
-):
+def test_getgenre_stations_cache_disabled(config, get_genre_stations_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_genre_stations",
@@ -133,9 +127,7 @@ def test_get_station_list(
         assert station_list[2].name.startswith("QuickMix")
 
 
-def test_get_station_list_populates_cache(
-    config, get_station_list_return_value_mock
-):
+def test_get_station_list_populates_cache(config, get_station_list_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_station_list",
@@ -149,9 +141,7 @@ def test_get_station_list_populates_cache(
         assert backend.api.station_list_cache.currsize == 1
 
 
-def test_get_station_list_changed_cached(
-    config, get_station_list_return_value_mock
-):
+def test_get_station_list_changed_cached(config, get_station_list_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_station_list",
@@ -185,9 +175,7 @@ def test_get_station_list_changed_cached(
         )
 
 
-def test_getstation_list_cache_disabled(
-    config, get_station_list_return_value_mock
-):
+def test_getstation_list_cache_disabled(config, get_station_list_return_value_mock):
     with mock.patch.object(
         APIClient,
         "get_station_list",
@@ -206,43 +194,45 @@ def test_getstation_list_cache_disabled(
 def test_get_station_list_changed_refreshed(
     config, get_station_list_return_value_mock, station_list_result_mock
 ):
-    with mock.patch.object(
-        APIClient,
-        "get_station_list",
-        return_value=get_station_list_return_value_mock,
+    # Ensure that the cache is invalidated if 'force_refresh' is True
+    with (
+        mock.patch.object(
+            APIClient,
+            "get_station_list",
+            return_value=get_station_list_return_value_mock,
+        ),
+        mock.patch.object(StationList, "has_changed", return_value=True),
     ):
-        # Ensure that the cache is invalidated if 'force_refresh' is True
-        with mock.patch.object(StationList, "has_changed", return_value=True):
-            backend = conftest.get_backend(config)
+        backend = conftest.get_backend(config)
 
-            cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
-            mock_cached_result = {
-                "stat": "ok",
-                "result": {
-                    "stations": [
-                        {
-                            "stationId": conftest.MOCK_STATION_ID,
-                            "stationToken": conftest.MOCK_STATION_TOKEN,
-                            "stationName": conftest.MOCK_STATION_NAME,
-                        }
-                    ],
-                    "checksum": cached_checksum,
-                },
-            }
+        cached_checksum = "zz00aa00aa00aa00aa00aa00aa00aa99"
+        mock_cached_result = {
+            "stat": "ok",
+            "result": {
+                "stations": [
+                    {
+                        "stationId": conftest.MOCK_STATION_ID,
+                        "stationToken": conftest.MOCK_STATION_TOKEN,
+                        "stationName": conftest.MOCK_STATION_NAME,
+                    }
+                ],
+                "checksum": cached_checksum,
+            },
+        }
 
-            backend.api.station_list_cache[time.time()] = StationList.from_json(
-                APIClient, mock_cached_result["result"]
-            )
+        backend.api.station_list_cache[time.time()] = StationList.from_json(
+            APIClient, mock_cached_result["result"]
+        )
 
-            assert backend.api.get_station_list().checksum == cached_checksum
+        assert backend.api.get_station_list().checksum == cached_checksum
 
-            assert (
-                backend.api.get_station_list(force_refresh=True).checksum
-                == conftest.MOCK_STATION_LIST_CHECKSUM
-            )
-            assert len(
-                next(iter(backend.api.station_list_cache.values()))
-            ) == len(station_list_result_mock["stations"])
+        assert (
+            backend.api.get_station_list(force_refresh=True).checksum
+            == conftest.MOCK_STATION_LIST_CHECKSUM
+        )
+        assert len(next(iter(backend.api.station_list_cache.values()))) == len(
+            station_list_result_mock["stations"]
+        )
 
 
 def test_get_station_list_handles_request_exception(config, caplog):
@@ -260,10 +250,10 @@ def test_get_station(config, get_station_list_return_value_mock):
         "get_station_list",
         return_value=get_station_list_return_value_mock,
     ):
+        backend = conftest.get_backend(config)
+
         # Make sure we re-use the cached station list between calls
         with mock.patch.object(StationList, "has_changed", return_value=False):
-            backend = conftest.get_backend(config)
-
             backend.api.get_station_list()
 
             assert (
@@ -285,11 +275,11 @@ def test_get_invalid_station(config, get_station_list_return_value_mock):
         "get_station_list",
         return_value=get_station_list_return_value_mock,
     ):
+        backend = conftest.get_backend(config)
+
         # Check that a call to the Pandora server is triggered if station is
         # not found in the cache
-        with pytest.raises(conftest.TransportCallTestNotImplemented):
-            backend = conftest.get_backend(config)
-
+        with pytest.raises(conftest.TransportCallTestNotImplementedError):
             backend.api.get_station("9999999999999999999")
 
 
@@ -299,28 +289,30 @@ def test_create_genre_station_invalidates_cache(
     get_genre_stations_return_value_mock,
     station_result_mock,
 ):
-    with mock.patch.object(
-        APIClient,
-        "get_station_list",
-        return_value=get_station_list_return_value_mock,
-    ):
-        with mock.patch.object(
+    with (
+        mock.patch.object(
+            APIClient,
+            "get_station_list",
+            return_value=get_station_list_return_value_mock,
+        ),
+        mock.patch.object(
             MopidyAPIClient,
             "get_genre_stations",
             return_value=get_genre_stations_return_value_mock,
-        ):
-            backend = conftest.get_backend(config)
+        ),
+    ):
+        backend = conftest.get_backend(config)
 
-            backend.api.create_station = mock.PropertyMock(
-                return_value=Station.from_json(
-                    mock.MagicMock(MopidyAPIClient),
-                    station_result_mock["result"],
-                )
+        backend.api.create_station = mock.PropertyMock(
+            return_value=Station.from_json(
+                mock.MagicMock(MopidyAPIClient),
+                station_result_mock["result"],
             )
-            t = time.time()
-            backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
-            assert t in list(backend.api.station_list_cache)
+        )
+        t = time.time()
+        backend.api.station_list_cache[t] = mock.Mock(spec=StationList)
+        assert t in list(backend.api.station_list_cache)
 
-            backend.library._create_station_for_token("test_token")
-            assert t not in list(backend.api.station_list_cache)
-            assert backend.api.station_list_cache.currsize == 1
+        backend.library._create_station_for_token("test_token")
+        assert t not in list(backend.api.station_list_cache)
+        assert backend.api.station_list_cache.currsize == 1

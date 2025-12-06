@@ -6,6 +6,7 @@ from unittest import mock
 import pykka
 import pytest
 import requests
+from mopidy import models
 from pandora.client import APIClient
 from pandora.models.ad import AdItem
 from pandora.models.playlist import PlaylistItem
@@ -17,10 +18,8 @@ from pandora.models.station import (
     StationList,
 )
 
-from mopidy import models
 from mopidy_pandora import backend, frontend, listener
 from mopidy_pandora.frontend import EventSequence
-
 from tests.dummy_mopidy import DummyMopidyInstance
 
 MOCK_STATION_TYPE = "station"
@@ -98,9 +97,7 @@ def get_backend(config, simulate_request_exceptions=False):
 @pytest.fixture
 def mopidy(config):
     mopidy = DummyMopidyInstance()
-    mopidy.frontend = frontend.PandoraFrontend.start(
-        config, mopidy.core
-    ).proxy()
+    mopidy.frontend = frontend.PandoraFrontend.start(config, mopidy.core).proxy()
     mopidy.actor_register.append(mopidy.frontend)
 
     yield mopidy
@@ -111,15 +108,13 @@ def mopidy(config):
 
 @pytest.fixture
 def mopidy_with_monitor(config, mopidy):
-    mopidy.monitor = frontend.EventMonitorFrontend.start(
-        config, mopidy.core
-    ).proxy()
+    mopidy.monitor = frontend.EventMonitorFrontend.start(config, mopidy.core).proxy()
     mopidy.actor_register.append(mopidy.monitor)
 
     # Consume mode needs to be enabled to detect 'previous' track changes
     mopidy.core.tracklist.set_consume(True)
 
-    yield mopidy
+    return mopidy
 
 
 @pytest.fixture
@@ -129,17 +124,36 @@ def rq():
 
 @pytest.fixture
 def event_sequence(rq):
-    return EventSequence("match_mock", ["e1", "e2", "e3"], rq, 0.1, False)
+    return EventSequence(
+        "match_mock",
+        ["e1", "e2", "e3"],
+        rq,
+        interval=0.1,
+        strict=False,
+    )
 
 
 @pytest.fixture
 def event_sequence_strict(rq):
-    return EventSequence("match_mock", ["e1", "e2", "e3"], rq, 0.1, True)
+    return EventSequence(
+        "match_mock",
+        ["e1", "e2", "e3"],
+        rq,
+        interval=0.1,
+        strict=True,
+    )
 
 
 @pytest.fixture
 def event_sequence_wait(rq):
-    return EventSequence("match_mock", ["e1", "e2", "e3"], rq, 0.1, False, "w1")
+    return EventSequence(
+        "match_mock",
+        ["e1", "e2", "e3"],
+        rq,
+        interval=0.1,
+        strict=False,
+        wait_for="w1",
+    )
 
 
 @pytest.fixture
@@ -169,7 +183,7 @@ def genre_station_mock(
 
 @pytest.fixture
 def station_result_mock():
-    mock_result = {
+    return {
         "stat": "ok",
         "result": {
             "stationId": MOCK_STATION_ID,
@@ -180,8 +194,6 @@ def station_result_mock():
             "genre": [MOCK_STATION_GENRE],
         },
     }
-
-    return mock_result
 
 
 @pytest.fixture
@@ -196,7 +208,7 @@ def get_station_mock_return_value(
 
 @pytest.fixture(scope="session")
 def playlist_result_mock():
-    mock_result = {
+    return {
         "stat": "ok",
         "result": {
             "items": [
@@ -238,12 +250,10 @@ def playlist_result_mock():
         },
     }
 
-    return mock_result
-
 
 @pytest.fixture(scope="session")
 def ad_metadata_result_mock():
-    mock_result = {
+    return {
         "stat": "ok",
         "result": {
             "title": MOCK_TRACK_NAME,
@@ -275,18 +285,14 @@ def ad_metadata_result_mock():
         },
     }
 
-    return mock_result
-
 
 @pytest.fixture
-def playlist_mock(
-    config, playlist_result_mock, simulate_request_exceptions=False
-):
+def playlist_mock(config, playlist_result_mock, simulate_request_exceptions=False):
     with mock.patch.object(APIClient, "__call__", mock.Mock()) as call_mock:
         call_mock.return_value = playlist_result_mock["result"]
-        return get_backend(
-            config, simulate_request_exceptions
-        ).api.get_playlist(MOCK_STATION_TOKEN)
+        return get_backend(config, simulate_request_exceptions).api.get_playlist(
+            MOCK_STATION_TOKEN
+        )
 
 
 @pytest.fixture
@@ -440,9 +446,7 @@ def search_result_mock():
 
 @pytest.fixture
 def get_station_list_return_value_mock(config, station_list_result_mock):
-    return StationList.from_json(
-        get_backend(config).api, station_list_result_mock
-    )
+    return StationList.from_json(get_backend(config).api, station_list_result_mock)
 
 
 @pytest.fixture
@@ -457,7 +461,7 @@ def request_exception_mock(self, *args, **kwargs):
 
 
 def transport_call_not_implemented_mock(self, method, **data):
-    raise TransportCallTestNotImplemented(
+    raise TransportCallTestNotImplementedError(
         method + "(" + json.dumps(self.remove_empty_values(data)) + ")"
     )
 
@@ -474,7 +478,7 @@ def search_return_value_mock(config, search_result_mock):
     return SearchResult.from_json(get_backend(config).api, search_result_mock)
 
 
-class TransportCallTestNotImplemented(Exception):
+class TransportCallTestNotImplementedError(Exception):
     pass
 
 
@@ -511,7 +515,8 @@ class ThreadJoiner:
         for thread in set(threading.enumerate()) - self.before:
             thread.join(self.timeout)
             if self.check_alive and thread.is_alive():
-                raise RuntimeError("Timeout joining thread %r" % thread)
+                msg = f"Timeout joining thread {thread}"
+                raise RuntimeError(msg)
         self.left_behind = sorted(
             set(threading.enumerate()) - self.before, key=lambda t: t.name
         )

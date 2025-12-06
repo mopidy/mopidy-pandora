@@ -24,9 +24,7 @@ class MopidySettingsDictBuilder(SettingsDictBuilder):
             settings.get("PROXY", None),
         )
 
-        quality = settings.get(
-            "AUDIO_QUALITY", self.client_class.MED_AUDIO_QUALITY
-        )
+        quality = settings.get("AUDIO_QUALITY", self.client_class.MED_AUDIO_QUALITY)
 
         return self.client_class(
             settings["CACHE_TTL"],
@@ -44,7 +42,7 @@ class MopidyAPIClient(APIClient):
     This API client implements caching of the station list.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         cache_ttl,
         transport,
