@@ -1,8 +1,10 @@
 import queue
+from typing import ClassVar
 from unittest import mock
 
 import pykka
 from mopidy import core, models
+from mopidy.types import DurationMs, Uri
 
 from tests import dummy_audio, dummy_backend
 from tests.dummy_audio import DummyAudio
@@ -10,37 +12,43 @@ from tests.dummy_backend import DummyBackend, DummyPandoraBackend
 
 
 class DummyMopidyInstance:
-    tracks = [
-        models.Track(
-            uri="pandora:track:id_mock:token_mock1", length=40000
-        ),  # Regular track
-        models.Track(
-            uri="pandora:track:id_mock:token_mock2", length=40000
-        ),  # Regular track
-        models.Track(
-            uri="pandora:ad:id_mock:token_mock3", length=40000
-        ),  # Advertisement
-        models.Track(
-            uri="mock:track:id_mock:token_mock4", length=40000
-        ),  # Not a pandora track
-        models.Track(
-            uri="pandora:track:id_mock_other:token_mock5", length=40000
-        ),  # Different station
-        models.Track(
-            uri="pandora:track:id_mock:token_mock6", length=None
-        ),  # No duration
+    tracks: ClassVar[list[models.Track]] = [
+        models.Track(  # Regular track
+            uri=Uri("pandora:track:id_mock:token_mock1"),
+            length=DurationMs(40000),
+        ),
+        models.Track(  # Regular track
+            uri=Uri("pandora:track:id_mock:token_mock2"),
+            length=DurationMs(40000),
+        ),
+        models.Track(  # Advertisement
+            uri=Uri("pandora:ad:id_mock:token_mock3"),
+            length=DurationMs(40000),
+        ),
+        models.Track(  # Not a pandora track
+            uri=Uri("mock:track:id_mock:token_mock4"),
+            length=DurationMs(40000),
+        ),
+        models.Track(  # Different station
+            uri=Uri("pandora:track:id_mock_other:token_mock5"),
+            length=DurationMs(40000),
+        ),
+        models.Track(  # No duration
+            uri=Uri("pandora:track:id_mock:token_mock6"),
+            length=None,
+        ),
     ]
 
-    uris = [
-        "pandora:track:id_mock:token_mock1",
-        "pandora:track:id_mock:token_mock2",
-        "pandora:ad:id_mock:token_mock3",
-        "mock:track:id_mock:token_mock4",
-        "pandora:track:id_mock_other:token_mock5",
-        "pandora:track:id_mock:token_mock6",
+    uris: ClassVar[list[Uri]] = [
+        Uri("pandora:track:id_mock:token_mock1"),
+        Uri("pandora:track:id_mock:token_mock2"),
+        Uri("pandora:ad:id_mock:token_mock3"),
+        Uri("mock:track:id_mock:token_mock4"),
+        Uri("pandora:track:id_mock_other:token_mock5"),
+        Uri("pandora:track:id_mock:token_mock6"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         config = {"core": {"max_tracklist_length": 10000}}
 
         self.audio = dummy_audio.create_proxy(DummyAudio)
@@ -73,15 +81,6 @@ class DummyMopidyInstance:
         self.patcher = mock.patch("mopidy.listener.send")
         self.send_mock = self.patcher.start()
         self.send_mock.side_effect = send
-
-        # TODO: Remove this patcher once Mopidy 1.2 has been released.
-        try:
-            self.core_patcher = mock.patch("mopidy.listener.send_async")
-            self.core_send_mock = self.core_patcher.start()
-            self.core_send_mock.side_effect = send
-        except AttributeError:
-            # Mopidy > 1.1 no longer has mopidy.listener.send_async
-            pass
 
         self.actor_register = [self.backend, self.core, self.audio]
 
