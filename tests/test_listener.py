@@ -1,6 +1,7 @@
 from unittest import mock
 
 from mopidy import models
+from mopidy.types import Uri
 
 
 class TestEventMonitorListener:
@@ -68,17 +69,28 @@ class TestPandoraBackendListener:
 
         backend_listener.on_event(
             "next_track_available",
-            track=models.Ref(name="name_mock"),
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            ),
             auto_play=False,
         )
 
         backend_listener.next_track_available.assert_called_with(
-            track=models.Ref(name="name_mock"), auto_play=False
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            ),
+            auto_play=False,
         )
 
     def test_listener_has_default_impl_for_next_track_available(self, backend_listener):
         backend_listener.next_track_available(
-            track=models.Ref(name="name_mock"), auto_play=False
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            ),
+            auto_play=False,
         )
 
     def test_listener_has_default_impl_for_event_processed(self, backend_listener):
@@ -92,17 +104,36 @@ class TestPandoraPlaybackListener:
     def test_on_event_forwards_to_specific_handler(self, playback_listener):
         playback_listener.track_changing = mock.Mock()
 
-        playback_listener.on_event("track_changing", track=models.Ref(name="name_mock"))
+        playback_listener.on_event(
+            "track_changing",
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            ),
+        )
 
         playback_listener.track_changing.assert_called_with(
-            track=models.Ref(name="name_mock")
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            ),
         )
 
     def test_listener_has_default_impl_for_track_changing(self, playback_listener):
-        playback_listener.track_changing(track=models.Ref(name="name_mock"))
+        playback_listener.track_changing(
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            )
+        )
 
     def test_listener_has_default_impl_for_track_unplayable(self, playback_listener):
-        playback_listener.track_unplayable(track=models.Ref(name="name_mock"))
+        playback_listener.track_unplayable(
+            track=models.Ref.track(
+                uri=Uri("mock:uri"),
+                name="name_mock",
+            )
+        )
 
     def test_listener_has_default_impl_for_skip_limit_exceeded(self, playback_listener):
         playback_listener.skip_limit_exceeded()

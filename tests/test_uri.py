@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 from mopidy import models
+from mopidy.types import Uri
 from pandora.models.station import GenreStation, Station
 
 from mopidy_pandora.uri import (
@@ -57,8 +58,9 @@ def test_factory_playlist_item(playlist_item_mock):
 
 
 def test_factory_track_ref():
-    track_ref = models.Ref(
-        name="name_mock", uri="pandora:track:station_id_mock:track_token_mock"
+    track_ref = models.Ref.track(
+        uri=Uri("pandora:track:station_id_mock:track_token_mock"),
+        name="name_mock",
     )
 
     obj = PandoraUri.factory(track_ref)
@@ -69,7 +71,8 @@ def test_factory_track_ref():
 
 def test_factory_track():
     track = models.Track(
-        name="name_mock", uri="pandora:track:station_id_mock:track_token_mock"
+        uri=Uri("pandora:track:station_id_mock:track_token_mock"),
+        name="name_mock",
     )
 
     obj = PandoraUri.factory(track)
