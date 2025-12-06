@@ -85,6 +85,7 @@ def test_run_async_queue(caplog):
 
 
 @run_async
-def async_func(text, queue=None):
+def async_func(text, queue: queue.Queue | None = None) -> None:
     logger.info(text)
-    queue.put("test_value")
+    if queue:
+        queue.put("test_value")
