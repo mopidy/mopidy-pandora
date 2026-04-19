@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import pykka
 from mopidy import audio
-from mopidy.types import DurationMs
+from mopidy.types import DurationMs, PlaybackState
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -35,7 +35,7 @@ class DummyAudio(pykka.ThreadingActor):
         mixer: MixerProxy | None = None,
     ) -> None:
         super().__init__()
-        self.state = audio.PlaybackState.STOPPED
+        self.state = PlaybackState.STOPPED
         self._volume = 0
         self._position = DurationMs(0)
         self._callback = None
@@ -70,17 +70,17 @@ class DummyAudio(pykka.ThreadingActor):
         return True
 
     def start_playback(self) -> bool:
-        return self._change_state(audio.PlaybackState.PLAYING)
+        return self._change_state(PlaybackState.PLAYING)
 
     def pause_playback(self) -> bool:
-        return self._change_state(audio.PlaybackState.PAUSED)
+        return self._change_state(PlaybackState.PAUSED)
 
     def prepare_change(self) -> bool:
         self._uri = None
         return True
 
     def stop_playback(self) -> bool:
-        return self._change_state(audio.PlaybackState.STOPPED)
+        return self._change_state(PlaybackState.STOPPED)
 
     def wait_for_state_change(self) -> None:
         pass
@@ -95,7 +95,7 @@ class DummyAudio(pykka.ThreadingActor):
         if not self._uri:
             return False
 
-        if new_state == audio.PlaybackState.STOPPED and self._uri:
+        if new_state == PlaybackState.STOPPED and self._uri:
             self._stream_changed = True
             self._uri = None
 
@@ -114,7 +114,7 @@ class DummyAudio(pykka.ThreadingActor):
             target_state=None,
         )
 
-        if new_state == audio.PlaybackState.PLAYING:
+        if new_state == PlaybackState.PLAYING:
             self._tags["audio-codec"] = ["fake info..."]
             audio.AudioListener.send("tags_changed", tags=["audio-codec"])
 

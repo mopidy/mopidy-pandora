@@ -2,8 +2,8 @@ import time
 from unittest import mock
 
 from mopidy import listener, models
-from mopidy.audio import PlaybackState
 from mopidy.core import CoreListener
+from mopidy.types import PlaybackState
 
 from mopidy_pandora import frontend
 from mopidy_pandora.frontend import EventMarker, MatchResult, PandoraFrontend

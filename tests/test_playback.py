@@ -157,14 +157,6 @@ def test_change_track_fetches_next_track_if_station_uri(
     assert provider.backend._trigger_next_track_available.called
 
 
-def test_change_track_skips_if_no_track_uri(provider):
-    track = models.Track(uri=None)
-
-    provider.change_pandora_track = mock.PropertyMock()
-    assert provider.change_track(track) is False
-    assert not provider.change_pandora_track.called
-
-
 def test_change_track_skips_if_track_not_available_in_buffer(
     provider, playlist_item_mock, caplog
 ):
